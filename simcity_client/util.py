@@ -1,6 +1,8 @@
 import couchdb
 from ConfigParser import ConfigParser
-import os.path
+import json
+from os import listdir
+from os.path import isfile, join, expanduser
 
 class Config(object):
 	def __init__(self, filename=None):
@@ -20,8 +22,15 @@ def get_db(couch_cfg):
 def get_existing_path(fnames):
 	for fname in fnames:
 		if type(fname) is list:
-			fname = os.path.join(*fname)	
-		fname = os.path.expanduser(path)
-		if os.path.isfile(fname):
+			fname = join(*fname)	
+		fname = expanduser(path)
+		if isfile(fname):
 			return fname
 	return None
+
+def write_json(fname, obj):
+	with open(fname, 'w') as outfile:
+	    json.dump(obj, outfile)
+		
+def listfiles(mypath):
+	return [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]

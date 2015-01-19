@@ -3,3 +3,8 @@ url = https://couch.example.com
 username = myuser
 password = mypassword
 database = mydatabase
+
+[Execution]
+tmp_dir = $TMPDIR
+output_dir = $HOME/out
+input_dir = $HOME/in
