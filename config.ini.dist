@@ -1,0 +1,5 @@
+[CouchDB]
+url = https://couch.example.com
+username = myuser
+password = mypassword
+database = mydatabase

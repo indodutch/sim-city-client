@@ -1,0 +1,3 @@
+[submodule "picasclient"]
+	path = thirdparty/picasclient
+	url = git@github.com:jjbot/picasclient.git
