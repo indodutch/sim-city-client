@@ -11,10 +11,8 @@ description: create the following Views in [picas_db_name]:
 	done View : lock_timestamp > 0 && done _timestamp > 0	 
 	overview_total View : sum tokens per View (Map/Reduce)	
 '''
-import sys
-import couchdb
 from couchdb.design import ViewDefinition
-import util
+from simcity_client import util
 
 def createViews(db):
 	generalViewCode='''

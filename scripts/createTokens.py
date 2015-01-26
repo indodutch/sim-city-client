@@ -7,9 +7,8 @@ Created on 22 Dec 2014
 usage: python createTokens.py [picas_db_name] [picas_username] [picas_pwd]
 description: create 5 tokens with basic fields and a random number for the input field
 '''
-import sys
 import random
-import util
+from simcity_client import util
 
 def loadTokens(db):
 	tokens = []
