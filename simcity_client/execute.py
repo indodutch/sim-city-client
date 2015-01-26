@@ -1,6 +1,6 @@
-import os, os.path
-from simcity_client import util
-from os.path import listfiles, join, expandvars
+import os
+from simcity_client.util import listfiles, write_json
+from os.path import join, expandvars
 from subprocess import call
 
 #picas imports
@@ -24,11 +24,11 @@ class ExecuteActor(RunActor):
 
         dirs = self.create_dirs(token['_id'])
         params_file = join(dirs['input'], 'input.json')
-        util.write_json(params_file, token['input'])
+        write_json(params_file, token['input'])
         
         token['execute_properties'] = {'dirs': dirs, 'input_file': params_file}
         
-        command = [token['input']['command'], dirs['tmp'], dirs['input'], dirs['output']]
+        command = [token['command'], dirs['tmp'], dirs['input'], dirs['output']]
         
         try:
             call(command)
@@ -42,13 +42,14 @@ class ExecuteActor(RunActor):
         self.client.db[token['_id']] = token
         print "-----------------------"
     
-    def create_dirs(self, id):
+    def create_dirs(self, _id):
         dirs = {}
-        dirs['tmp'] = join(expandvars(self.config['tmp_dir']), id)
-        dirs['input'] = join(expandvars(self.config['input_dir']), id)
-        dirs['output'] = join(expandvars(self.config['output_dir']), id)
+        dirs['tmp'] = join(expandvars(self.config['tmp_dir']), _id)
+        dirs['input'] = join(expandvars(self.config['input_dir']), _id)
+        dirs['output'] = join(expandvars(self.config['output_dir']), _id)
         for d in dirs.values():
             os.mkdir(d)
+        
         return dirs
 
 def create_actor(config):
