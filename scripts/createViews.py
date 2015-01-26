@@ -12,9 +12,8 @@ description: create the following Views in [picas_db_name]:
     overview_total View : sum tokens per View (Map/Reduce)  
 '''
 from couchdb.design import ViewDefinition
-from simcity_client import util
-from simcity_client.database import CouchDB
 import pystache
+import simcity_client
 
 def createViews(db):
     generalMapTemplate = '''
@@ -59,11 +58,7 @@ function (key, values, rereduce) {
     db.add_view(ViewDefinition('Monitor', 'overview_total', overviewMapCode, overviewReduceCode))
 
 if __name__ == '__main__':
-    try:
-        config = util.Config('config.ini')
-        #Create a connection to the server
-        db = CouchDB(config.section('CouchDB'))
-        #Create the Views in database
-        createViews(db)
-    except Exception as ex:
-        print "configuration file is not valid: ", ex
+    config, db = simcity_client.init_couchdb()
+
+    #Create the Views in database
+    createViews(db)

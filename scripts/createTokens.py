@@ -8,8 +8,7 @@ usage: python createTokens.py [picas_db_name] [picas_username] [picas_pwd]
 description: create 5 tokens with basic fields and a random number for the input field
 '''
 import random
-from simcity_client import util
-from simcity_client.database import CouchDB
+import simcity_client
 
 def loadTokens(db):
     tokens = { 'token_' + str(i): {'input': {'a': random.random() * 10}, 'command': 'scripts/example_script.py'} for i in xrange(5, 10) }
@@ -22,11 +21,7 @@ def loadTokens(db):
         print "ERROR: all tokens were already in the database"
 
 if __name__ == '__main__':
-    # try:
-        config = util.Config()
-        #Create a connection to the server
-        db = CouchDB(config.section('CouchDB'))
-        #Load the tokens to the database
-        loadTokens(db)
-    # except Exception as ex:
-    #     print "configuration file is not valid: ", ex
+    config, db = simcity_client.init_couchdb()
+
+    #Load the tokens to the database
+    loadTokens(db)

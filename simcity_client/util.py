@@ -6,9 +6,12 @@ from os.path import isfile, join, expanduser
 class Config(object):
     def __init__(self, filename=None):
         if filename is None:
-            filename = existing_path_from_list(["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]])
+            self.filename = existing_path_from_list(["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]])
+        else:
+            self.filename = filename
+
         self.parser = ConfigParser()
-        self.parser.read(filename)
+        self.parser.read(self.filename)
     
     def section(self, name):
         return dict(self.parser.items(name))

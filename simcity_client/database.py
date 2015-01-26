@@ -39,7 +39,8 @@ class CouchDB(object):
         for i, token in enumerate(tokens):
             try:
                 self.database.delete(token)
-            except:
+            except Exception as ex:
+                print "Could not delete token ", token['_id'], ':', ex
                 result[i] = False
 
         return result
