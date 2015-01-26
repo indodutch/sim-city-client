@@ -12,7 +12,7 @@ pyflakes-exists: ; @which pyflakes > /dev/null
 
 pyflakes: pyflakes-exists 
 	@echo "======= PyFlakes ========="
-	@find . -name *.py -exec pyflakes {} \;
+	@find . -name '*.py' -exec pyflakes {} \;
 
 unittest:
 	@echo "======= Unit Tests ========="
