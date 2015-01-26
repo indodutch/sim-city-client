@@ -1,4 +1,3 @@
-import couchdb
 from ConfigParser import ConfigParser
 import json
 from os import listdir
@@ -18,7 +17,7 @@ def existing_path_from_list(fnames):
     for fname in fnames:
         if type(fname) is list:
             fname = join(*fname)    
-        fname = expanduser(path)
+        fname = expanduser(fname)
         if isfile(fname):
             return fname
     return None

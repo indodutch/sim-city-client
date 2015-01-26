@@ -1,8 +1,9 @@
 from util import merge_dicts
+import couchdb
 
 class CouchDB(object):
     def __init__(self, couch_cfg):
-    	self.server = couchdb.Server(couch_cfg['url'])
+    	server = couchdb.Server(couch_cfg['url'])
     	server.resource.credentials = (couch_cfg['username'],couch_cfg['password'])
     	self.database = server[couch_cfg['database']]
 
