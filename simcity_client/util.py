@@ -7,14 +7,14 @@ from os.path import isfile, join, expanduser
 class Config(object):
     def __init__(self, filename=None):
         if filename is None:
-            filename = get_existing_path(["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]])
+            filename = existing_path_from_list(["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]])
         self.parser = ConfigParser()
         self.parser.read(filename)
     
     def section(self, name):
         return dict(self.parser.items(name))
 
-def get_existing_path(fnames):
+def existing_path_from_list(fnames):
     for fname in fnames:
         if type(fname) is list:
             fname = join(*fname)    

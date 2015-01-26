@@ -21,8 +21,7 @@ class CouchDB(object):
     
         for name, token in enumerate(tokens):
             base['_id'] = 'token_' + str(name)
-            token = merge_dicts(base, token)
-            token_list.append(token)
+            token_list.append(merge_dicts(base, token))
     
         self.database.update(token_list)
 
