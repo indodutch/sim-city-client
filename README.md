@@ -1,19 +1,21 @@
 # Run a simulation on SIM-CITY infrastructure
 
-The best way to manage this package is through the virtualenv package. On a cluster resource run the following commands:
+Uses a pilot job script to run multiple simulations in the same job.
+
+## Dependencies
+
+The best way to manage this package is through the Python `virtualenv` package. On a cluster resource run the following commands:
 
     module load python/2.7
     pip install --user virtualenv
     ~/.local/bin/virtualenv simcity
 
-Then before every run, include the simcity virtualenv:
+Then before every run or installation, include the `simcity` virtualenv:
 
     module load python/2.7
     source simcity/bin/activate
 
-## Dependencies
-
-Install Python picasclient:
+Install Python `picas`:
 
 	git clone https://github.com/blootsvoets/picasclient.git picas
     cd picas
@@ -48,7 +50,7 @@ Refresh the database to see the views. Unfold top right tab 'View:All documents'
    
 This will run the example in your local machine. To submit the same on a cluster, you need to add the 'python runExample.py' command for example in a shell script and submit this with qsub.
 
-## Making an update
+## Contributing
 
 To commit a change git, first run
 
