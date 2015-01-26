@@ -5,6 +5,9 @@ from subprocess import call
 
 #picas imports
 from picas.actors import RunActor
+from picas.clients import CouchClient
+from picas.iterators import BasicViewIterator
+from picas.modifiers import BasicTokenModifier
 
 class ExecuteActor(RunActor):
     def __init__(self, iterator, modifier, config):
@@ -47,3 +50,15 @@ class ExecuteActor(RunActor):
         for d in dirs.values():
             os.mkdir(d)
         return dirs
+
+def create_actor(config):
+    couch_cfg = config.section('CouchDB')
+    
+    # setup connection to db
+    client = CouchClient(url=couch_cfg['url'], db=couch_cfg['database'], username=couch_cfg['username'], password=couch_cfg['password'])
+    # Create token modifier
+    modifier = BasicTokenModifier()
+    # Create iterator, point to the right todo view
+    iterator = BasicViewIterator(client, "Monitor/todo", modifier)
+    # Create actor
+    return ExecuteActor(iterator, modifier, config.section('Execution'))
