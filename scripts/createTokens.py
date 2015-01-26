@@ -9,15 +9,24 @@ description: create 5 tokens with basic fields and a random number for the input
 '''
 import random
 from simcity_client import util
-from simcity_client.couchdb import CouchDB
+from simcity_client.database import CouchDB
 
 def loadTokens(db):
-    tokens = {(str(i), {'input': random.random() * 10}) for i in xrange(5)}
-    db.add_tokens(tokens)
+    tokens = { 'token_' + str(i): {'input': {'a': random.random() * 10}, 'command': 'scripts/example_script.py'} for i in xrange(5, 10) }
+    is_added = db.add_tokens(tokens)
+    if any(is_added.values()):
+        for _id in is_added:
+            if not is_added[_id]:
+                print "ERROR:", _id, "failed to be updated, it was already in the database"
+    else:
+        print "ERROR: all tokens were already in the database"
 
 if __name__ == '__main__':
-    config = util.Config('config.ini')
-    #Create a connection to the server
-    db = CouchDB(config.section('CouchDB'))
-    #Load the tokens to the database
-    loadTokens(db)
+    # try:
+        config = util.Config()
+        #Create a connection to the server
+        db = CouchDB(config.section('CouchDB'))
+        #Load the tokens to the database
+        loadTokens(db)
+    # except Exception as ex:
+    #     print "configuration file is not valid: ", ex

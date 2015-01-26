@@ -13,7 +13,7 @@ description: create the following Views in [picas_db_name]:
 '''
 from couchdb.design import ViewDefinition
 from simcity_client import util
-from simcity_client.couchdb import CouchDB
+from simcity_client.database import CouchDB
 import pystache
 
 def createViews(db):
@@ -48,7 +48,7 @@ function (key, values, rereduce) {
         'locked': 'doc.lock > 0  && doc.done == 0',
         'done':   'doc.lock > 0  && doc.done > 0'
     }
-    pystache_views = {'views': [{'name': view, 'condition': condition} for view, condition in enumerate(views)]}
+    pystache_views = {'views': [{'name': view, 'condition': condition} for view, condition in views.iteritems()]}
 
     for view in pystache_views['views']:
         mapCode = pystache.render(generalMapTemplate, view)
@@ -59,8 +59,11 @@ function (key, values, rereduce) {
     db.add_view(ViewDefinition('Monitor', 'overview_total', overviewMapCode, overviewReduceCode))
 
 if __name__ == '__main__':
-    config = util.Config('config.ini')
-    #Create a connection to the server
-    db = CouchDB(config.section('CouchDB'))
-    #Create the Views in database
-    createViews(db)
+    try:
+        config = util.Config('config.ini')
+        #Create a connection to the server
+        db = CouchDB(config.section('CouchDB'))
+        #Create the Views in database
+        createViews(db)
+    except Exception as ex:
+        print "configuration file is not valid: ", ex
