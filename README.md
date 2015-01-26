@@ -13,31 +13,45 @@ Then before every run, include the simcity virtualenv:
 
 ## Dependencies
 
-Install Python CouchDB and picasclient:
+Install Python picasclient:
 
 	git clone https://github.com/blootsvoets/picasclient.git picas
     cd picas
     git checkout setup
     pip install .
-    cd ..
-	pip install .
+
+## Installation
+
+Simply run
+
+    make install
+
+Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. Set the correct values for the CouchDB database and executable settings.
 
 ## Usage
 
 **Load tokens** to your database: 
 
-	$ python createTokens.py [picas_db_name] [picas_username] [picas_pwd]
+	$ python scripts/createTokens.py
 
 Refresh the database to see the tokens
 
 **Create basic views** (todo, locked, done, overview):
 
-	$ python createViews.py [picas_db_name] [picas_username] [picas_pwd]
+	$ python scripts/createViews.py
 
 Refresh the database to see the views. Unfold top right tab 'View:All documents' to inspect each view.
 
 **Run a simple example** that calculates the square of a set of tokens:
    
-	$ python runExample.py [picas_db_name] [picas_username] [picas_pwd]
+	$ python scripts/runExample.py
    
 This will run the example in your local machine. To submit the same on a cluster, you need to add the 'python runExample.py' command for example in a shell script and submit this with qsub.
+
+## Making an update
+
+To commit a change git, first run
+
+    make test
+
+and then commit, to make sure the change didn't break any code.
