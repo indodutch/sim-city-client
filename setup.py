@@ -9,5 +9,5 @@ setup(name='simcity_client',
       author_email='j.borgdorff@esciencecenter.nl',
       url='https://esciencecenter.nl/projects/sim-city/',
       packages=['simcity_client'],
-      install_requires=['picas', 'couchdb']
+      install_requires=['picas', 'couchdb', 'pystache']
      )
