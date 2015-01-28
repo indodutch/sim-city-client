@@ -22,7 +22,7 @@ class CouchDB(object):
     """Client class to handle communication with the CouchDB back-end.
     """
     def __init__(self, url="http://localhost:5984", db="test",
-            username="", password=""):
+            username="", password="", design_document="Monitor"):
         """Create a CouchClient object. 
         :param url: the location where the CouchDB instance is located, 
         including the port at which it's listening. Default: http://localhost:5984
@@ -34,19 +34,20 @@ class CouchDB(object):
         else:
             self.db = couchdb.Database(url + "/" + db)
             self.db.resource.credentials = (username, password)
+        
+        self.design_doc = design_document
     
     def __getitem__(self, idx):
         return self.db[idx]
     
-    def get_all_tokens(self, design_doc, view, **view_params):
+    def get_all_tokens(self, view, **view_params):
         """
         Get tokens from the specified view with token _id as key.
-        :param design_doc: design document of the view
         :param view: name of the view, having the token _id as keys
         :param view_params: name of the view optional extra parameters for the view.
         :return: a list of Token objects in the view
         """
-        view = self.view(design_doc, view, **view_params)
+        view = self.view(view, **view_params)
         return [self.get_token(row['key']) for row in view.rows]
     
     def get_token(self, id):
@@ -57,36 +58,36 @@ class CouchDB(object):
         """
         return Token(self.db[id])
     
-    def get_single_token(self, design_doc, view, window_size=1, **view_params):
+    def get_single_token(self, view, window_size=1, **view_params):
         """Get a token from the specified view.
         :param view: the view to get the token from.
         :param view_params: the parameters that should be added to the view
         request. Optional.
         :return: a CouchDB token.
         """
-        view = self.view(design_doc, view, limit=window_size, **view_params)
+        view = self.view(view, limit=window_size, **view_params)
         row = random.choice(view.rows)
         return self.get_token(row['key'])
     
-    def view(self, design_doc, view, **view_params):
+    def view(self, view, **view_params):
         """
         Get the data from a view
         
-        :param design_doc: name of the design document
         :param view: name of the view
+        :param view_params: the parameters that should be added to the view
+        request. Optional.
         :return: iterator over the view; the rows property contains the rows.
         """
-        return self.db.view(design_doc + '/' + view, **view_params)
+        return self.db.view(self.design_doc + '/' + view, **view_params)
     
-    def token_iterator(self, design_doc, view):
+    def token_iterator(self, view):
         """ Iterate over all tokens in a view.
         
         Gets one token at a time
-        :param design_doc: name of the design document
         :param view: name of the view
         :return: iterator returning Token objects
         """
-        return TokenViewIterator(self, design_doc, view)
+        return TokenViewIterator(self, view)
     
     def save(self, doc):
         """ Save a Document to the database.
@@ -119,15 +120,14 @@ class CouchDB(object):
         
         return result
 
-    def add_view(self, design_doc, view, map_fun, reduce_fun=None, *args, **kwargs):
+    def add_view(self, view, map_fun, reduce_fun=None, *args, **kwargs):
         """ Add a view to the database
         All extra parameters are passed to couchdb.design.ViewDefinition
-        :param design_doc: name of the design document
         :param view: name of the view
         :param map_fun: string of the javascript map function
         :param reduce_fun: string of the javascript reduce function (optional)
         """
-        definition = ViewDefinition('Monitor', view, map_fun, reduce_fun, *args, **kwargs)
+        definition = ViewDefinition(self.design_doc, view, map_fun, reduce_fun, *args, **kwargs)
         definition.sync(self.db)
 
     def delete_tokens(self, tokens):
@@ -152,23 +152,21 @@ class CouchDB(object):
 
         return result
 
-    def delete_tokens_from_view(self, design_doc, view):
+    def delete_tokens_from_view(self, view):
         """
         Delete all tokens in a view
         
-        :param design_doc: name of the design document
         :param view: name of the view
         :return: array of booleans indicating whether the respective tokens were deleted
         """
-        tokens = self.get_all_tokens(design_doc, view)
+        tokens = self.get_all_tokens(view)
         return self.delete_tokens(tokens)
 
 class ViewIterator(object):
     """Dummy class to show what to implement for a PICaS iterator.
     """
-    def __init__(self, design_doc, view, **view_params):
+    def __init__(self, view, **view_params):
         self._stop = False
-        self.design_doc = design_doc
         self.view = view
         self.view_params = view_params
     
@@ -176,7 +174,7 @@ class ViewIterator(object):
         return "<ViewIterator object>"
     
     def __str__(self):
-        return "<view: " + self.design_doc + "/" + self.view + ">"
+        return "<view: " + self.view + ">"
     
     def __iter__(self):
         """Python needs this."""
@@ -203,7 +201,7 @@ class ViewIterator(object):
 class TokenViewIterator(ViewIterator):
     """Iterator object to fetch tokens while available.
     """
-    def __init__(self, client, design_doc, view, **view_params):
+    def __init__(self, client, view, **view_params):
         """
         @param client: CouchClient for handling the connection to the CouchDB
         server.
@@ -212,13 +210,13 @@ class TokenViewIterator(ViewIterator):
         @param view_params: parameters which need to be passed on to the view
         (optional).
         """
-        super(TokenViewIterator, self).__init__(design_doc, view, **view_params)
+        super(TokenViewIterator, self).__init__(view, **view_params)
         self.client = client
     
     def claim_token(self, allowed_failures=10):
         for _ in xrange(allowed_failures):
             try:
-                token = self.client.get_single_token(self.design_doc, self.view, window_size=100, **self.view_params)
+                token = self.client.get_single_token(self.view, window_size=100, **self.view_params)
                 token.lock()
                 return self.client.save(token)
             except ResourceConflict:
