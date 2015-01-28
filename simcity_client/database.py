@@ -10,7 +10,6 @@ import couchdb
 from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
 import numpy as np
-from picas.iterators import ViewIterator
         
 class CouchDB(object):
     """Client class to handle communication with the CouchDB back-end.
@@ -110,6 +109,43 @@ class CouchDB(object):
     def delete_tokens_from_view(self, design_doc, view):
         tokens = self.get_all_tokens(design_doc, view)
         return self.delete_tokens(tokens)
+
+class ViewIterator(object):
+    """Dummy class to show what to implement for a PICaS iterator.
+    """
+    def __init__(self, design_doc, view, **view_params):
+        self._stop = False
+        self.design_doc = design_doc
+        self.view = view
+        self.view_params = view_params
+    
+    def __repr__(self):
+        return "<ViewIterator object>"
+    
+    def __str__(self):
+        return "<view: " + self.design_doc + "/" + self.view + ">"
+    
+    def __iter__(self):
+        """Python needs this."""
+        return self
+    
+    def next(self):
+        if self._stop:
+            raise StopIteration
+        
+        try:
+            return self.claim_token()
+        except IndexError:
+            self._stop = True
+            raise StopIteration
+    
+    def claim_token(self, allowed_failures=10):
+        """
+        Get the first available token from a view.
+        @param allowed_failures: the number of times a lock failure may
+        occur before giving up. Default=10.
+        """
+        raise NotImplementedError("claim_token function not implemented.")
 
 class TokenViewIterator(ViewIterator):
     """Iterator object to fetch tokens while available.
