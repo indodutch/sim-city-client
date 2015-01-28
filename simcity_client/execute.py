@@ -3,8 +3,6 @@ from simcity_client.util import listfiles, write_json, Timer
 from subprocess import call
 import sys
 
-#picas imports
-
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
     """
