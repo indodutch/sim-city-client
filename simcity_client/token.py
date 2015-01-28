@@ -1,10 +1,6 @@
 import socket
-import time
-from simcity_client.util import merge_dicts
+from simcity_client.util import merge_dicts, seconds
 import traceback
-
-def _t():
-    return int( time.time() )
     
 class Document(object):
     def __init__(self, data):
@@ -18,7 +14,10 @@ class Document(object):
     
     @property
     def id(self):
-        return self.doc['_id']
+        try:
+            return self.doc['_id']
+        except KeyError:
+            raise KeyError("_id for document is not set")
         
     @property
     def value(self):
@@ -55,7 +54,7 @@ class Token(Document):
         """Function which modifies the token such that it is locked.
         """
         self.doc['hostname'] = socket.gethostname()
-        self.doc['lock']     = _t()
+        self.doc['lock']     = seconds()
     
     def unlock(self):
         """Reset the token to its unlocked state.
@@ -67,7 +66,7 @@ class Token(Document):
         """Function which modifies the token such that it is closed for ever
         to the view that has supplied it.
         """
-        self.doc['done'] = _t()
+        self.doc['done'] = seconds()
     
     def unmark_done(self):
         """Reset the token to be fetched again.
@@ -107,7 +106,7 @@ class Token(Document):
         self.unmark_done()
     
     def error(self, msg = None, exception=None):
-        error = {'time': _t()}
+        error = {'time': seconds()}
         if msg is not None:
             error['message'] = str(msg)
 

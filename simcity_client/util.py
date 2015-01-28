@@ -40,6 +40,9 @@ def merge_dicts(dict1, dict2):
     merge.update(dict2)
     return merge
 
+def seconds():
+    return int( time.time() )
+
 class Timer(object):
     def __init__(self):
         self.t = time.time()
