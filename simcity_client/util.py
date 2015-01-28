@@ -1,37 +1,39 @@
 from ConfigParser import ConfigParser
 import json
-from os import listdir
-from os.path import isfile, join, expanduser
+import os
 import time
 
 class Config(object):
-    def __init__(self, filename=None):
-        if filename is None:
-            self.filename = existing_path_from_list(["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]])
-        else:
-            self.filename = filename
+    def __init__(self, filenames=["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]]):
+        exp_filenames = expandfilenames(filenames)
 
         self.parser = ConfigParser()
-        self.parser.read(self.filename)
+        self.filename = self.parser.read(exp_filenames)
+        if len(self.filename) == 0:
+            raise ValueError("No valid configuration files could be found: tried " + str(exp_filenames))
     
     def section(self, name):
         return dict(self.parser.items(name))
 
-def existing_path_from_list(fnames):
-    for fname in fnames:
-        if type(fname) is list:
-            fname = join(*fname)    
-        fname = expanduser(fname)
-        if isfile(fname):
-            return fname
-    return None
+def expandfilenames(filenames):
+    if type(filenames) is not list:
+        filenames = [filenames]
+
+    result = []
+    for filename in filenames:
+        if type(filename) is list:
+            filename = os.path.join(*filename)    
+        filename = os.path.expanduser(filename)
+        result.append(filename)
+
+    return result
 
 def write_json(fname, obj):
     with open(fname, 'w') as outfile:
         json.dump(obj, outfile)
         
 def listfiles(mypath):
-    return [ f for f in listdir(mypath) if isfile(join(mypath,f)) ]
+    return [ f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath,f)) ]
     
 def merge_dicts(dict1, dict2):
     merge = dict1.copy()

@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import unittest
-from simcity_client.util import Config, existing_path_from_list, merge_dicts
+from simcity_client.util import Config, expandfilenames, merge_dicts
 import os, tempfile
 import ConfigParser
 
@@ -35,21 +35,12 @@ class TestConfig(unittest.TestCase):
 
 class TestExistingPath(unittest.TestCase):
     def testPaths(self):
-        fd, fname = tempfile.mkstemp()
-        os.close(fd)
-        fd2, f2name = tempfile.mkstemp()
-        os.close(fd2)
-        self.assertEqual(existing_path_from_list([fname, f2name]), fname)
-        os.remove(fname)
-        self.assertEqual(existing_path_from_list([fname, f2name]), f2name)
-
-        # Absolute file name, split
-        f2split = f2name.split('/')[1:]
-        f2split[0] = '/' + f2split[0]
+        value = expandfilenames(['config.ini', ['~', 'home'], ['..', 'config.ini']])
+        expected =  ['config.ini', os.path.expanduser('~/home'), '../config.ini']
+        self.assertEqual(value, expected)
         
-        self.assertEqual(existing_path_from_list([fname, f2split]), f2name)
-        os.remove(f2name)
-        self.assertIsNone(existing_path_from_list([fname, f2name]))
+        self.assertEqual(expandfilenames('config.ini'), ['config.ini'])
+        self.assertEqual(expandfilenames([]), [])
 
 class TestMerge(unittest.TestCase):
     def setUp(self):
