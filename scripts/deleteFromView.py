@@ -8,8 +8,13 @@ usage: python createTokens.py [picas_db_name] [picas_username] [picas_pwd]
 description: create 5 tokens with basic fields and a random number for the input field
 '''
 import simcity_client
+import argparse
 
 if __name__ == '__main__':
-    config, db = simcity_client.init_couchdb()
+    parser = argparse.ArgumentParser(description="Remove all tokens in a view")
+    parser.add_argument('view', choices=['todo', 'done', 'locked'], help="View to remove tokens from")
+    args = parser.parse_args()
     
-    print db.delete_from_view('Monitor', 'done')
+    _, db = simcity_client.init()
+
+    print db.delete_tokens_from_view('Monitor', args.view)

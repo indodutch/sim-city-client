@@ -9,19 +9,31 @@ description: create 5 tokens with basic fields and a random number for the input
 '''
 import random
 import simcity_client
+import sys
+from simcity_client.token import Token
 
-def loadTokens(db):
-    tokens = { 'token_' + str(i): {'input': {'a': random.random() * 10}, 'command': 'scripts/example_script.py'} for i in xrange(5, 10) }
-    is_added = db.add_tokens(tokens)
-    if any(is_added.values()):
-        for _id in is_added:
-            if not is_added[_id]:
-                print "ERROR:", _id, "failed to be updated, it was already in the database"
+def createToken(i):
+    return Token( {
+        '_id': 'token_' + str(i),
+        'input': {'a': random.random() * 10},
+        'command': 'scripts/example_script.py'
+    })
+
+def loadTokens(db, start, stop):
+    tokens = [createToken(i) for i in xrange(start, stop)]
+    is_added = db.save_tokens(tokens)
+
+    if any(is_added):
+        for i in xrange(len(tokens)):
+            if not is_added[i]:
+                print "ERROR: token", tokens[i].id, "failed to be added"
     else:
         print "ERROR: all tokens were already in the database"
 
 if __name__ == '__main__':
-    config, db = simcity_client.init_couchdb()
+    start = int(sys.argv[1])
+    stop = int(sys.argv[2])
+    _, db = simcity_client.init()
 
     #Load the tokens to the database
-    loadTokens(db)
+    loadTokens(db, start, stop)

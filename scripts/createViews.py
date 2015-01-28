@@ -11,18 +11,22 @@ description: create the following Views in [picas_db_name]:
     done View : lock_timestamp > 0 && done _timestamp > 0    
     overview_total View : sum tokens per View (Map/Reduce)  
 '''
-from couchdb.design import ViewDefinition
 import pystache
 import simcity_client
 
 def createViews(db):
     generalMapTemplate = '''
 function(doc) {
-  if(doc.type == "token") {
-    if({{condition}}) {
-      emit(doc._id, doc._id);
-    }
+  if(doc.type == "token" && {{condition}}) {
+    emit(doc._id, { 'lock': doc.lock, 'done': doc.done });
   }
+}
+    '''
+    erroneousMapCode = '''
+function(doc) {
+    if (doc.type == "token" && doc.done == -1) {
+        emit(doc._id, doc.error)
+    }
 }
     '''
     overviewMapTemplate='''
@@ -48,17 +52,20 @@ function (key, values, rereduce) {
         'done':   'doc.lock > 0  && doc.done > 0'
     }
     pystache_views = {'views': [{'name': view, 'condition': condition} for view, condition in views.iteritems()]}
+    renderer = pystache.renderer.Renderer(escape=lambda u: u)
 
     for view in pystache_views['views']:
-        mapCode = pystache.render(generalMapTemplate, view)
-        db.add_view(ViewDefinition('Monitor', view['name'], mapCode))
+        mapCode = renderer.render(generalMapTemplate, view)
+        db.add_view('Monitor', view['name'], mapCode)
+    
+    db.add_view('Monitor', 'error', erroneousMapCode)
     
     # overview_total View -- lists all views and the number of tokens in each view
-    overviewMapCode = pystache.render(overviewMapTemplate, pystache_views)
-    db.add_view(ViewDefinition('Monitor', 'overview_total', overviewMapCode, overviewReduceCode))
+    overviewMapCode = renderer.render(overviewMapTemplate, pystache_views)
+    db.add_view('Monitor', 'overview_total', overviewMapCode, overviewReduceCode)
 
 if __name__ == '__main__':
-    config, db = simcity_client.init_couchdb()
+    _, db = simcity_client.init()
 
     #Create the Views in database
     createViews(db)

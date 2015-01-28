@@ -2,6 +2,7 @@ from ConfigParser import ConfigParser
 import json
 from os import listdir
 from os.path import isfile, join, expanduser
+import time
 
 class Config(object):
     def __init__(self, filename=None):
@@ -36,3 +37,17 @@ def merge_dicts(dict1, dict2):
     merge = dict1.copy()
     merge.update(dict2)
     return merge
+
+class Timer(object):
+    def __init__(self):
+        self.t = time.time()
+    
+    @property
+    def elapsed(self):
+        return time.time() - self.t
+    
+    def reset(self):
+        new_t = time.time()
+        diff = new_t - self.t
+        self.t = new_t
+        return diff
