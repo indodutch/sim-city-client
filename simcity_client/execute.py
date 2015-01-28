@@ -6,11 +6,11 @@ import sys
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
     """
-    def __init__(self, client):
+    def __init__(self, database):
         """
         @param iterator: the view iterator to get the tokens from.
         """
-        self.client = client
+        self.database = database
     
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
@@ -18,7 +18,7 @@ class RunActor(object):
         """
         time = Timer()
         self.prepare_env()
-        for token in self.client.token_iterator('Monitor', 'todo'):
+        for token in self.database.token_iterator('Monitor', 'todo'):
             self.prepare_run()
             
             try:
@@ -28,7 +28,7 @@ class RunActor(object):
                 token.error(msg, exception=ex)
                 print msg
             
-            self.client.save(token)
+            self.database.save(token)
             self.cleanup_run()
             
             if maxtime > 0 and time.elapsed() > maxtime:
@@ -70,14 +70,11 @@ class RunActor(object):
         pass
 
 class ExecuteActor(RunActor):
-    def __init__(self, client, config):
-        super(ExecuteActor, self).__init__(client)
-         # Create iterator, point to the right todo view
+    def __init__(self, database, config):
+        super(ExecuteActor, self).__init__(database)
         self.config = config.section('Execution')
     
-    # Overwrite this method to process your work
     def process_token(self, token):
-        # Print token information
         print "-----------------------"
         print "Working on token: " + token.id
 
