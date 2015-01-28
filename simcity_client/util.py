@@ -4,7 +4,7 @@ import os
 import time
 
 class Config(object):
-    def __init__(self, filenames=["config.ini", ["..", "config.ini"], ["~", ".simcity_client"]]):
+    def __init__(self, filenames=["config.ini", ("..", "config.ini"), ("~", ".simcity_client")]):
         exp_filenames = expandfilenames(filenames)
 
         self.parser = ConfigParser()
@@ -15,18 +15,18 @@ class Config(object):
     def section(self, name):
         return dict(self.parser.items(name))
 
+def issequence(obj):
+    return isinstance(obj, (list, tuple))
+    
+def expandfilename(filename):
+    if issequence(filename):
+        filename = os.path.join(*filename)    
+    return os.path.expanduser(filename)
+
 def expandfilenames(filenames):
-    if type(filenames) is not list:
+    if not issequence(filenames):
         filenames = [filenames]
-
-    result = []
-    for filename in filenames:
-        if type(filename) is list:
-            filename = os.path.join(*filename)    
-        filename = os.path.expanduser(filename)
-        result.append(filename)
-
-    return result
+    return [expandfilename(fname) for fname in filenames]
 
 def write_json(fname, obj):
     with open(fname, 'w') as outfile:

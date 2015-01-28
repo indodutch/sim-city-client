@@ -35,7 +35,7 @@ class TestConfig(unittest.TestCase):
 
 class TestExistingPath(unittest.TestCase):
     def testPaths(self):
-        value = expandfilenames(['config.ini', ['~', 'home'], ['..', 'config.ini']])
+        value = expandfilenames(['config.ini', ['~', 'home'], ('..', 'config.ini')])
         expected =  ['config.ini', os.path.expanduser('~/home'), '../config.ini']
         self.assertEqual(value, expected)
         
