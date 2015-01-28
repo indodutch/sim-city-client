@@ -12,3 +12,4 @@ if __name__ == '__main__':
     # Start work!
     print "Connected to the database %s sucessfully. Now starting work..." %(config.section('CouchDB')['database'])
     actor.run()
+    print "No more tokens to process, done."

@@ -9,6 +9,7 @@ description: create 5 tokens with basic fields and a random number for the input
 '''
 import simcity_client
 import argparse
+import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Remove all tokens in a view")
@@ -17,4 +18,5 @@ if __name__ == '__main__':
     
     _, db = simcity_client.init()
 
-    print db.delete_tokens_from_view('Monitor', args.view)
+    is_deleted = db.delete_tokens_from_view('Monitor', args.view)
+    print "Deleted", np.sum(is_deleted), "out of", len(is_deleted), "tokens from view", args.view

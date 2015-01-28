@@ -23,7 +23,9 @@ def loadTokens(db, start, stop):
     tokens = [createToken(i) for i in xrange(start, stop)]
     is_added = db.save_tokens(tokens)
 
-    if any(is_added):
+    if all(is_added):
+        print "Added", stop - start, "tokens"
+    elif any(is_added):
         for i in xrange(len(tokens)):
             if not is_added[i]:
                 print "ERROR: token", tokens[i].id, "failed to be added"
