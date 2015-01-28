@@ -1,11 +1,10 @@
 from __future__ import print_function
 
 import unittest
-from simcity_client.util import Config, expandfilenames, merge_dicts
+from simcity_client.util import Config, expandfilenames, merge_dicts, issequence, expandfilename, Timer
 import os, tempfile
 import ConfigParser
-
-#from numpy.testing import assert_array_equal, assert_array_almost_equal
+import time
 
 class TestConfig(unittest.TestCase):
     def testWriteRead(self):
@@ -34,13 +33,28 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(other['c'], 'wefa=feaf', "equals-sign allowed")
 
 class TestExistingPath(unittest.TestCase):
+    def testSeq(self):
+        self.assertTrue(issequence(()))
+        self.assertTrue(issequence(("a", "b")))
+        self.assertTrue(issequence([]))
+        self.assertTrue(issequence(["a"]))
+        self.assertFalse(issequence(""))
+        self.assertFalse(issequence("a"))
+        self.assertFalse(issequence(1))
+        self.assertFalse(issequence({}))
+        self.assertFalse(issequence(set()))
+    
     def testPaths(self):
         value = expandfilenames(['config.ini', ['~', 'home'], ('..', 'config.ini')])
-        expected =  ['config.ini', os.path.expanduser('~/home'), '../config.ini']
+        expected = ['config.ini', os.path.expanduser('~/home'), '../config.ini']
         self.assertEqual(value, expected)
         
         self.assertEqual(expandfilenames('config.ini'), ['config.ini'])
         self.assertEqual(expandfilenames([]), [])
+
+    def testPath(self):
+        self.assertEqual(expandfilename('config.ini'), 'config.ini')
+        self.assertEqual(expandfilename(['~', 'home']), os.path.expanduser('~/home'))
 
 class TestMerge(unittest.TestCase):
     def setUp(self):
@@ -68,3 +82,12 @@ class TestMerge(unittest.TestCase):
     
     def testEmptyEmptyMerge(self):
         self.assertDictEqual(merge_dicts({}, {}), {})
+        
+class TestTimer(unittest.TestCase):
+    def testTimer(self):
+        timer = Timer()
+        time.sleep(0.2)
+        self.assertGreaterEqual(timer.elapsed, 0.2)
+        self.assertLess(timer.elapsed, 0.4)
+        timer.reset()
+        self.assertLess(timer.elapsed, 0.2)
