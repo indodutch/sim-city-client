@@ -21,7 +21,7 @@ def issequence(obj):
 def expandfilename(filename):
     if issequence(filename):
         filename = os.path.join(*filename)    
-    return os.path.expanduser(filename)
+    return os.path.expandvars(os.path.expanduser(filename))
 
 def expandfilenames(filenames):
     if not issequence(filenames):

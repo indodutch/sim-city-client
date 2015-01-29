@@ -1,5 +1,5 @@
 import os
-from simcity_client.util import listfiles, write_json, Timer
+from simcity_client.util import listfiles, write_json, Timer, expandfilename
 from subprocess import call
 import sys
 
@@ -84,7 +84,7 @@ class ExecuteActor(RunActor):
         
         token['execute_properties'] = {'dirs': dirs, 'input_file': params_file}
         
-        command = [token['command'], dirs['tmp'], dirs['input'], dirs['output']]
+        command = [expandfilename(token['command']), dirs['tmp'], dirs['input'], dirs['output']]
         stdout = os.path.join(dirs['output'], 'stdout')
         stderr = os.path.join(dirs['output'], 'stderr')
         try:
@@ -110,7 +110,7 @@ class ExecuteActor(RunActor):
         
         dirs = {}
         for d, conf in dir_map.iteritems():
-            superdir = os.path.expandvars(self.config[conf])
+            superdir = expandfilename(self.config[conf])
             if not os.path.exists(superdir):
                 os.mkdir(superdir)
             
