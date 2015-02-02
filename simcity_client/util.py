@@ -46,7 +46,7 @@ def seconds():
     return int( time.time() )
 
 def copyglob(srcglob, dstdir):
-    if not os.isdir(dstdir):
+    if not os.path.isdir(dstdir):
         raise ValueError("Destination of copyglob must be a directory")
     
     for src in glob.glob(expandfilename(srcglob)):
