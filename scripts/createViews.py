@@ -34,7 +34,7 @@ function(doc) {
   if(doc.type == "token") {
   {{#views}}
     if ({{condition}}) {
-      emit({{name}}, 1);
+      emit("{{name}}", 1);
     }
   {{/views}}
   }
