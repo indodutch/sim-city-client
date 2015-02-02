@@ -2,7 +2,6 @@ import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
 from subprocess import call
 import sys
-import base64
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
@@ -97,16 +96,18 @@ class ExecuteActor(RunActor):
         except Exception as ex:
             token.error("Command raised exception", ex)
         
-        out_files = listfiles(dirs['output'])
         token.output = {}
+
+        # create readable standard err/out
+        with open(stdout) as fout, open(stderr) as ferr:
+            token.output['stdout'] = fout.read()
+            token.output['stderr'] = ferr.read()
+        
+        # Read all files in as base
+        out_files = listfiles(dirs['output'])
         for filename in out_files:
             with open(os.path.join(dirs['output'], filename), 'r') as f:
-		data = f.read()
-                try:
-                    enc_data = data.encode('utf-8')
-                    token.output[filename] = {'encoding': 'ascii', 'data': enc_data}
-                except UnicodeDecodeError:
-                    token.output[filename] = {'encoding': 'base64', 'data': base64.b64encode(data)}
+                token.put_attachment(filename, f.read())
 
         token.mark_done()
         print "-----------------------"
