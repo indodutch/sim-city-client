@@ -32,6 +32,7 @@ if __name__ == '__main__':
     
     # Set up runtime directories
     copyglob((src, 'control', '*.ctl'), dirs['control'])
+    copyglob((src, 'control', '*.sh'), dirs['control'])
     copyglob((src, 'input', '*'), dirs['input'])
     
     # Run simulation
