@@ -2,6 +2,7 @@ import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
 from subprocess import call
 import sys
+import base64
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
@@ -100,7 +101,12 @@ class ExecuteActor(RunActor):
         token.output = {}
         for filename in out_files:
             with open(os.path.join(dirs['output'], filename), 'r') as f:
-                token.output[filename] = f.read()
+		data = f.read()
+                try:
+                    enc_data = data.encode('utf-8')
+                    token.output[filename] = {'encoding': 'ascii', 'data': enc_data}
+                except UnicodeDecodeError:
+                    token.output[filename] = {'encoding': 'base64', 'data': base64.b64encode(data)}
 
         token.mark_done()
         print "-----------------------"
