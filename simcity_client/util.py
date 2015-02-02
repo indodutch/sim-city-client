@@ -2,6 +2,8 @@ from ConfigParser import ConfigParser
 import json
 import os
 import time
+import glob
+import shutil
 
 class Config(object):
     def __init__(self, filenames=["config.ini", ("..", "config.ini"), ("~", ".simcity_client")]):
@@ -42,6 +44,13 @@ def merge_dicts(dict1, dict2):
 
 def seconds():
     return int( time.time() )
+
+def copyglob(srcglob, dstdir):
+    if not os.isdir(dstdir):
+        raise ValueError("Destination of copyglob must be a directory")
+    
+    for src in glob.glob(expandfilename(srcglob)):
+        shutil.copy(src, dstdir)
 
 class Timer(object):
     def __init__(self):
