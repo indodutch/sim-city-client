@@ -56,13 +56,13 @@ function (key, values, rereduce) {
 
     for view in pystache_views['views']:
         mapCode = renderer.render(generalMapTemplate, view)
-        db.add_view('Monitor', view['name'], mapCode)
+        db.add_view(view['name'], mapCode)
     
-    db.add_view('Monitor', 'error', erroneousMapCode)
+    db.add_view('error', erroneousMapCode)
     
     # overview_total View -- lists all views and the number of tokens in each view
     overviewMapCode = renderer.render(overviewMapTemplate, pystache_views)
-    db.add_view('Monitor', 'overview_total', overviewMapCode, overviewReduceCode)
+    db.add_view('overview_total', overviewMapCode, overviewReduceCode)
 
 if __name__ == '__main__':
     _, db = simcity_client.init()

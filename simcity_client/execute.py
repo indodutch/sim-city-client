@@ -18,7 +18,7 @@ class RunActor(object):
         """
         time = Timer()
         self.prepare_env()
-        for token in self.database.token_iterator('Monitor', 'todo'):
+        for token in self.database.token_iterator('todo'):
             self.prepare_run()
             
             try:

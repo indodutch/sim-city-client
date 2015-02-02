@@ -18,5 +18,5 @@ if __name__ == '__main__':
     
     _, db = simcity_client.init()
 
-    is_deleted = db.delete_tokens_from_view('Monitor', args.view)
+    is_deleted = db.delete_tokens_from_view(args.view)
     print "Deleted", np.sum(is_deleted), "out of", len(is_deleted), "tokens from view", args.view

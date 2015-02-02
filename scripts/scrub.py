@@ -16,7 +16,7 @@ if __name__ == '__main__':
     _, db = simcity_client.init()
 
     update = []
-    for row in db.view('Monitor', args.view):
+    for row in db.view(args.view):
         if arg_t <= 0 or row['value']['lock'] < min_t:
             token = db.get_token(row['key'])
             token.scrub()
