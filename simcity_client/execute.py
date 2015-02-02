@@ -97,13 +97,8 @@ class ExecuteActor(RunActor):
             token.error("Command raised exception", ex)
         
         token.output = {}
-
-        # create readable standard err/out
-        with open(stdout) as fout, open(stderr) as ferr:
-            token.output['stdout'] = fout.read()
-            token.output['stderr'] = ferr.read()
         
-        # Read all files in as base
+        # Read all files in as attachments
         out_files = listfiles(dirs['output'])
         for filename in out_files:
             with open(os.path.join(dirs['output'], filename), 'r') as f:
