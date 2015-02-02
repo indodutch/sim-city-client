@@ -26,6 +26,7 @@ if __name__ == '__main__':
     dirnames = ['control', 'input', 'output', 'ArcGis']
     dirs = {name: expandfilename([dst, name]) for name in dirnames}
 
+    os.mkdir(dst)
     for dstdir in dirs.values():
         os.mkdir(dstdir)
     
