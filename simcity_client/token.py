@@ -30,6 +30,27 @@ class Document(object):
         """
         self.doc.update(values)
     
+    def put_attachment(self, name, data, mimetype=None):
+        if '_attachments' not in self.doc:
+            self.doc['_attachments'] = {}
+        
+        if mimetype is None:
+            mimetype, encoding = mimetypes.guess_type(name)
+            if mimetype is None:
+                mimetype = 'text/plain'
+        
+        b64data = base64.b64encode(data)
+        self.doc['_attachments'][name] = {'content_type': mimetype, 'data': b64data}
+    
+    def get_attachment(self, name):
+        attachment = self.doc['_attachments'][name]
+        attachment['data'] = base64.b64decode(attachment['data'])
+        return attachment
+    
+    def remove_attachment(self, name):
+        del self.doc['_attachments'][name]
+
+
 _token_base = {
     'type': 'token',
     'lock': 0,
@@ -126,23 +147,4 @@ class Token(Document):
             return self.doc['error']
         except:
             return []
-            
-    def put_attachment(self, name, data, mimetype=None):
-        if '_attachments' not in self.doc:
-            self.doc['_attachments'] = {}
-        
-        if mimetype is None:
-            mimetype, encoding = mimetypes.guess_type(name)
-            if mimetype is None:
-                mimetype = 'text/plain'
-        
-        b64data = base64.b64encode(data)
-        self.doc['_attachments'][name] = {'content_type': mimetype, 'data': b64data}
-    
-    def get_attachment(self, name):
-        attachment = self.doc['_attachments'][name]
-        attachment['data'] = base64.b64decode(attachment['data'])
-        return attachment
-    
-    def remove_attachment(self, name):
-        del self.doc['_attachments'][name]
+
