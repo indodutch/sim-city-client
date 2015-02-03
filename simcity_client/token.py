@@ -5,7 +5,10 @@ import base64
 import mimetypes
 
 class Document(object):
-    def __init__(self, data):
+    def __init__(self, data, base = {}):
+        if '_rev' not in data:
+            data = merge_dicts(base, data)
+
         self.doc = data
     
     def __getitem__(self, idx):
@@ -49,40 +52,38 @@ class Document(object):
     
     def remove_attachment(self, name):
         del self.doc['_attachments'][name]
+        
+    def _update_hostname(self):
+        self.doc['hostname'] = socket.gethostname()
 
-
-_token_base = {
-    'type': 'token',
-    'lock': 0,
-    'done': 0,
-    'hostname': '',
-    'scrub_count': 0,
-    'input': {},
-    'output': {},
-    'error': []
-}
 
 class Token(Document):
+    __BASE = {
+        'type': 'token',
+        'lock': 0,
+        'done': 0,
+        'hostname': '',
+        'scrub_count': 0,
+        'input': {},
+        'output': {},
+        'error': []
+    }
+
     """Class to manage token modifications with.
     """
     def __init__(self, token):
-        global _token_base
-        
-        if '_rev' not in token:
-            token = merge_dicts(_token_base, token)
-
-        super(Token, self).__init__(token)
+        super(Token, self).__init__(token, Token.__BASE)
 
     def lock(self):
         """Function which modifies the token such that it is locked.
         """
-        self.doc['hostname'] = socket.gethostname()
+        self._update_hostname()
         self.doc['lock']     = seconds()
     
     def unlock(self):
         """Reset the token to its unlocked state.
         """
-        self.doc['hostname'] = socket.gethostname()
+        self._update_hostname()
         self.doc['lock']     = 0
     
     def mark_done(self):
@@ -148,3 +149,20 @@ class Token(Document):
         except:
             return []
 
+class Job(Document):
+    __BASE = {
+        'type': 'job',
+        'hostname': '',
+        'started': 0,
+        'done': 0
+    }
+    
+    def __init__(self, job):
+        super(Job, self).__init__(job, Job.__BASE)
+    
+    def start(self):
+        self._update_hostname()
+        self.doc['started'] = seconds()
+
+    def finish(self):
+        self.doc['done'] = seconds()
