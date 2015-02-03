@@ -18,7 +18,7 @@ class RunActor(object):
         """
         time = Timer()
         self.prepare_env()
-        for token in self.database.token_iterator('Monitor', 'todo'):
+        for token in self.database.token_iterator('todo'):
             self.prepare_run()
             
             try:
@@ -96,11 +96,13 @@ class ExecuteActor(RunActor):
         except Exception as ex:
             token.error("Command raised exception", ex)
         
-        out_files = listfiles(dirs['output'])
         token.output = {}
+        
+        # Read all files in as attachments
+        out_files = listfiles(dirs['output'])
         for filename in out_files:
             with open(os.path.join(dirs['output'], filename), 'r') as f:
-                token.output[filename] = f.read()
+                token.put_attachment(filename, f.read())
 
         token.mark_done()
         print "-----------------------"
