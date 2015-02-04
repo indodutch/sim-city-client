@@ -1,6 +1,9 @@
 import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
+from simcity_client.document import Job
 from subprocess import call
+from couchdb.http import ResourceConflict
+
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
@@ -12,13 +15,35 @@ class RunActor(object):
         """
         self.database = database
         self.job_id = job_id
+
+    def start_job(self):
+        try:
+            job = self.database.get_job(self.job_id)
+        except ValueError:
+            job = Job({'_id': self.job_id})
+
+        try:
+            return self.database.save(job.start())
+        # Check for concurrent modification: the job may be added to the
+        # database by the submission script.
+        # Since this happens only once, we don't risk unlimited recursion
+        except ResourceConflict:
+            return self.start_job()
+    
+    def finish_job(self, job):
+        try:
+            return self.database.save(job.finish())
+        # Check for concurrent modification: the job may be added to the
+        # database by the submission script after starting.
+        # Since this happens only once, we don't risk unlimited recursion
+        except ResourceConflict:
+            return self.finish_job(self.database.get_job(self.job_id))
     
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
         over the available tokens in CouchDB.
         """
-        job = self.database.get_job(self.job_id)
-        self.database.save(job.start())
+        job = self.start_job()
         
         time = Timer()
         self.prepare_env()
@@ -39,8 +64,8 @@ class RunActor(object):
                 break
         
         self.cleanup_env()
-
-        self.database.save(job.finish())
+        
+        self.finish_job(job)
         
     def prepare_env(self, *kargs, **kwargs):
         """Method to be called to prepare the environment to run the 

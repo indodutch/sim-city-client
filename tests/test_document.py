@@ -1,5 +1,5 @@
 import unittest
-from simcity_client.token import Document, Token
+from simcity_client.document import Document, Token
 from simcity_client.util import seconds
 
 class TestDocument(unittest.TestCase):

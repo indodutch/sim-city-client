@@ -8,7 +8,8 @@ Updated Wed Jan 28 17:12 2015
 @author: Jan Bot
 @author: Joris Borgdorff
 """
-from simcity_client.token import Token, Job
+from simcity_client.token import Token
+from simcity_client.job import Job
 import random
 import numpy as np
 
@@ -50,13 +51,23 @@ class CouchDB(object):
         view = self.view(view, **view_params)
         return [self.get_token(row['key']) for row in view.rows]
     
+    def get(self, id):
+        """
+        Get raw data associated to the given ID
+        :param id: _id string of the token
+        """
+        data = self.db.get(id)
+        if data is None:
+            raise ValueError(id + " is not a token ID in the database")
+        return data
+    
     def get_token(self, id):
         """
         Get the token associated to the given ID
         :param id: _id string of the token
         :return: Token object with given id
         """
-        return Token(self.db[id])
+        return Token(self.get(id))
 
     def get_job(self, id):
         """
@@ -64,7 +75,7 @@ class CouchDB(object):
         :param id: _id string of the token
         :return: Token object with given id
         """
-        return Job(self.db[id])
+        return Job(self.get(id))
     
     def get_single_token(self, view, window_size=1, **view_params):
         """Get a token from the specified view.

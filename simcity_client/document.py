@@ -58,7 +58,6 @@ class Document(object):
     def _update_hostname(self):
         self.doc['hostname'] = socket.gethostname()
 
-
 class Token(Document):
     __BASE = {
         'type': 'token',
@@ -157,13 +156,15 @@ class Token(Document):
         except:
             return []
 
+
 class Job(Document):
     __BASE = {
         'type': 'job',
         'hostname': '',
         'start': 0,
         'done': 0,
-        'queue': 0
+        'queue': 0,
+        'engine': ''
     }
     
     def __init__(self, job):
