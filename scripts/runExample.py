@@ -4,10 +4,19 @@ PiCaS client to run commands
 #python imports
 import simcity_client
 from simcity_client.execute import ExecuteActor
+import sys
 
 if __name__ == '__main__':
     simcity = simcity_client.init()
-    actor = ExecuteActor(simcity['database'], simcity['config'], simcity['job_id'])
+
+    if len(sys.argv) > 1:
+        job_id = sys.argv[1]
+    elif 'job_id' in sim_city:
+        job_id = simcity['job_id']
+    else:
+        raise EnvironmentError('Job ID not defined')
+        
+    actor = ExecuteActor(simcity['database'], simcity['config'], job_id)
 
     # Start work!
     print "Connected to the database %s sucessfully. Now starting work..." %(config.section('CouchDB')['database'])
