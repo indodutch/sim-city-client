@@ -60,4 +60,4 @@ class SSHSubmitter(Submitter):
             # get the first item of the last line
             return lines[-2].split('.')[0]
         except:
-            raise IOError("Cannot parse job ID. Last line: " + last)
+            raise IOError("Cannot parse job ID from " + lines)

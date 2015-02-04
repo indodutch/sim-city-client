@@ -13,7 +13,6 @@ import random
 import numpy as np
 
 # Couchdb imports
-import couchdb
 from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
 from couchdb.client import Server
