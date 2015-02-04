@@ -4,7 +4,6 @@ from simcity_client.document import Job
 from subprocess import call
 from couchdb.http import ResourceConflict
 
-
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
     """

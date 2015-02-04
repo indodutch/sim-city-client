@@ -114,8 +114,9 @@ class CouchDB(object):
         Updates the document to have the new _rev value.
         :param doc: Document object
         """
-        _, _rev = self.db.save(doc.value)
+        _id, _rev = self.db.save(doc.value)
         doc['_rev'] = _rev
+        doc['_id'] = _id
         return doc
     
     def save_tokens(self, tokens):
@@ -132,8 +133,9 @@ class CouchDB(object):
         
         result = np.zeros(len(tokens), dtype=np.bool)
         for i in xrange(len(tokens)):
-            is_added, _, _rev = updated[i]
+            is_added, _id, _rev = updated[i]
             if is_added:
+                tokens[i]['_id'] = _id
                 tokens[i]['_rev'] = _rev
                 result[i] = True
         

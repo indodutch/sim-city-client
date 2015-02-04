@@ -61,3 +61,7 @@ class TestToken(unittest.TestCase):
         self.assertEqual(self.token['lock'], 0)
         self.assertEqual(self.token['done'], 0)
         self.assertEqual(len(self.token['error']), 1)
+    
+    def testNoId(self):
+        t = Token()
+        self.assertGreater(len(t.id), 10)

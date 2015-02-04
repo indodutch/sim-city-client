@@ -3,9 +3,10 @@ from simcity_client.util import merge_dicts, seconds
 import traceback
 import base64
 import mimetypes
+from uuid import uuid4
 
 class Document(object):
-    def __init__(self, data, base = {}):
+    def __init__(self, data = {}, base = {}):
         if '_rev' not in data:
             data = merge_dicts(base, data)
 
@@ -72,8 +73,10 @@ class Token(Document):
 
     """Class to manage token modifications with.
     """
-    def __init__(self, token):
+    def __init__(self, token={}):
         super(Token, self).__init__(token, Token.__BASE)
+        if '_id' not in self.doc:
+            self.doc['_id'] = uuid4().hex
 
     def lock(self):
         """Function which modifies the token such that it is locked.
@@ -156,7 +159,6 @@ class Token(Document):
         except:
             return []
 
-
 class Job(Document):
     __BASE = {
         'type': 'job',
@@ -168,6 +170,9 @@ class Job(Document):
     }
     
     def __init__(self, job):
+        if '_id' not in job:
+            raise ValueError('Job ID must be set')
+        
         super(Job, self).__init__(job, Job.__BASE)
     
     def queue(self, host):
