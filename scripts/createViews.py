@@ -51,7 +51,7 @@ function(doc) {
   if (doc.type == "job") {
   {{#jobs}}
     if ({{condition}}) {
-      emit("{name}}", 1)
+      emit("{{name}}", 1)
     }
   {{/jobs}}
   }
