@@ -161,16 +161,22 @@ class Job(Document):
     __BASE = {
         'type': 'job',
         'hostname': '',
-        'started': 0,
-        'done': 0
+        'start': 0,
+        'done': 0,
+        'queue': 0
     }
     
     def __init__(self, job):
         super(Job, self).__init__(job, Job.__BASE)
     
+    def queue(self, host):
+        self.doc['hostname'] = host
+        self.doc['queue'] = seconds()
+        return self
+    
     def start(self):
         self._update_hostname()
-        self.doc['started'] = seconds()
+        self.doc['start'] = seconds()
         return self
 
     def finish(self):
