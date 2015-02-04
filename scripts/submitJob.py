@@ -19,16 +19,28 @@ if __name__ == '__main__':
 
     simcity = simcity_client.init()
     try:
-        simcity_client.add_token({'command': args.command}, simcity['database'])
+        token = simcity_client.add_token({'command': args.command}, simcity['database'])
+        print "token", token.id, "added to the database"
     except Exception as ex:
         print "Token could not be added to the database:", ex
         sys.exit(1)
 
     overview = simcity['database'].view('overview_total')
-    active_jobs = overview['active_jobs']['value']
-    todo = overview['todo']['value']
-    if active_jobs <= todo and active_jobs < 2:
+    
+    num = {}
+    for key in ['todo', 'locked', 'active_jobs', 'pending_jobs']:
         try:
-            simcity_client.submit_job(args.host, simcity['database'], simcity['config'])
-        except Exception as ex:
-            print "Pilot job framework could not be started:", ex
+            num[key] = list(overview[[key]])[0]['value']
+        except IndexError:
+            num[key] = 0
+
+    num_jobs = num['active_jobs'] + num['pending_jobs']
+    if num_jobs <= num['todo'] and num_jobs < 2:
+        print "Starting new job"
+        # try:
+        job = simcity_client.start_job(args.host, simcity['database'], simcity['config'])
+        print "Submitted job with id", job.id, "to", args.host
+        # except Exception as ex:
+        # print "Pilot job framework could not be started:", ex
+    else:
+        print "Let job be processed by existing pilot-job scripts"

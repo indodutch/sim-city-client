@@ -39,8 +39,8 @@ def start_job(hostname, database, config):
     else:
         raise ValueError('Host ' + hostname + ' not configured under ' + host + 'section')
     
-    submitter.submit([host_cfg['script']])
+    return submitter.submit([host_cfg['script']])
 
-def add_token(database, properties):
+def add_token(properties, database):
     t = Token(properties)
     return database.save(t)

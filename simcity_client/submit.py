@@ -55,11 +55,9 @@ class SSHSubmitter(Submitter):
     def _do_submit(self, command):
         command_str = 'cd ' + self.jobdir + '; qsub ' + ' '.join(command)
         process = subprocess.Popen(['ssh', self.host, command_str], stdout=subprocess.PIPE)
-        # get the last line
-        for line in process.communicate()[0]:
-            pass
-        last = line
+        lines = process.communicate()[0].split('\n')
         try:
-            return last.split('.')[0]
+            # get the first item of the last line
+            return lines[-2].split('.')[0]
         except:
             raise IOError("Cannot parse job ID. Last line: " + last)
