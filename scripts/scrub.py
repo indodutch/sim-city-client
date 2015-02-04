@@ -13,7 +13,7 @@ if __name__ == '__main__':
     arg_t = 60*((24*args.days) + args.hours) + args.seconds
     min_t = int( time.time() ) - arg_t
     
-    _, db = simcity_client.init()
+    db = simcity_client.init()['database']
 
     update = []
     for row in db.view(args.view):

@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--number', type=int, help="number of tokens to create", default=1)
     args = parser.parse_args() 
 
-    _, db = simcity_client.init()
+    db = simcity_client.init()['database']
 
     #Load the tokens to the database
-    loadTokens(db, args.command, args.start, args.start + args.number)
+    loadTokens(simcity['database'], args.command, args.start, args.start + args.number)

@@ -57,6 +57,14 @@ class CouchDB(object):
         :return: Token object with given id
         """
         return Token(self.db[id])
+
+    def get_job(self, id):
+        """
+        Get the token associated to the given ID
+        :param id: _id string of the token
+        :return: Token object with given id
+        """
+        return Job(self.db[id])
     
     def get_single_token(self, view, window_size=1, **view_params):
         """Get a token from the specified view.
@@ -217,8 +225,7 @@ class TokenViewIterator(ViewIterator):
         for _ in xrange(allowed_failures):
             try:
                 token = self.client.get_single_token(self.view, window_size=100, **self.view_params)
-                token.lock()
-                return self.client.save(token)
+                return self.client.save(token.lock())
             except ResourceConflict:
                 pass
 

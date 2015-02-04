@@ -16,7 +16,7 @@ if __name__ == '__main__':
     parser.add_argument('view', choices=['todo', 'done', 'locked'], help="View to remove tokens from")
     args = parser.parse_args()
     
-    _, db = simcity_client.init()
+    db = simcity_client.init()['database']
 
     is_deleted = db.delete_tokens_from_view(args.view)
     print "Deleted", np.sum(is_deleted), "out of", len(is_deleted), "tokens from view", args.view
