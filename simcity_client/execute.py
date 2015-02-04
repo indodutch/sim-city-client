@@ -1,21 +1,25 @@
 import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
 from subprocess import call
-import sys
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
     """
-    def __init__(self, database):
+    def __init__(self, database, job_id):
         """
-        @param iterator: the view iterator to get the tokens from.
+        @param database: the database to get the tokens from.
+        @param job_id: job id.
         """
         self.database = database
+        self.job_id = job_id
     
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
         over the available tokens in CouchDB.
         """
+        job = self.database.get_job(self.job_id)
+        self.database.save(job.start())
+        
         time = Timer()
         self.prepare_env()
         for token in self.database.token_iterator('todo'):
@@ -32,9 +36,11 @@ class RunActor(object):
             self.cleanup_run()
             
             if maxtime > 0 and time.elapsed() > maxtime:
-                    sys.exit(0)
+                break
         
         self.cleanup_env()
+
+        self.database.save(job.finish())
         
     def prepare_env(self, *kargs, **kwargs):
         """Method to be called to prepare the environment to run the 
@@ -70,8 +76,8 @@ class RunActor(object):
         pass
 
 class ExecuteActor(RunActor):
-    def __init__(self, database, config):
-        super(ExecuteActor, self).__init__(database)
+    def __init__(self, database, config, job_id):
+        super(ExecuteActor, self).__init__(database, job_id)
         self.config = config.section('Execution')
     
     def process_token(self, token):

@@ -15,7 +15,7 @@ import pystache
 import simcity_client
 
 def createViews(db):
-    generalMapTemplate = '''
+    tokenMapTemplate = '''
 function(doc) {
   if(doc.type == "token" && {{condition}}) {
     emit(doc._id, { 'lock': doc.lock, 'done': doc.done });
@@ -29,14 +29,31 @@ function(doc) {
     }
 }
     '''
+    jobMapTemplate = '''
+function(doc) {
+    if (doc.type == "job" && {{condition}}) {
+        emit(doc._id, { 'queue': doc.queue, 'start': doc.start, 'done': doc.done })
+    }
+}
+    '''
     overviewMapTemplate='''
 function(doc) {
   if(doc.type == "token") {
-  {{#views}}
+  {{#tokens}}
     if ({{condition}}) {
       emit("{{name}}", 1);
     }
-  {{/views}}
+  {{/tokens}}
+    if (doc.done == -1) {
+      emit("{{error}}", 1)
+    }
+  }
+  if (doc.type == "job") {
+  {{#jobs}}
+    if ({{condition}}) {
+      emit("{name}}", 1)
+    }
+  {{/jobs}}
   }
 }
     '''
@@ -46,16 +63,28 @@ function (key, values, rereduce) {
 }
     '''
     
-    views = {
-        'todo':   'doc.lock == 0 && doc.done == 0',
+    tokens = {
+        'todo':   'doc.lock == 0',
         'locked': 'doc.lock > 0  && doc.done == 0',
-        'done':   'doc.lock > 0  && doc.done > 0'
+        'done':   'doc.done > 0'
     }
-    pystache_views = {'views': [{'name': view, 'condition': condition} for view, condition in views.iteritems()]}
+    jobs = {
+        'pending_jobs':  'doc.start == 0',
+        'active_jobs':   'doc.start > 0 && doc.done == 0',
+        'finished_jobs': 'doc.done > 0'
+    }
+    pystache_views = {
+        'tokens': [{'name': view, 'condition': condition} for view, condition in tokens.items()],
+        'jobs': [{'name': view, 'condition': condition} for view, condition in jobs.items()]
+    }
     renderer = pystache.renderer.Renderer(escape=lambda u: u)
 
-    for view in pystache_views['views']:
-        mapCode = renderer.render(generalMapTemplate, view)
+    for view in pystache_views['tokens']:
+        mapCode = renderer.render(tokenMapTemplate, view)
+        db.add_view(view['name'], mapCode)
+
+    for view in pystache_views['jobs']:
+        mapCode = renderer.render(jobMapTemplate, view)
         db.add_view(view['name'], mapCode)
     
     db.add_view('error', erroneousMapCode)
@@ -65,7 +94,7 @@ function (key, values, rereduce) {
     db.add_view('overview_total', overviewMapCode, overviewReduceCode)
 
 if __name__ == '__main__':
-    _, db = simcity_client.init()
+    db = simcity_client.init()['database']
 
     #Create the Views in database
     createViews(db)
