@@ -41,4 +41,4 @@ if __name__ == '__main__':
     db = simcity_client.init()['database']
 
     #Load the tokens to the database
-    loadTokens(simcity['database'], args.command, args.start, args.start + args.number)
+    loadTokens(db, args.command, args.start, args.start + args.number)

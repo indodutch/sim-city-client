@@ -8,7 +8,7 @@ Updated Wed Jan 28 17:12 2015
 @author: Jan Bot
 @author: Joris Borgdorff
 """
-from simcity_client.token import Token
+from simcity_client.token import Token, Job
 import random
 import numpy as np
 

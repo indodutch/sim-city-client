@@ -1,7 +1,6 @@
 import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
 from subprocess import call
-import sys
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
@@ -18,7 +17,7 @@ class RunActor(object):
         """Run method of the actor, executes the application code by iterating
         over the available tokens in CouchDB.
         """
-        job = self.database.get_job(job_id)
+        job = self.database.get_job(self.job_id)
         self.database.save(job.start())
         
         time = Timer()

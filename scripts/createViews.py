@@ -74,7 +74,7 @@ function (key, values, rereduce) {
         'finished_jobs': 'doc.done > 0'
     }
     pystache_views = {
-        'tokens': [{'name': view, 'condition': condition} for view, condition in views.items()],
+        'tokens': [{'name': view, 'condition': condition} for view, condition in tokens.items()],
         'jobs': [{'name': view, 'condition': condition} for view, condition in jobs.items()]
     }
     renderer = pystache.renderer.Renderer(escape=lambda u: u)

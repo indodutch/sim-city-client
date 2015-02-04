@@ -19,6 +19,6 @@ def init():
                                         password=couch_cfg['password'])
         return result
     except NoSectionError:
-        raise ValueError("Configuration file " + config.filename + "does not contain CouchDB section")
+        raise ValueError("Configuration file " + result['config'].filename + "does not contain CouchDB section")
     except IOError as ex:
         raise IOError("Cannot establish connection with CouchDB: " + ex)
