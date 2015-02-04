@@ -8,8 +8,7 @@ Updated Wed Jan 28 17:12 2015
 @author: Jan Bot
 @author: Joris Borgdorff
 """
-from simcity_client.token import Token
-from simcity_client.job import Job
+from simcity_client.document import Token, Job
 import random
 import numpy as np
 
@@ -28,14 +27,11 @@ class CouchDB(object):
         :param url: the location where the CouchDB instance is located, 
         including the port at which it's listening. Default: http://localhost:5984
         :param db: the database to use. Default: test.
-        """
+        # """
         self.server = Server(url=url)
-        if username == "":            
-            self.db = self.server[db]
-        else:
-            self.db = couchdb.Database(url + "/" + db)
-            self.db.resource.credentials = (username, password)
-        
+        if username != "":
+            self.server.resource.credentials = (username, password)
+        self.db = self.server[db]
         self.design_doc = design_document
     
     def __getitem__(self, idx):
