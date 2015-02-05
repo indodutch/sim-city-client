@@ -9,7 +9,6 @@ description: create 5 tokens with basic fields and a random number for the input
 '''
 import simcity_client
 import argparse
-import sys
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="start a job")

@@ -1,4 +1,5 @@
 import simcity_client
+from simcity_client.document import Token
 import argparse
 import time
 
@@ -17,13 +18,12 @@ if __name__ == '__main__':
 
     update = []
     for row in db.view(args.view):
-        if arg_t <= 0 or row['value']['lock'] < min_t:
-            token = db.get_token(row['key'])
-            token.scrub()
-            update.append(token)
+        if arg_t <= 0 or row.value['lock'] < min_t:
+            token = Token(db.get(row.id))
+            update.append(token.scrub())
     
     if len(update) > 0:
-        db.save_tokens(update)
+        db.save_documents(update)
         print "Scrubbed", len(update), "token(s)"
     else:
         print "No scrubbing required"

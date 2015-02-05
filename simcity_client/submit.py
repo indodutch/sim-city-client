@@ -2,7 +2,7 @@ from simcity_client.util import merge_dicts
 import httplib
 from couchdb.http import ResourceConflict
 import subprocess
-from simcity_client.document import Job
+from simcity_client.job import Job
 
 class Submitter(object):
     def __init__(self, database, host, prefix, jobdir):
@@ -22,7 +22,7 @@ class Submitter(object):
         try:
             return self.database.save(job.queue(self.host))
         except ResourceConflict:
-            return self.queue_job(self.database.get_job(job.id))
+            return self.queue_job(Job(self.database.get(job.id)))
 
 class OsmiumSubmitter(Submitter):
     __BASE = {

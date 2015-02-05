@@ -7,6 +7,9 @@ from uuid import uuid4
 
 class Document(object):
     def __init__(self, data = {}, base = {}):
+        if isinstance(data, Document):
+            data = data.value
+        
         if '_rev' not in data:
             data = merge_dicts(base, data)
 
@@ -165,34 +168,3 @@ class Token(Document):
             return self.doc['error']
         except:
             return []
-
-class Job(Document):
-    __BASE = {
-        'type': 'job',
-        'hostname': '',
-        'start': 0,
-        'done': 0,
-        'queue': 0,
-        'engine': ''
-    }
-    
-    def __init__(self, job):
-        if '_id' not in job:
-            raise ValueError('Job ID must be set')
-        
-        super(Job, self).__init__(job, Job.__BASE)
-    
-    def queue(self, host = None):
-        if host is not None:
-            self.doc['hostname'] = host
-        self.doc['queue'] = seconds()
-        return self
-    
-    def start(self):
-        self._update_hostname()
-        self.doc['start'] = seconds()
-        return self
-
-    def finish(self):
-        self.doc['done'] = seconds()
-        return self
