@@ -44,7 +44,7 @@ class CouchDB(object):
         :return: a list of Token objects in the view
         """
         view = self.view(view, **view_params)
-        return [self.get_token(row['key']) for row in view.rows]
+        return [self.get_token(doc.key) for doc in view]
     
     def get(self, id):
         """
@@ -53,7 +53,7 @@ class CouchDB(object):
         """
         data = self.db.get(id)
         if data is None:
-            raise ValueError(id + " is not a token ID in the database")
+            raise ValueError(id + " is not a document ID in the database")
         return data
     
     def get_token(self, id):
@@ -81,7 +81,7 @@ class CouchDB(object):
         """
         view = self.view(view, limit=window_size, **view_params)
         row = random.choice(view.rows)
-        return self.get_token(row['key'])
+        return self.get_token(row.key)
     
     def view(self, view, **view_params):
         """
@@ -160,7 +160,7 @@ class CouchDB(object):
             try:
                 self.db.delete(token.value)
             except ResourceConflict as ex:
-                print "Could not delete token", token, "due to resource conflict:", ex
+                print "Could not delete token", token.id, " (rev", token.rev, ") due to resource conflict:", ex
                 result[i] = False
             except Exception as ex:
                 print "Could not delete token ", token, ':', ex
@@ -217,23 +217,23 @@ class ViewIterator(object):
 class TokenViewIterator(ViewIterator):
     """Iterator object to fetch tokens while available.
     """
-    def __init__(self, client, view, **view_params):
+    def __init__(self, database, view, **view_params):
         """
         @param client: CouchClient for handling the connection to the CouchDB
         server.
-        @param view: CouchDB view from which to fetch the token.
+        @param database: CouchDB view from which to fetch the token.
         @param token_modifier: instance of a TokenModifier.
         @param view_params: parameters which need to be passed on to the view
         (optional).
         """
         super(TokenViewIterator, self).__init__(view, **view_params)
-        self.client = client
+        self.database = database
     
     def claim_token(self, allowed_failures=10):
         for _ in xrange(allowed_failures):
             try:
-                token = self.client.get_single_token(self.view, window_size=100, **self.view_params)
-                return self.client.save(token.lock())
+                token = self.database.get_single_token(self.view, window_size=100, **self.view_params)
+                return self.database.save(token.lock())
             except ResourceConflict:
                 pass
 
