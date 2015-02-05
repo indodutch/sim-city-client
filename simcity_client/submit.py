@@ -5,14 +5,15 @@ import subprocess
 from simcity_client.document import Job
 
 class Submitter(object):
-    def __init__(self, database, host, jobdir):
+    def __init__(self, database, host, prefix, jobdir):
         self.database = database
         self.host = host
         self.jobdir = jobdir
+        self.prefix = prefix
     
     def submit(self, command):
         job_id = self._do_submit(command)
-        return self.queue_job(Job({'_id': job_id}))
+        return self.queue_job(Job({'_id': prefix + job_id}))
         
     def _do_submit(self, command):
         pass
@@ -32,8 +33,8 @@ class OsmiumSubmitter(Submitter):
        "prestaged": [],
        "poststaged": []
     }
-    def __init__(self, database, port, host="localhost", jobdir="~"):
-        super(OsmiumSubmitter, self).__init__(database, host, jobdir)
+    def __init__(self, database, port, prefix, host="localhost", jobdir="~"):
+        super(OsmiumSubmitter, self).__init__(database, host, prefix, jobdir)
         self.port = port
         
     def _do_submit(self, command):
@@ -49,8 +50,8 @@ class OsmiumSubmitter(Submitter):
         return response.location.split('/')[-1]
 
 class SSHSubmitter(Submitter):
-    def __init__(self, database, host, jobdir="~"):
-        super(SSHSubmitter, self).__init__(database, host, jobdir)
+    def __init__(self, database, host, prefix, jobdir="~"):
+        super(SSHSubmitter, self).__init__(database, host, prefix, jobdir)
     
     def _do_submit(self, command):
         command_str = 'cd ' + self.jobdir + '; qsub ' + ' '.join(command)
