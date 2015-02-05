@@ -50,7 +50,7 @@ def add_token(properties, database):
     return database.save(t)
 
 def overview_total(database):
-    overview = database.view('overview_total')
+    overview = database.view('overview_total', group=True)
 
     views = ['todo', 'locked', 'error', 'done', 'finished_jobs', 'active_jobs', 'pending_jobs']
     num = {view: 0 for view in views}
