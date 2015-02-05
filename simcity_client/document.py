@@ -182,8 +182,9 @@ class Job(Document):
         
         super(Job, self).__init__(job, Job.__BASE)
     
-    def queue(self, host):
-        self.doc['hostname'] = host
+    def queue(self, host = None):
+        if host is not None:
+            self.doc['hostname'] = host
         self.doc['queue'] = seconds()
         return self
     
