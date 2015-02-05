@@ -1,6 +1,5 @@
 from couchdb.http import ResourceConflict
 from simcity_client.document import Document
-from uuid import uuid4
 from simcity_client.util import seconds
 
 class Job(Document):

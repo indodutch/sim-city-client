@@ -13,7 +13,7 @@ class Submitter(object):
     
     def submit(self, command):
         job_id = self._do_submit(command)
-        return self.queue_job(Job({'_id': prefix + job_id}))
+        return self.queue_job(Job({'_id': self.prefix + job_id}))
         
     def _do_submit(self, command):
         pass
