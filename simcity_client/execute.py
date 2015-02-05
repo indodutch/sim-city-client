@@ -1,5 +1,7 @@
 import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
+from simcity_client.job import start_job, finish_job
+from simcity_client.iterator import TokenViewIterator
 from subprocess import call
 
 class RunActor(object):
@@ -12,17 +14,16 @@ class RunActor(object):
         """
         self.database = database
         self.job_id = job_id
-    
+
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
         over the available tokens in CouchDB.
         """
-        job = self.database.get_job(self.job_id)
-        self.database.save(job.start())
+        job = start_job(self.job_id, self.database)
         
         time = Timer()
         self.prepare_env()
-        for token in self.database.token_iterator('todo'):
+        for token in TokenViewIterator(self.database, 'todo'):
             self.prepare_run()
             
             try:
@@ -39,8 +40,8 @@ class RunActor(object):
                 break
         
         self.cleanup_env()
-
-        self.database.save(job.finish())
+        
+        finish_job(job, self.database)
         
     def prepare_env(self, *kargs, **kwargs):
         """Method to be called to prepare the environment to run the 
@@ -110,7 +111,7 @@ class ExecuteActor(RunActor):
             with open(os.path.join(dirs['output'], filename), 'r') as f:
                 token.put_attachment(filename, f.read())
 
-        token.mark_done()
+        token.done()
         print "-----------------------"
     
     def create_dirs(self, token):

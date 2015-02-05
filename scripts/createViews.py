@@ -18,22 +18,22 @@ def createViews(db):
     tokenMapTemplate = '''
 function(doc) {
   if(doc.type == "token" && {{condition}}) {
-    emit(doc._id, { 'lock': doc.lock, 'done': doc.done });
+    emit(doc._id, { "lock": doc.lock, "done": doc.done });
   }
 }
     '''
     erroneousMapCode = '''
 function(doc) {
-    if (doc.type == "token" && doc.done == -1) {
-        emit(doc._id, doc.error)
-    }
+  if (doc.type == "token" && doc.done == -1) {
+    emit(doc._id, doc.error);
+  }
 }
     '''
     jobMapTemplate = '''
 function(doc) {
-    if (doc.type == "job" && {{condition}}) {
-        emit(doc._id, { 'queue': doc.queue, 'start': doc.start, 'done': doc.done })
-    }
+  if (doc.type == "job" && {{condition}}) {
+    emit(doc._id, { "queue": doc.queue, "start": doc.start, "done": doc.done });
+  }
 }
     '''
     overviewMapTemplate='''
@@ -45,13 +45,13 @@ function(doc) {
     }
   {{/tokens}}
     if (doc.done == -1) {
-      emit("{{error}}", 1)
+      emit("error", 1);
     }
   }
   if (doc.type == "job") {
   {{#jobs}}
     if ({{condition}}) {
-      emit("{name}}", 1)
+      emit("{{name}}", 1);
     }
   {{/jobs}}
   }
@@ -69,9 +69,10 @@ function (key, values, rereduce) {
         'done':   'doc.done > 0'
     }
     jobs = {
-        'pending_jobs':  'doc.start == 0',
-        'active_jobs':   'doc.start > 0 && doc.done == 0',
-        'finished_jobs': 'doc.done > 0'
+        'pending_jobs':  'doc.start == 0 && doc.archive == 0',
+        'active_jobs':   'doc.start > 0 && doc.done == 0 && doc.archive == 0',
+        'finished_jobs': 'doc.done > 0',
+        'archived_jobs': 'doc.archive > 0'
     }
     pystache_views = {
         'tokens': [{'name': view, 'condition': condition} for view, condition in tokens.items()],

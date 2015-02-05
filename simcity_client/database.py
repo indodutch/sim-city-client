@@ -8,12 +8,11 @@ Updated Wed Jan 28 17:12 2015
 @author: Jan Bot
 @author: Joris Borgdorff
 """
-from simcity_client.token import Token, Job
+from simcity_client.document import Document
 import random
 import numpy as np
 
 # Couchdb imports
-import couchdb
 from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
 from couchdb.client import Server
@@ -27,46 +26,44 @@ class CouchDB(object):
         :param url: the location where the CouchDB instance is located, 
         including the port at which it's listening. Default: http://localhost:5984
         :param db: the database to use. Default: test.
-        """
+        # """
         self.server = Server(url=url)
-        if username == "":            
-            self.db = self.server[db]
-        else:
-            self.db = couchdb.Database(url + "/" + db)
-            self.db.resource.credentials = (username, password)
-        
+        if username != "":
+            self.server.resource.credentials = (username, password)
+        self.db = self.server[db]
         self.design_doc = design_document
     
     def __getitem__(self, idx):
         return self.db[idx]
+        
     
-    def get_all_tokens(self, view, **view_params):
+    def get_from_view(self, view, **view_params):
         """
-        Get tokens from the specified view with token _id as key.
-        :param view: name of the view, having the token _id as keys
+        Get Documents from the specified view that has token _id as key.
+        :param view: name of the view that has a row id coupled to a document
         :param view_params: name of the view optional extra parameters for the view.
         :return: a list of Token objects in the view
         """
-        view = self.view(view, **view_params)
-        return [self.get_token(row['key']) for row in view.rows]
-    
-    def get_token(self, id):
-        """
-        Get the token associated to the given ID
-        :param id: _id string of the token
-        :return: Token object with given id
-        """
-        return Token(self.db[id])
+        result = []
+        for doc in self.view(view, **view_params):
+            try:
+                result.append(self.get(doc.id))
+            except:
+                pass # token was already deleted
+            
+        return result
 
-    def get_job(self, id):
+    def get(self, id):
         """
-        Get the token associated to the given ID
+        Get raw data associated to the given ID
         :param id: _id string of the token
-        :return: Token object with given id
         """
-        return Job(self.db[id])
+        data = self.db.get(id)
+        if data is None:
+            raise ValueError(id + " is not a document ID in the database")
+        return Document(data)
     
-    def get_single_token(self, view, window_size=1, **view_params):
+    def get_single_from_view(self, view, window_size=1, **view_params):
         """Get a token from the specified view.
         :param view: the view to get the token from.
         :param view_params: the parameters that should be added to the view
@@ -75,7 +72,7 @@ class CouchDB(object):
         """
         view = self.view(view, limit=window_size, **view_params)
         row = random.choice(view.rows)
-        return self.get_token(row['key'])
+        return self.get(row.id)
     
     def view(self, view, **view_params):
         """
@@ -88,27 +85,19 @@ class CouchDB(object):
         """
         return self.db.view(self.design_doc + '/' + view, **view_params)
     
-    def token_iterator(self, view):
-        """ Iterate over all tokens in a view.
-        
-        Gets one token at a time
-        :param view: name of the view
-        :return: iterator returning Token objects
-        """
-        return TokenViewIterator(self, view)
-    
     def save(self, doc):
         """ Save a Document to the database.
         
         Updates the document to have the new _rev value.
         :param doc: Document object
         """
-        _, _rev = self.db.save(doc.value)
+        _id, _rev = self.db.save(doc.value)
         doc['_rev'] = _rev
+        doc['_id'] = _id
         return doc
     
-    def save_tokens(self, tokens):
-        """Save a sequence of Tokens to the database.
+    def save_documents(self, docs):
+        """Save a sequence of Documents to the database.
         
         - If the token was newly created and the _id is already is in the
           database the token will not be added.
@@ -117,13 +106,14 @@ class CouchDB(object):
         :param tokens [token1, token2, ...]; tokens for which the save was succesful will get new _rev values
         :return: a sequence of [succeeded1, succeeded2, ...] values.
         """
-        updated = self.db.update([token.value for token in tokens])
+        updated = self.db.update([doc.value for doc in docs])
         
-        result = np.zeros(len(tokens), dtype=np.bool)
-        for i in xrange(len(tokens)):
-            is_added, _, _rev = updated[i]
+        result = np.zeros(len(docs), dtype=np.bool)
+        for i in xrange(len(docs)):
+            is_added, _id, _rev = updated[i]
             if is_added:
-                tokens[i]['_rev'] = _rev
+                doc[i]['_id'] = _id
+                doc[i]['_rev'] = _rev
                 result[i] = True
         
         return result
@@ -138,95 +128,45 @@ class CouchDB(object):
         definition = ViewDefinition(self.design_doc, view, map_fun, reduce_fun, *args, **kwargs)
         definition.sync(self.db)
 
-    def delete_tokens(self, tokens):
+    def delete(self, doc):
         """
-        Delete a sequence of tokens from the database.
-        
-        The tokens must have a valid and current _id and _rev, so they must be
+        Delete a Document from the database
+
+        The Document must have a valid and current _id and _rev, so they must be
         retrieved from the database and not be altered there in the mean time.
-        :param tokens: list of Token objects
-        :return: array of booleans indicating whether the respective token was deleted.
+        :param doc: Document object
+        :raise: ResouceConflict: if the document was updated in the database
         """
-        result = np.ones(len(tokens),dtype=np.bool)
-        for i, token in enumerate(tokens):
+        self.db.delete(doc.value)
+
+    def delete_documents(self, docs):
+        """
+        Delete a sequence of Documents from the database.
+        
+        The Documents must have a valid and current _id and _rev, so they must be
+        retrieved from the database and not be altered there in the mean time.
+        :param tokens: list of Document objects
+        :return: array of booleans indicating whether the respective Document was deleted.
+        """
+        result = np.ones(len(docs),dtype=np.bool)
+        for i, doc in enumerate(docs):
             try:
-                self.db.delete(token.value)
+                self.delete(doc)
             except ResourceConflict as ex:
-                print "Could not delete token", token, "due to resource conflict:", ex
+                print "Could not delete document", doc.id, " (rev", doc.rev, ") due to resource conflict:", ex
                 result[i] = False
             except Exception as ex:
-                print "Could not delete token ", token, ':', ex
+                print "Could not delete document ", doc, ':', ex
                 result[i] = False
 
         return result
 
-    def delete_tokens_from_view(self, view):
+    def delete_from_view(self, view):
         """
-        Delete all tokens in a view
+        Delete all documents in a view
         
         :param view: name of the view
         :return: array of booleans indicating whether the respective tokens were deleted
         """
-        tokens = self.get_all_tokens(view)
-        return self.delete_tokens(tokens)
-
-class ViewIterator(object):
-    """Dummy class to show what to implement for a PICaS iterator.
-    """
-    def __init__(self, view, **view_params):
-        self._stop = False
-        self.view = view
-        self.view_params = view_params
-    
-    def __repr__(self):
-        return "<ViewIterator object>"
-    
-    def __str__(self):
-        return "<view: " + self.view + ">"
-    
-    def __iter__(self):
-        """Python needs this."""
-        return self
-    
-    def next(self):
-        if self._stop:
-            raise StopIteration
-        
-        try:
-            return self.claim_token()
-        except IndexError:
-            self._stop = True
-            raise StopIteration
-    
-    def claim_token(self, allowed_failures=10):
-        """
-        Get the first available token from a view.
-        :param allowed_failures: the number of times a lock failure may
-        occur before giving up. Default=10.
-        """
-        raise NotImplementedError("claim_token function not implemented.")
-
-class TokenViewIterator(ViewIterator):
-    """Iterator object to fetch tokens while available.
-    """
-    def __init__(self, client, view, **view_params):
-        """
-        @param client: CouchClient for handling the connection to the CouchDB
-        server.
-        @param view: CouchDB view from which to fetch the token.
-        @param token_modifier: instance of a TokenModifier.
-        @param view_params: parameters which need to be passed on to the view
-        (optional).
-        """
-        super(TokenViewIterator, self).__init__(view, **view_params)
-        self.client = client
-    
-    def claim_token(self, allowed_failures=10):
-        for _ in xrange(allowed_failures):
-            try:
-                token = self.client.get_single_token(self.view, window_size=100, **self.view_params)
-                return self.client.save(token.lock())
-            except ResourceConflict:
-                pass
-
-        raise EnvironmentError("Unable to claim token.")
+        docs = self.get_from_view(view)
+        return self.delete_documents(docs)

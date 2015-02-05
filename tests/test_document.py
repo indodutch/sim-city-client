@@ -1,5 +1,5 @@
 import unittest
-from simcity_client.token import Document, Token
+from simcity_client.document import Document, Token
 from simcity_client.util import seconds
 
 class TestDocument(unittest.TestCase):
@@ -29,21 +29,17 @@ class TestToken(unittest.TestCase):
     
     def testDone(self):
         self.assertEqual(self.token['done'], 0)
-        self.token.mark_done()
+        self.token.done()
         self.assertGreaterEqual(self.token['done'], seconds() - 1)
-        self.token.unmark_done()
-        self.assertEqual(self.token['done'], 0)
 
     def testLock(self):
         self.assertEqual(self.token['lock'], 0)
         self.token.lock()
         self.assertGreaterEqual(self.token['lock'], seconds() - 1)
-        self.token.unlock()
-        self.assertEqual(self.token['lock'], 0)
 
     def testScrub(self):
         self.token.lock()
-        self.token.mark_done()
+        self.token.done()
         self.token.scrub()
         self.assertEqual(self.token['lock'], 0)
         self.assertEqual(self.token['done'], 0)
@@ -61,3 +57,7 @@ class TestToken(unittest.TestCase):
         self.assertEqual(self.token['lock'], 0)
         self.assertEqual(self.token['done'], 0)
         self.assertEqual(len(self.token['error']), 1)
+    
+    def testNoId(self):
+        t = Token()
+        self.assertGreater(len(t.id), 10)

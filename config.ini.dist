@@ -8,3 +8,9 @@ database = mydatabase
 tmp_dir = $TMPDIR
 output_dir = $HOME/out
 input_dir = $HOME/in
+
+[lisa-host]
+path = ~/sim-city-client
+script = scripts/lisaSubmitExpress.sh
+host = lisa
+method = ssh
