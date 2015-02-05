@@ -69,9 +69,10 @@ function (key, values, rereduce) {
         'done':   'doc.done > 0'
     }
     jobs = {
-        'pending_jobs':  'doc.start == 0',
-        'active_jobs':   'doc.start > 0 && doc.done == 0',
-        'finished_jobs': 'doc.done > 0'
+        'pending_jobs':  'doc.start == 0 && doc.archive == 0',
+        'active_jobs':   'doc.start > 0 && doc.done == 0 && doc.archive == 0',
+        'finished_jobs': 'doc.done > 0',
+        'archived_jobs': 'doc.archive > 0'
     }
     pystache_views = {
         'tokens': [{'name': view, 'condition': condition} for view, condition in tokens.items()],

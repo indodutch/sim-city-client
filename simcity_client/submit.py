@@ -5,11 +5,12 @@ import subprocess
 from simcity_client.job import Job
 
 class Submitter(object):
-    def __init__(self, database, host, prefix, jobdir):
+    def __init__(self, database, host, prefix, jobdir, method):
         self.database = database
         self.host = host
         self.jobdir = jobdir
         self.prefix = prefix
+        self.method = method
     
     def submit(self, command):
         job_id = self._do_submit(command)
@@ -34,7 +35,7 @@ class OsmiumSubmitter(Submitter):
        "poststaged": []
     }
     def __init__(self, database, port, prefix, host="localhost", jobdir="~"):
-        super(OsmiumSubmitter, self).__init__(database, host, prefix, jobdir)
+        super(OsmiumSubmitter, self).__init__(database, host, prefix, jobdir, method="osmium")
         self.port = port
         
     def _do_submit(self, command):
@@ -51,14 +52,14 @@ class OsmiumSubmitter(Submitter):
 
 class SSHSubmitter(Submitter):
     def __init__(self, database, host, prefix, jobdir="~"):
-        super(SSHSubmitter, self).__init__(database, host, prefix, jobdir)
+        super(SSHSubmitter, self).__init__(database, host, prefix, jobdir, method="ssh")
     
     def _do_submit(self, command):
         command_str = 'cd ' + self.jobdir + '; qsub ' + ' '.join(command)
         process = subprocess.Popen(['ssh', self.host, command_str], stdout=subprocess.PIPE)
         lines = process.communicate()[0].split('\n')
         try:
-            # get the first item of the last line
-            return lines[-2].split('.')[0]
+            # get the (before)last line
+            return lines[-2]
         except:
             raise IOError("Cannot parse job ID from " + lines)

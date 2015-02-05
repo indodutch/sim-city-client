@@ -13,7 +13,7 @@ import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Remove all tokens in a view")
-    parser.add_argument('view', choices=['todo', 'done', 'locked', 'pending_jobs', 'active_jobs', 'finished_jobs'], help="View to remove tokens from")
+    parser.add_argument('view', choices=['todo', 'done', 'locked', 'pending_jobs', 'active_jobs', 'finished_jobs', 'archived_jobs'], help="View to remove documents from")
     
     args = parser.parse_args()
     

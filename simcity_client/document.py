@@ -70,10 +70,6 @@ class Document(object):
         del self.doc['_attachments'][name]
         return self
         
-    def clear_rev(self):
-        del self.doc['_rev']
-        return self
-    
     def _update_hostname(self):
         self.doc['hostname'] = socket.gethostname()
 
@@ -94,7 +90,7 @@ class Token(Document):
     def __init__(self, token={}):
         super(Token, self).__init__(token, Token.__BASE)
         if '_id' not in self.doc:
-            self.doc['_id'] = uuid4().hex
+            self.doc['_id'] = 'token_' + uuid4().hex
 
     def lock(self):
         """Function which modifies the token such that it is locked.
@@ -103,24 +99,11 @@ class Token(Document):
         self.doc['lock'] = seconds()
         return self
     
-    def unlock(self):
-        """Reset the token to its unlocked state.
-        """
-        self._update_hostname()
-        self.doc['lock'] = 0
-        return self
-    
-    def mark_done(self):
+    def done(self):
         """Function which modifies the token such that it is closed for ever
         to the view that has supplied it.
         """
         self.doc['done'] = seconds()
-        return self
-    
-    def unmark_done(self):
-        """Reset the token to be fetched again.
-        """
-        self.doc['done'] = 0
         return self
     
     @property
@@ -152,8 +135,9 @@ class Token(Document):
         if 'scrub_count' not in self.doc:
             self.doc['scrub_count'] = 0
         self.doc['scrub_count'] += 1
-        self.unlock()
-        self.unmark_done()
+        self.doc['done'] = 0
+        self.doc['lock'] = 0
+        self._update_hostname()
         return self
     
     def error(self, msg = None, exception=None):

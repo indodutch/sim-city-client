@@ -111,7 +111,7 @@ class ExecuteActor(RunActor):
             with open(os.path.join(dirs['output'], filename), 'r') as f:
                 token.put_attachment(filename, f.read())
 
-        token.mark_done()
+        token.done()
         print "-----------------------"
     
     def create_dirs(self, token):

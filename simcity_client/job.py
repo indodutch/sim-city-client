@@ -9,7 +9,8 @@ class Job(Document):
         'start': 0,
         'done': 0,
         'queue': 0,
-        'engine': ''
+        'method': '',
+        'archive': 0
     }
     
     def __init__(self, job):        
@@ -17,7 +18,8 @@ class Job(Document):
         if '_id' not in self.doc:
             raise ValueError('Job ID must be set')
     
-    def queue(self, host = None):
+    def queue(self, method, host = None):
+        self.doc['method'] = method
         if host is not None:
             self.doc['hostname'] = host
         self.doc['queue'] = seconds()
@@ -30,6 +32,12 @@ class Job(Document):
 
     def finish(self):
         self.doc['done'] = seconds()
+        return self
+    
+    def archive(self):
+        self.doc['archive'] = seconds()
+        self.id = 'archived-' + self.id + '-' + str(seconds())
+        del self.doc['_rev']
         return self
 
 def start_job(job_id, database):
@@ -58,17 +66,15 @@ def finish_job(job, database):
         if job['queue'] > 0:
             archive_job(job, database)
 
-def queue_job(job, database, host = None):
+def queue_job(job, database, method, host = None):
     try:
-        return database.save(job.queue(host))
+        return database.save(job.queue(method, host))
     except ResourceConflict:
-        return queue_job(Job(database.get(job.id)), database)
+        return queue_job(Job(database.get(job.id)), database, method)
     else:
         if job['done'] > 0:
             archive_job(job, database)
 
 def archive_job(job, database):
     database.delete(job)
-    job.id = 'archived-job-' + job.id + '-' + str(seconds())
-    job.clear_rev()
-    return database.save(job)
+    return database.save(job.archive())
