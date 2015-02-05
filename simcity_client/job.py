@@ -1,6 +1,5 @@
 from couchdb.http import ResourceConflict
 from simcity_client.document import Job
-from uuid import uuid4
 from simcity_client.util import seconds
 
 def start_job(job_id, database):

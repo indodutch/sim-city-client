@@ -23,7 +23,7 @@ def init():
     except NoSectionError:
         raise ValueError("Configuration file " + result['config'].filename + "does not contain CouchDB section")
     except IOError as ex:
-        raise IOError("Cannot establish connection with CouchDB: " + str(ex))
+        raise IOError("Cannot establish connection with CouchDB <" + couch_cfg['url'] + ">: " + str(ex))
 
 def start_job(hostname, database, config):
     host = hostname + '-host'
