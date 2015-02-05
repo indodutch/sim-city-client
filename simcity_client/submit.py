@@ -1,8 +1,7 @@
 from simcity_client.util import merge_dicts
 import httplib
-from couchdb.http import ResourceConflict
 import subprocess
-from simcity_client.job import Job
+from simcity_client.job import Job, queue_job
 
 class Submitter(object):
     def __init__(self, database, host, prefix, jobdir, method):
@@ -14,17 +13,11 @@ class Submitter(object):
     
     def submit(self, command):
         job_id = self._do_submit(command)
-        return self.queue_job(Job({'_id': self.prefix + job_id}))
+        return queue_job(Job({'_id': self.prefix + job_id}), self.database, self.method, self.host)
         
     def _do_submit(self, command):
-        pass
+        raise NotImplementedError("Submission not implemented")
     
-    def queue_job(self, job):
-        try:
-            return self.database.save(job.queue(self.host))
-        except ResourceConflict:
-            return self.queue_job(Job(self.database.get(job.id)))
-
 class OsmiumSubmitter(Submitter):
     __BASE = {
        "executable": "/usr/bin/qsub",
