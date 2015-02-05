@@ -5,17 +5,38 @@ from simcity_client.util import seconds
 class TestDocument(unittest.TestCase):
     def testCreate(self):
         _id = 'mydoc'
+        other_id = 'myotherdoc'
         doc = Document({'_id': _id})
         self.assertEqual(doc.id, _id)
         self.assertDictEqual(doc.value, {'_id': _id})
+        doc.id = other_id
+        self.assertEqual(doc.id, other_id)
+        self.assertDictEqual(doc.value, {'_id': other_id})
     
     def testNoId(self):
         doc = Document({'someattr': 1})
         with self.assertRaises(KeyError):
             doc.id
+        with self.assertRaises(KeyError):
+            doc.rev
 
     def testEmpty(self):
         Document({})
+        
+    def testAttachment(self):
+        doc = Document()
+        data = "This is it"
+        doc.put_attachment('mytext.txt', data)
+        attach = doc.get_attachment('mytext.txt')
+        self.assertEqual(attach['content_type'], 'text/plain')
+        self.assertEqual(attach['data'], data)
+        self.assertEqual(doc['_attachments']['mytext.txt']['data'], "VGhpcyBpcyBpdA==")
+        doc.remove_attachment('mytext.txt')
+        self.assertTrue('mytext.txt' not in doc['_attachments'])
+        self.assertEqual(attach['data'], data)
+        doc.put_attachment('mytext.json', '{}')
+        attach = doc.get_attachment('mytext.json')
+        self.assertEqual(attach['content_type'], 'application/json')
 
 class TestToken(unittest.TestCase):
     def setUp(self):

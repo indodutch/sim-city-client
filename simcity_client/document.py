@@ -62,8 +62,13 @@ class Document(object):
         return self
     
     def get_attachment(self, name):
-        attachment = self.doc['_attachments'][name]
-        attachment['data'] = base64.b64decode(attachment['data'])
+        # Copy all attributes except data, it may be very large
+        attachment = {}
+        for key in self.doc['_attachments'][name]:
+            if key != 'data':
+                attachment[key] = self.doc['_attachments'][name][key]
+
+        attachment['data'] = base64.b64decode(self.doc['_attachments'][name]['data'])
         return attachment
     
     def remove_attachment(self, name):
