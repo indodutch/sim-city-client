@@ -26,6 +26,13 @@ class Document(object):
             raise KeyError("_id for document is not set")
         
     @property
+    def rev(self):
+        try:
+            return self.doc['_rev']
+        except KeyError:
+            raise KeyError("_rev is not available: document is not retrieved from database")
+
+    @property
     def value(self):
         return self.doc
 
