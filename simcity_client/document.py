@@ -27,13 +27,17 @@ class Document(object):
             return self.doc['_id']
         except KeyError:
             raise KeyError("_id for document is not set")
-        
+    
     @property
     def rev(self):
         try:
             return self.doc['_rev']
         except KeyError:
             raise KeyError("_rev is not available: document is not retrieved from database")
+
+    @id.setter
+    def id(self, new_id):
+        self.doc['_id'] = new_id
 
     @property
     def value(self):
@@ -66,6 +70,10 @@ class Document(object):
         del self.doc['_attachments'][name]
         return self
         
+    def clear_rev(self):
+        del self.doc['_rev']
+        return self
+    
     def _update_hostname(self):
         self.doc['hostname'] = socket.gethostname()
 

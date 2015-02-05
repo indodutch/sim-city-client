@@ -12,11 +12,10 @@ class Job(Document):
         'engine': ''
     }
     
-    def __init__(self, job):
-        if '_id' not in job:
-            raise ValueError('Job ID must be set')
-        
+    def __init__(self, job):        
         super(Job, self).__init__(job, Job.__BASE)
+        if '_id' not in self.doc:
+            raise ValueError('Job ID must be set')
     
     def queue(self, host = None):
         if host is not None:
@@ -36,7 +35,7 @@ class Job(Document):
 def start_job(job_id, database):
     try:
         doc = database.get(job_id)
-    except ValueError:
+    except ValueError: # job ID was not yet added to database
         doc = {'_id': job_id}
 
     try:
@@ -70,6 +69,6 @@ def queue_job(job, database, host = None):
 
 def archive_job(job, database):
     database.delete(job)
-    job['_id'] = 'archived-job-' + job.id + '-' + str(seconds())
-    del job['_rev']
+    job.id = 'archived-job-' + job.id + '-' + str(seconds())
+    job.clear_rev()
     return database.save(job)

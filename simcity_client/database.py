@@ -128,19 +128,30 @@ class CouchDB(object):
         definition = ViewDefinition(self.design_doc, view, map_fun, reduce_fun, *args, **kwargs)
         definition.sync(self.db)
 
+    def delete(self, doc):
+        """
+        Delete a Document from the database
+
+        The Document must have a valid and current _id and _rev, so they must be
+        retrieved from the database and not be altered there in the mean time.
+        :param doc: Document object
+        :raise: ResouceConflict: if the document was updated in the database
+        """
+        self.db.delete(doc.value)
+
     def delete_documents(self, docs):
         """
-        Delete a sequence of tokens from the database.
+        Delete a sequence of Documents from the database.
         
-        The tokens must have a valid and current _id and _rev, so they must be
+        The Documents must have a valid and current _id and _rev, so they must be
         retrieved from the database and not be altered there in the mean time.
-        :param tokens: list of Token objects
-        :return: array of booleans indicating whether the respective token was deleted.
+        :param tokens: list of Document objects
+        :return: array of booleans indicating whether the respective Document was deleted.
         """
         result = np.ones(len(docs),dtype=np.bool)
         for i, doc in enumerate(docs):
             try:
-                self.db.delete(doc.value)
+                self.delete(doc)
             except ResourceConflict as ex:
                 print "Could not delete document", doc.id, " (rev", doc.rev, ") due to resource conflict:", ex
                 result[i] = False
