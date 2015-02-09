@@ -16,9 +16,10 @@ if __name__ == '__main__':
     parser.add_argument('command', help="command to run")
     parser.add_argument('host', help="host to run pilot job on")
     parser.add_argument('-m', '--max', help="only run if there are less than MAX jobs running", default=2)
+    parser.add_argument('-c', '--config', help="configuration file", default=None)
     args = parser.parse_args() 
 
-    simcity = simcity_client.init()
+    simcity = simcity_client.init(configfile=args.config)
     try:
         token = simcity_client.add_token({'command': args.command}, simcity['database'])
         print "token", token.id, "added to the database"

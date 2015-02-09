@@ -14,9 +14,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="create new tokens in the database")
     parser.add_argument('command', help="command to run")
     parser.add_argument('-n', '--number', type=int, help="number of tokens to create", default=1)
+    parser.add_argument('-c', '--config', help="configuration file", default=None)
     args = parser.parse_args() 
 
-    db = simcity_client.init()['database']
+    db = simcity_client.init(configfile=args.config)['database']
 
     #Load the tokens to the database
     for i in xrange(args.number):

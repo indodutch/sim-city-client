@@ -5,14 +5,14 @@ from simcity_client.document import Token
 from ConfigParser import NoSectionError
 import os
 
-def init():
+def init(configfile=None):
     try:
         result = {}
 
         if 'SIMCITY_JOBID' in os.environ:
             result['job_id'] = os.environ['SIMCITY_JOBID']
         
-        result['config'] = util.Config()
+        result['config'] = util.Config([configfile])
         couch_cfg = result['config'].section('CouchDB')
         result['database'] = database.CouchDB(
                                         url      = couch_cfg['url'],

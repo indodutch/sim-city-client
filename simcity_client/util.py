@@ -6,7 +6,10 @@ import glob
 import shutil
 
 class Config(object):
-    def __init__(self, filenames=["config.ini", ("..", "config.ini"), ("~", ".simcity_client")]):
+    def __init__(self, filenames=None):
+        if filenames is None:
+            filenames = ["config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
+        
         exp_filenames = expandfilenames(filenames)
 
         self.parser = ConfigParser()

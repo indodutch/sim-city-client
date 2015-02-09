@@ -14,9 +14,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="start a job")
     parser.add_argument('host', help="host to run pilot job on")
     parser.add_argument('-m', '--max', help="only run if there are less than MAX jobs running", default=2)
-    args = parser.parse_args() 
+    parser.add_argument('-c', '--config', help="configuration file", default=None)
+    args = parser.parse_args()
 
-    simcity = simcity_client.init()
+    simcity = simcity_client.init(configfile=args.config)
 
     num = simcity_client.overview_total(simcity['database'])
     print "Overview", num
