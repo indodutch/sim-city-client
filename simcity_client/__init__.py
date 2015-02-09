@@ -12,7 +12,7 @@ def init(configfile=None):
         if 'SIMCITY_JOBID' in os.environ:
             result['job_id'] = os.environ['SIMCITY_JOBID']
         
-        result['config'] = util.Config([configfile])
+        result['config'] = util.Config(configfile)
         couch_cfg = result['config'].section('CouchDB')
         result['database'] = database.CouchDB(
                                         url      = couch_cfg['url'],
