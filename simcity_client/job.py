@@ -76,5 +76,9 @@ def queue_job(job, database, method, host = None):
             archive_job(job, database)
 
 def archive_job(job, database):
-    database.delete(job)
-    return database.save(job.archive())
+    try:
+        database.delete(job)
+    except ResourceConflict:
+        return archive_job(Job(database.get(job.id)), database)
+    else:
+        return database.save(job.archive())

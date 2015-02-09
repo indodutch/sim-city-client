@@ -4,6 +4,7 @@ import os
 import time
 import glob
 import shutil
+from copy import deepcopy 
 
 class Config(object):
     def __init__(self, filenames=None):
@@ -41,7 +42,7 @@ def listfiles(mypath):
     return [ f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath,f)) ]
     
 def merge_dicts(dict1, dict2):
-    merge = dict1.copy()
+    merge = deepcopy(dict1)
     merge.update(dict2)
     return merge
 

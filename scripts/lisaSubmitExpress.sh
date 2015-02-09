@@ -8,4 +8,5 @@
 
 module load python/2.7.9
 . ~/simcity/bin/activate
-python $PBS_O_WORKDIR/scripts/runExample.py lisa-$PBS_JOBID
+cd $PBS_O_WORKDIR
+python runExample.py
