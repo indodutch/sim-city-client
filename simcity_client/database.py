@@ -35,7 +35,6 @@ class CouchDB(object):
     
     def __getitem__(self, idx):
         return self.db[idx]
-        
     
     def get_from_view(self, view, **view_params):
         """

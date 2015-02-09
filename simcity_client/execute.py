@@ -55,7 +55,7 @@ class RunActor(object):
         """
         pass
     
-    def process_token(self, key, token):
+    def process_token(self, token):
         """The function to overwrite which processes the tokens themselves.
         @param key: the token key. Should not be used to hold anything
         informative as it is mainly used to determine the order in which the
@@ -120,8 +120,10 @@ class ExecuteActor(RunActor):
         dirs = {}
         for d, conf in dir_map.iteritems():
             superdir = expandfilename(self.config[conf])
-            if not os.path.exists(superdir):
+            try:
                 os.mkdir(superdir)
+            except OSError: # directory exists
+                pass
             
             dirs[d] = os.path.join(superdir, token.id + '_' + str(token['lock']))
             os.mkdir(dirs[d])
