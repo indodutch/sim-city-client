@@ -17,9 +17,9 @@ class Submitter(object):
         job = queue_job(Job({'_id': job_id}), self.database, self.method, self.host)
         try:
             job['batch_id'] = self._do_submit(job, command)
-        except Exception as ex:
+        except:
             archive_job(job, self.database)
-            raise ex
+            raise
         else:
             self.database.save(job)
             return job
@@ -71,4 +71,4 @@ class SSHSubmitter(Submitter):
             # get the (before)last line
             return lines[-2]
         except:
-            raise IOError("Cannot parse job ID from " + lines)
+            raise IOError("Cannot parse job ID from '" + '\\n'.join(lines) + "'")

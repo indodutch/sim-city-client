@@ -77,8 +77,11 @@ def queue_job(job, database, method, host = None):
 
 def archive_job(job, database):
     try:
+        print "Deleting original job description"
         database.delete(job)
     except ResourceConflict:
+        print "Failed to archive jobs"
         return archive_job(Job(database.get(job.id)), database)
     else:
+        print "Archiving job description"
         return database.save(job.archive())
