@@ -1,8 +1,8 @@
 import os
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
-from simcity_client.document import Job
+from simcity_client.job import start_job, finish_job
+from simcity_client.iterator import TokenViewIterator
 from subprocess import call
-from couchdb.http import ResourceConflict
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
@@ -15,38 +15,15 @@ class RunActor(object):
         self.database = database
         self.job_id = job_id
 
-    def start_job(self):
-        try:
-            job = self.database.get_job(self.job_id)
-        except ValueError:
-            job = Job({'_id': self.job_id})
-
-        try:
-            return self.database.save(job.start())
-        # Check for concurrent modification: the job may be added to the
-        # database by the submission script.
-        # Since this happens only once, we don't risk unlimited recursion
-        except ResourceConflict:
-            return self.start_job()
-    
-    def finish_job(self, job):
-        try:
-            return self.database.save(job.finish())
-        # Check for concurrent modification: the job may be added to the
-        # database by the submission script after starting.
-        # Since this happens only once, we don't risk unlimited recursion
-        except ResourceConflict:
-            return self.finish_job(self.database.get_job(self.job_id))
-    
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
         over the available tokens in CouchDB.
         """
-        job = self.start_job()
+        job = start_job(self.job_id, self.database)
         
         time = Timer()
         self.prepare_env()
-        for token in self.database.token_iterator('todo'):
+        for token in TokenViewIterator(self.database, 'todo'):
             self.prepare_run()
             
             try:
@@ -64,7 +41,7 @@ class RunActor(object):
         
         self.cleanup_env()
         
-        self.finish_job(job)
+        finish_job(job, self.database)
         
     def prepare_env(self, *kargs, **kwargs):
         """Method to be called to prepare the environment to run the 
@@ -134,7 +111,7 @@ class ExecuteActor(RunActor):
             with open(os.path.join(dirs['output'], filename), 'r') as f:
                 token.put_attachment(filename, f.read())
 
-        token.mark_done()
+        token.done()
         print "-----------------------"
     
     def create_dirs(self, token):

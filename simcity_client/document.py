@@ -7,6 +7,9 @@ from uuid import uuid4
 
 class Document(object):
     def __init__(self, data = {}, base = {}):
+        if isinstance(data, Document):
+            data = data.value
+        
         if '_rev' not in data:
             data = merge_dicts(base, data)
 
@@ -24,13 +27,17 @@ class Document(object):
             return self.doc['_id']
         except KeyError:
             raise KeyError("_id for document is not set")
-        
+    
     @property
     def rev(self):
         try:
             return self.doc['_rev']
         except KeyError:
             raise KeyError("_rev is not available: document is not retrieved from database")
+
+    @id.setter
+    def id(self, new_id):
+        self.doc['_id'] = new_id
 
     @property
     def value(self):
@@ -83,7 +90,7 @@ class Token(Document):
     def __init__(self, token={}):
         super(Token, self).__init__(token, Token.__BASE)
         if '_id' not in self.doc:
-            self.doc['_id'] = uuid4().hex
+            self.doc['_id'] = 'token_' + uuid4().hex
 
     def lock(self):
         """Function which modifies the token such that it is locked.
@@ -92,24 +99,11 @@ class Token(Document):
         self.doc['lock'] = seconds()
         return self
     
-    def unlock(self):
-        """Reset the token to its unlocked state.
-        """
-        self._update_hostname()
-        self.doc['lock'] = 0
-        return self
-    
-    def mark_done(self):
+    def done(self):
         """Function which modifies the token such that it is closed for ever
         to the view that has supplied it.
         """
         self.doc['done'] = seconds()
-        return self
-    
-    def unmark_done(self):
-        """Reset the token to be fetched again.
-        """
-        self.doc['done'] = 0
         return self
     
     @property
@@ -141,8 +135,9 @@ class Token(Document):
         if 'scrub_count' not in self.doc:
             self.doc['scrub_count'] = 0
         self.doc['scrub_count'] += 1
-        self.unlock()
-        self.unmark_done()
+        self.doc['done'] = 0
+        self.doc['lock'] = 0
+        self._update_hostname()
         return self
     
     def error(self, msg = None, exception=None):
@@ -165,34 +160,3 @@ class Token(Document):
             return self.doc['error']
         except:
             return []
-
-class Job(Document):
-    __BASE = {
-        'type': 'job',
-        'hostname': '',
-        'start': 0,
-        'done': 0,
-        'queue': 0,
-        'engine': ''
-    }
-    
-    def __init__(self, job):
-        if '_id' not in job:
-            raise ValueError('Job ID must be set')
-        
-        super(Job, self).__init__(job, Job.__BASE)
-    
-    def queue(self, host = None):
-        if host is not None:
-            self.doc['hostname'] = host
-        self.doc['queue'] = seconds()
-        return self
-    
-    def start(self):
-        self._update_hostname()
-        self.doc['start'] = seconds()
-        return self
-
-    def finish(self):
-        self.doc['done'] = seconds()
-        return self

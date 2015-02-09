@@ -13,10 +13,11 @@ import numpy as np
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Remove all tokens in a view")
-    parser.add_argument('view', choices=['todo', 'done', 'locked'], help="View to remove tokens from")
+    parser.add_argument('view', choices=['todo', 'done', 'locked', 'pending_jobs', 'active_jobs', 'finished_jobs', 'archived_jobs'], help="View to remove documents from")
+    
     args = parser.parse_args()
     
     db = simcity_client.init()['database']
 
-    is_deleted = db.delete_tokens_from_view(args.view)
+    is_deleted = db.delete_from_view(args.view)
     print "Deleted", np.sum(is_deleted), "out of", len(is_deleted), "tokens from view", args.view
