@@ -95,7 +95,7 @@ function (key, values, rereduce) {
     db.add_view('overview_total', overviewMapCode, overviewReduceCode)
 
 if __name__ == '__main__':
-    db = simcity_client.init()['database']
+    simcity_client.init()
 
     #Create the Views in database
-    createViews(db)
+    createViews(simcity_client.database)

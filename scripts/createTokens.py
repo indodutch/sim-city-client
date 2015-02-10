@@ -17,12 +17,12 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', help="configuration file", default=None)
     args = parser.parse_args() 
 
-    db = simcity_client.init(configfile=args.config)['database']
+    simcity_client.init(configfile=args.config)
 
     #Load the tokens to the database
     for i in xrange(args.number):
         try:
-            simcity_client.add_token({'command': args.command}, db)
+            simcity_client.add_token({'command': args.command})
             print "added token", i
         except:
             print "ERROR: token", i, "failed to be added"

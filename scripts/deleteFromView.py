@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', help="configuration file", default=None)
     args = parser.parse_args()
     
-    db = simcity_client.init(configfile=args.config)['database']
+    simcity_client.init(configfile=args.config)
 
-    is_deleted = db.delete_from_view(args.view)
+    is_deleted = simcity_client.database.delete_from_view(args.view)
     print "Deleted", np.sum(is_deleted), "out of", len(is_deleted), "tokens from view", args.view

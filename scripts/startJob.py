@@ -18,6 +18,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     simcity = simcity_client.init(configfile=args.config)
+    
+    simcity.start_job_if_necessary()
 
     num = simcity_client.overview_total(simcity['database'])
     print "Overview", num

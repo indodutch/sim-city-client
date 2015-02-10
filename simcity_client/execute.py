@@ -1,4 +1,5 @@
 import os
+import simcity_client
 from simcity_client.util import listfiles, write_json, Timer, expandfilename
 from simcity_client.job import start_job, finish_job
 from simcity_client.iterator import TokenViewIterator
@@ -12,6 +13,11 @@ class RunActor(object):
         @param database: the database to get the tokens from.
         @param job_id: job id.
         """
+        if database is None:
+            raise ValueError("Database must be initialized")
+        if job_id is None:
+            raise ValueError("Job ID must be defined")
+        
         self.database = database
         self.job_id = job_id
 
@@ -77,8 +83,10 @@ class RunActor(object):
         pass
 
 class ExecuteActor(RunActor):
-    def __init__(self, database, config, job_id):
+    def __init__(self, database = simcity_client.database, config = simcity_client.config, job_id = simcity_client.job_id):
         super(ExecuteActor, self).__init__(database, job_id)
+        if config is None:
+            raise ValueError("Config must be initialized")
         self.config = config.section('Execution')
     
     def process_token(self, token):

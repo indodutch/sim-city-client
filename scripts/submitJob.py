@@ -19,23 +19,16 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', help="configuration file", default=None)
     args = parser.parse_args() 
 
-    simcity = simcity_client.init(configfile=args.config)
+    simcity_client.init(configfile=args.config)
     try:
-        token = simcity_client.add_token({'command': args.command}, simcity['database'])
+        token = simcity_client.add_token({'command': args.command})
         print "token", token.id, "added to the database"
     except Exception as ex:
         print "Token could not be added to the database:", ex
         sys.exit(1)
 
-    num = simcity_client.overview_total(simcity['database'])
-    print "Overview", num
-    num_jobs = num['active_jobs'] + num['pending_jobs']
-    if num_jobs <= num['todo'] and num_jobs < args.max:
-        print "Starting new job"
-        # try:
-        job = simcity_client.start_job(args.host, simcity['database'], simcity['config'])
-        print "Submitted job with id", job.id, "to", args.host
-        # except Exception as ex:
-        # print "Pilot job framework could not be started:", ex
-    else:
+    job = simcity_client.start_job_if_needed(args.host, args.max)
+    if job is None:
         print "Let job be processed by existing pilot-job scripts"
+    else:
+        print "Job " + job['batch_id'] + " (ID: " + job.id + ") will process token"
