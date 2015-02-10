@@ -65,10 +65,11 @@ class SSHSubmitter(Submitter):
     def _do_submit(self, job, command):
         commandTemplate = 'cd "%s"; export SIMCITY_JOBID="%s"; qsub -v SIMCITY_JOBID %s'
         command_str = commandTemplate % (self.jobdir, job.id, ' '.join(command))
-        process = subprocess.Popen(['ssh', self.host, command_str], stdout=subprocess.PIPE)
-        lines = process.communicate()[0].split('\n')
+        process = subprocess.Popen(['ssh', self.host, command_str], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        (stdout, stderr) = process.communicate()
+        lines = stdout.split('\n')
         try:
             # get the (before)last line
             return lines[-2]
         except:
-            raise IOError("Cannot parse job ID from '" + '\\n'.join(lines) + "'")
+            raise IOError("Cannot parse job ID from stdout: '" + stdout + "'\n==== stderr ====\n'" + stderr + "'")
