@@ -111,8 +111,8 @@ class CouchDB(object):
         for i in xrange(len(docs)):
             is_added, _id, _rev = updated[i]
             if is_added:
-                doc[i]['_id'] = _id
-                doc[i]['_rev'] = _rev
+                docs[i]['_id'] = _id
+                docs[i]['_rev'] = _rev
                 result[i] = True
         
         return result
