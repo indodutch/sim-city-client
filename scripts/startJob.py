@@ -21,6 +21,6 @@ if __name__ == '__main__':
     
     job = simcity.job.submit_if_needed(args.host, args.max)
     if job is None:
-        print "No tasks to process or already " + args.max " jobs running (increase maximum number of jobs with -m)"
+        print "No tasks to process or already " + str(args.max) + " jobs running (increase maximum number of jobs with -m)"
     else:
         print "Job " + job['batch_id'] + " (ID: " + job.id + ") started"
