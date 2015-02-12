@@ -176,7 +176,7 @@ def _load(name):
     try:
         cfg = simcity.config.section(name)
     except NoSectionError:
-        raise EnvironmentError("Configuration file " + config.filename + " does not contain '" + name + "' section")
+        raise EnvironmentError("Configuration file " + simcity.config.filename + " does not contain '" + name + "' section")
 
     try:
         return CouchDB(
