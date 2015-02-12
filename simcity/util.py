@@ -7,9 +7,10 @@ import shutil
 from copy import deepcopy 
 
 class Config(object):
+    DEFAULT_FILENAMES = ["config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
     def __init__(self, filenames=None):
         if filenames is None:
-            filenames = ["config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
+            filenames = Config.DEFAULT_FILENAMES
         
         exp_filenames = expandfilenames(filenames)
 

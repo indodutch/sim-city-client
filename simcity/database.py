@@ -8,7 +8,9 @@ Updated Wed Jan 28 17:12 2015
 @author: Jan Bot
 @author: Joris Borgdorff
 """
-from simcity_client.document import Document
+from simcity.document import Document
+from simcity import config
+from ConfigParser import NoSectionError
 import random
 import numpy as np
 
@@ -16,7 +18,7 @@ import numpy as np
 from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
 from couchdb.client import Server
-        
+
 class CouchDB(object):
     """Client class to handle communication with the CouchDB back-end.
     """
@@ -38,24 +40,24 @@ class CouchDB(object):
     
     def get_from_view(self, view, **view_params):
         """
-        Get Documents from the specified view that has token _id as key.
+        Get Documents from the specified view that has task _id as key.
         :param view: name of the view that has a row id coupled to a document
         :param view_params: name of the view optional extra parameters for the view.
-        :return: a list of Token objects in the view
+        :return: a list of Task objects in the view
         """
         result = []
         for doc in self.view(view, **view_params):
             try:
                 result.append(self.get(doc.id))
             except:
-                pass # token was already deleted
+                pass # task was already deleted
             
         return result
 
     def get(self, id):
         """
         Get raw data associated to the given ID
-        :param id: _id string of the token
+        :param id: _id string of the task
         """
         data = self.db.get(id)
         if data is None:
@@ -63,11 +65,11 @@ class CouchDB(object):
         return Document(data)
     
     def get_single_from_view(self, view, window_size=1, **view_params):
-        """Get a token from the specified view.
-        :param view: the view to get the token from.
+        """Get a task from the specified view.
+        :param view: the view to get the task from.
         :param view_params: the parameters that should be added to the view
         request. Optional.
-        :return: a CouchDB token.
+        :return: a CouchDB task.
         """
         view = self.view(view, limit=window_size, **view_params)
         row = random.choice(view.rows)
@@ -98,11 +100,11 @@ class CouchDB(object):
     def save_documents(self, docs):
         """Save a sequence of Documents to the database.
         
-        - If the token was newly created and the _id is already is in the
-          database the token will not be added.
-        - If the token is an existing document, it will be updated if the _rev key
+        - If the task was newly created and the _id is already is in the
+          database the task will not be added.
+        - If the task is an existing document, it will be updated if the _rev key
           matches.
-        :param tokens [token1, token2, ...]; tokens for which the save was succesful will get new _rev values
+        :param tasks [task1, task2, ...]; tasks for which the save was succesful will get new _rev values
         :return: a sequence of [succeeded1, succeeded2, ...] values.
         """
         updated = self.db.update([doc.value for doc in docs])
@@ -144,7 +146,7 @@ class CouchDB(object):
         
         The Documents must have a valid and current _id and _rev, so they must be
         retrieved from the database and not be altered there in the mean time.
-        :param tokens: list of Document objects
+        :param tasks: list of Document objects
         :return: array of booleans indicating whether the respective Document was deleted.
         """
         result = np.ones(len(docs),dtype=np.bool)
@@ -165,7 +167,22 @@ class CouchDB(object):
         Delete all documents in a view
         
         :param view: name of the view
-        :return: array of booleans indicating whether the respective tokens were deleted
+        :return: array of booleans indicating whether the respective tasks were deleted
         """
         docs = self.get_from_view(view)
         return self.delete_documents(docs)
+
+def _load(name):
+    try:
+        cfg = config.section(name)
+    except NoSectionError:
+        raise EnvironmentError("Configuration file " + config.filename + " does not contain '" + name + "' section")
+
+    try:
+        return CouchDB(
+                url      = cfg['url'],
+                db       = cfg['database'],
+                username = cfg['username'],
+                password = cfg['password'])
+    except IOError as ex:
+        raise IOError("Cannot establish connection with " + name + " CouchDB <" + cfg['url'] + ">: " + str(ex))

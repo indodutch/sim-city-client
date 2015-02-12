@@ -1,8 +1,51 @@
-from simcity_client.util import merge_dicts
+from simcity.util import merge_dicts
+from simcity.job import Job, archive, queue
+import simcity, simcity.job
+
 import httplib
 import subprocess
-from simcity_client.job import Job, queue_job, archive_job
 from uuid import uuid4
+
+def submit_if_needed(hostname, max_jobs):
+    num = simcity.overview_total()
+
+    num_jobs = num['active_jobs'] + num['pending_jobs']
+    if num_jobs <= num['todo'] and num_jobs < max_jobs:
+        return submit(hostname)
+    else:
+        return None
+
+def submit(hostname):
+    simcity._check_init()
+
+    host = hostname + '-host'
+    try:
+        host_cfg = simcity.config.section(host)
+    except:
+        raise ValueError(hostname + ' not configured under ' + host + 'section')
+    
+    try:
+        if host_cfg['method'] == 'ssh':
+            submitter = SSHSubmitter(
+                            database = simcity.job.database,
+                            host     = host_cfg['host'],
+                            jobdir   = host_cfg['path'],
+                            prefix   = hostname + '-')
+        elif host_cfg['method'] == 'osmium':
+            submitter = OsmiumSubmitter(
+                            database = simcity.job.database,
+                            port     = host_cfg['port'],
+                            jobdir   = host_cfg['path'],
+                            prefix   = hostname + '-')
+        else:
+            raise EnvironmentError('Connection method for ' + hostname + ' unknown')
+        
+        script = [host_cfg['script']]
+    except KeyError:
+        raise EnvironmentError('Connection method for ' + hostname + ' not well configured')
+
+    return submitter.submit(script)
+
 
 class Submitter(object):
     def __init__(self, database, host, prefix, jobdir, method):
@@ -14,11 +57,11 @@ class Submitter(object):
     
     def submit(self, command):
         job_id = 'job_' + self.prefix + uuid4().hex
-        job = queue_job(Job({'_id': job_id}), self.database, self.method, self.host)
+        job = queue(Job({'_id': job_id}), self.method, self.host)
         try:
             job['batch_id'] = self._do_submit(job, command)
         except:
-            archive_job(job, self.database)
+            archive(job)
             raise
         else:
             self.database.save(job)
@@ -26,7 +69,7 @@ class Submitter(object):
                     
     def _do_submit(self, job, command):
         raise NotImplementedError
-    
+ 
 class OsmiumSubmitter(Submitter):
     __BASE = {
        "executable": "/usr/bin/qsub",

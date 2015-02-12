@@ -1,6 +1,7 @@
+import simcity
+from simcity.document import Document
+from simcity.util import seconds
 from couchdb.http import ResourceConflict
-from simcity_client.document import Document
-from simcity_client.util import seconds
 
 class Job(Document):
     __BASE = {
@@ -40,48 +41,57 @@ class Job(Document):
         del self.doc['_rev']
         return self
 
-def start_job(job_id, database):
-    try:
-        doc = database.get(job_id)
-    except ValueError: # job ID was not yet added to database
-        doc = {'_id': job_id}
+def get(job_id = None):
+    simcity._check_init()
+    if job_id is None:
+        job_id = simcity.job.job_id
+    if job_id is None:
+        raise EnvironmentError("Job ID cannot be determined")
+    return Job(simcity.job.database.get(job_id))
 
+def start():
+    simcity._check_init()
+    try: # EnvironmentError if job_id cannot be determined falls through
+        job = get()
+    except ValueError: # job ID was not yet added to database
+        job = Job({'_id': simcity.job.job_id})
+    
     try:
-        return database.save(Job(doc).start())
+        return simcity.job.database.save(job.start())
     # Check for concurrent modification: the job may be added to the
     # database by the submission script.
     # Since this happens only once, we don't risk unlimited recursion
     except ResourceConflict:
-        return start_job(job_id, database)
+        return start()
     
-def finish_job(job, database):
+def finish(job):
+    simcity._check_init()
     try:
-        job = database.save(job.finish())
+        job = simcity.job.database.save(job.finish())
     # Check for concurrent modification: the job may be added to the
     # database by the submission script after starting.
     # Since this happens only once, we don't risk unlimited recursion
     except ResourceConflict:
-        return finish_job(Job(database.get(job.id)), database)
+        return finish(get())
     else:
         if job['queue'] > 0:
-            archive_job(job, database)
+            archive(job)
 
-def queue_job(job, database, method, host = None):
+def queue(job, method, host = None):
+    simcity._check_init()
     try:
-        return database.save(job.queue(method, host))
+        return simcity.job.database.save(job.queue(method, host))
     except ResourceConflict:
-        return queue_job(Job(database.get(job.id)), database, method)
+        return queue(get(job.id), method)
     else:
         if job['done'] > 0:
-            archive_job(job, database)
+            archive(job)
 
-def archive_job(job, database):
+def archive(job):
+    simcity._check_init()
     try:
-        print "Deleting original job description"
-        database.delete(job)
+        simcity.job.database.delete(job)
     except ResourceConflict:
-        print "Failed to archive jobs"
-        return archive_job(Job(database.get(job.id)), database)
+        return archive(get(job.id))
     else:
-        print "Archiving job description"
-        return database.save(job.archive())
+        return simcity.job.database.save(job.archive())

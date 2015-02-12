@@ -25,11 +25,11 @@ Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. Set t
 
 ## Usage
 
-**Load tokens** to your database: 
+**Load tasks** to your database: 
 
-	$ python scripts/createTokens.py COMMAND TOKEN_ID
+	$ python scripts/createTasks.py COMMAND TOKEN_ID
 
-The TOKEN_ID must be unique. Refresh the database to see the tokens.
+The TOKEN_ID must be unique. Refresh the database to see the tasks.
 
 **Create basic views** (todo, locked, done, error, overview):
 
@@ -37,7 +37,7 @@ The TOKEN_ID must be unique. Refresh the database to see the tokens.
 
 Refresh the database to see the views. Unfold top right tab 'View:All documents' to inspect each view.
 
-**Run a simple example** that calculates the square of a set of tokens:
+**Run a simple example** that calculates the square of a set of tasks:
    
 	$ python scripts/runExample.py
 

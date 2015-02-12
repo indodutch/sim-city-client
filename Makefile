@@ -12,7 +12,7 @@ pyflakes-exists: ; @which pyflakes > /dev/null
 
 pyflakes: pyflakes-exists 
 	@echo "======= PyFlakes ========="
-	@find simcity_client -name '*.py' -exec pyflakes {} \;
+	@find simcity -name '*.py' -exec pyflakes {} \;
 	@find scripts -name '*.py' -exec pyflakes {} \;
 	@find tests -name '*.py' -exec pyflakes {} \;
 
