@@ -1,7 +1,9 @@
-from simcity_client.util import merge_dicts
+from simcity.util import merge_dicts
+import simcity.job
+from simcity.job.document import Job
+
 import httplib
 import subprocess
-from simcity_client.job import Job, queue_job, archive_job
 from uuid import uuid4
 
 class Submitter(object):
@@ -14,11 +16,11 @@ class Submitter(object):
     
     def submit(self, command):
         job_id = 'job_' + self.prefix + uuid4().hex
-        job = queue_job(Job({'_id': job_id}), self.database, self.method, self.host)
+        job = simcity.job.queue(Job({'_id': job_id}), self.method, self.host)
         try:
             job['batch_id'] = self._do_submit(job, command)
         except:
-            archive_job(job, self.database)
+            simcity.job.archive(job)
             raise
         else:
             self.database.save(job)

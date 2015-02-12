@@ -1,45 +1,43 @@
+import simcity
+import simcity.job
+from simcity.util import listfiles, write_json, Timer, expandfilename
+from simcity.task.iterator import TaskViewIterator
+
 import os
-import simcity_client
-from simcity_client.util import listfiles, write_json, Timer, expandfilename
-from simcity_client.job import start_job, finish_job
-from simcity_client.iterator import TokenViewIterator
 from subprocess import call
 
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
     """
-    def __init__(self, database, job_id):
+    def __init__(self, task_db):
         """
-        @param database: the database to get the tokens from.
+        @param database: the database to get the tasks from.
         @param job_id: job id.
         """
-        if database is None:
+        if task_db is None:
             raise ValueError("Database must be initialized")
-        if job_id is None:
-            raise ValueError("Job ID must be defined")
         
-        self.database = database
-        self.job_id = job_id
+        self.task_db = task_db
 
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
-        over the available tokens in CouchDB.
+        over the available tasks in CouchDB.
         """
-        job = start_job(self.job_id, self.database)
+        job = simcity.job.start()
         
         time = Timer()
         self.prepare_env()
-        for token in TokenViewIterator(self.database, 'todo'):
+        for task in TaskViewIterator('todo', database=self.task_db):
             self.prepare_run()
             
             try:
-                self.process_token(token)
+                self.process_task(task)
             except Exception as ex:
                 msg = "Exception " + str(type(ex)) + " occurred during processing: " + str(ex)
-                token.error(msg, exception=ex)
+                task.error(msg, exception=ex)
                 print msg
             
-            self.database.save(token)
+            self.task_db.save(task)
             self.cleanup_run()
             
             if maxtime > 0 and time.elapsed() > maxtime:
@@ -47,7 +45,7 @@ class RunActor(object):
         
         self.cleanup_env()
         
-        finish_job(job, self.database)
+        simcity.job.finish(job)
         
     def prepare_env(self, *kargs, **kwargs):
         """Method to be called to prepare the environment to run the 
@@ -56,24 +54,24 @@ class RunActor(object):
         pass
     
     def prepare_run(self, *kargs, **kwargs):
-        """Code to run before a token gets processed. Used e.g. for fetching
+        """Code to run before a task gets processed. Used e.g. for fetching
         inputs.
         """
         pass
     
-    def process_token(self, token):
-        """The function to overwrite which processes the tokens themselves.
-        @param key: the token key. Should not be used to hold anything
+    def process_task(self, task):
+        """The function to overwrite which processes the tasks themselves.
+        @param key: the task key. Should not be used to hold anything
         informative as it is mainly used to determine the order in which the
-        tokens are returned.
-        @param key: the key indicating where the token is stored in the 
+        tasks are returned.
+        @param key: the key indicating where the task is stored in the 
         database.
-        @param token: the token itself. !WARNING
+        @param task: the task itself. !WARNING
         """
         raise NotImplementedError
 
     def cleanup_run(self, *kargs, **kwargs):
-        """Code to run after a token has been processed.
+        """Code to run after a task has been processed.
         """
         pass
     
@@ -83,23 +81,25 @@ class RunActor(object):
         pass
 
 class ExecuteActor(RunActor):
-    def __init__(self, database = simcity_client.database, config = simcity_client.config, job_id = simcity_client.job_id):
-        super(ExecuteActor, self).__init__(database, job_id)
+    def __init__(self, task_db = None, config = None):
+        if task_db is None:
+            task_db = simcity.task.database
+        super(ExecuteActor, self).__init__(task_db)
         if config is None:
-            raise ValueError("Config must be initialized")
+            config = simcity.config
         self.config = config.section('Execution')
     
-    def process_token(self, token):
+    def process_task(self, task):
         print "-----------------------"
-        print "Working on token: " + token.id
+        print "Working on task: " + task.id
 
-        dirs = self.create_dirs(token)
+        dirs = self.create_dirs(task)
         params_file = os.path.join(dirs['input'], 'input.json')
-        write_json(params_file, token.input)
+        write_json(params_file, task.input)
         
-        token['execute_properties'] = {'dirs': dirs, 'input_file': params_file}
+        task['execute_properties'] = {'dirs': dirs, 'input_file': params_file}
         
-        command = [expandfilename(token['command']), dirs['tmp'], dirs['input'], dirs['output']]
+        command = [expandfilename(task['command']), dirs['tmp'], dirs['input'], dirs['output']]
         stdout = os.path.join(dirs['output'], 'stdout')
         stderr = os.path.join(dirs['output'], 'stderr')
         try:
@@ -107,22 +107,22 @@ class ExecuteActor(RunActor):
                 returnValue = call(command,stdout=fout, stderr=ferr)
             
             if returnValue != 0:
-                token.error("Command failed")
+                task.error("Command failed")
         except Exception as ex:
-            token.error("Command raised exception", ex)
+            task.error("Command raised exception", ex)
         
-        token.output = {}
+        task.output = {}
         
         # Read all files in as attachments
         out_files = listfiles(dirs['output'])
         for filename in out_files:
             with open(os.path.join(dirs['output'], filename), 'r') as f:
-                token.put_attachment(filename, f.read())
+                task.put_attachment(filename, f.read())
 
-        token.done()
+        task.done()
         print "-----------------------"
     
-    def create_dirs(self, token):
+    def create_dirs(self, task):
         dir_map = {'tmp': 'tmp_dir', 'input': 'input_dir', 'output': 'output_dir'}
         
         dirs = {}
@@ -133,7 +133,7 @@ class ExecuteActor(RunActor):
             except OSError: # directory exists
                 pass
             
-            dirs[d] = os.path.join(superdir, token.id + '_' + str(token['lock']))
+            dirs[d] = os.path.join(superdir, task.id + '_' + str(task['lock']))
             os.mkdir(dirs[d])
         
         return dirs

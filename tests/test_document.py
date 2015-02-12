@@ -1,6 +1,7 @@
 import unittest
-from simcity_client.document import Document, Token
-from simcity_client.util import seconds
+from simcity.document import Document
+from simcity.task import Task
+from simcity.util import seconds
 
 class TestDocument(unittest.TestCase):
     def testCreate(self):
@@ -38,47 +39,47 @@ class TestDocument(unittest.TestCase):
         attach = doc.get_attachment('mytext.json')
         self.assertEqual(attach['content_type'], 'application/json')
 
-class TestToken(unittest.TestCase):
+class TestTask(unittest.TestCase):
     def setUp(self):
         self._id = 'mydoc'
-        self.token = Token({'_id': self._id})
+        self.task = Task({'_id': self._id})
     
     def testId(self):
-        self.assertEqual(self.token.id, self._id)
-        self.assertEqual(self.token.value['_id'], self._id)
-        self.assertEqual(self.token['_id'], self._id)
+        self.assertEqual(self.task.id, self._id)
+        self.assertEqual(self.task.value['_id'], self._id)
+        self.assertEqual(self.task['_id'], self._id)
     
     def testDone(self):
-        self.assertEqual(self.token['done'], 0)
-        self.token.done()
-        self.assertGreaterEqual(self.token['done'], seconds() - 1)
+        self.assertEqual(self.task['done'], 0)
+        self.task.done()
+        self.assertGreaterEqual(self.task['done'], seconds() - 1)
 
     def testLock(self):
-        self.assertEqual(self.token['lock'], 0)
-        self.token.lock()
-        self.assertGreaterEqual(self.token['lock'], seconds() - 1)
+        self.assertEqual(self.task['lock'], 0)
+        self.task.lock()
+        self.assertGreaterEqual(self.task['lock'], seconds() - 1)
 
     def testScrub(self):
-        self.token.lock()
-        self.token.done()
-        self.token.scrub()
-        self.assertEqual(self.token['lock'], 0)
-        self.assertEqual(self.token['done'], 0)
-        self.assertEqual(self.token['scrub_count'], 1)
-        self.token.scrub()
-        self.assertEqual(self.token['lock'], 0)
-        self.assertEqual(self.token['done'], 0)
-        self.assertEqual(self.token['scrub_count'], 2)
+        self.task.lock()
+        self.task.done()
+        self.task.scrub()
+        self.assertEqual(self.task['lock'], 0)
+        self.assertEqual(self.task['done'], 0)
+        self.assertEqual(self.task['scrub_count'], 1)
+        self.task.scrub()
+        self.assertEqual(self.task['lock'], 0)
+        self.assertEqual(self.task['done'], 0)
+        self.assertEqual(self.task['scrub_count'], 2)
     
     def testEror(self):
-        self.token.error("some message")
-        self.assertEqual(self.token['lock'], -1)
-        self.assertEqual(self.token['done'], -1)
-        self.token.scrub()
-        self.assertEqual(self.token['lock'], 0)
-        self.assertEqual(self.token['done'], 0)
-        self.assertEqual(len(self.token['error']), 1)
+        self.task.error("some message")
+        self.assertEqual(self.task['lock'], -1)
+        self.assertEqual(self.task['done'], -1)
+        self.task.scrub()
+        self.assertEqual(self.task['lock'], 0)
+        self.assertEqual(self.task['done'], 0)
+        self.assertEqual(len(self.task['error']), 1)
     
     def testNoId(self):
-        t = Token()
+        t = Task()
         self.assertGreater(len(t.id), 10)

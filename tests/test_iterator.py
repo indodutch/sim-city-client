@@ -1,14 +1,14 @@
 import unittest
-from simcity_client.iterator import TokenViewIterator
+from simcity.task.iterator import TaskViewIterator
 from test_mock import MockDB
 
-class TestTokenIter(unittest.TestCase):
+class TestTaskIter(unittest.TestCase):
     def testIterator(self):
         db = MockDB()
-        for token in TokenViewIterator(db, 'view'):
-            self.assertGreater(token['lock'], 0)
-            self.assertEqual(token.rev, 'something')
-            self.assertDictEqual(db.saved[token.id], token.value)
-            break # process one token only
+        for task in TaskViewIterator('view', database=db):
+            self.assertGreater(task['lock'], 0)
+            self.assertEqual(task.rev, 'something')
+            self.assertDictEqual(db.saved[task.id], task.value)
+            break # process one task only
         
         self.assertEqual(len(db.saved), 1)
