@@ -9,7 +9,7 @@ Updated Wed Jan 28 17:12 2015
 @author: Joris Borgdorff
 """
 from simcity.document import Document
-from simcity import config
+import simcity
 from ConfigParser import NoSectionError
 import random
 import numpy as np
@@ -174,7 +174,7 @@ class CouchDB(object):
 
 def _load(name):
     try:
-        cfg = config.section(name)
+        cfg = simcity.config.section(name)
     except NoSectionError:
         raise EnvironmentError("Configuration file " + config.filename + " does not contain '" + name + "' section")
 

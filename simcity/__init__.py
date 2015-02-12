@@ -1,4 +1,5 @@
 import simcity
+from simcity import database
 import simcity.task, simcity.job
 
 config = None
@@ -20,13 +21,13 @@ def init(configfile):
             raise
     else:
         try:
-            simcity.task.database = simcity.database._load('task-db')
+            simcity.task.database = database._load('task-db')
         except:
             if not __is_initializing:
                 raise
         
         try:
-            simcity.job.database = simcity.database._load('job-db')
+            simcity.job.database = database._load('job-db')
         except EnvironmentError:
             # job database not explicitly configured
             simcity.job.database = simcity.task.database
