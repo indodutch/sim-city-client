@@ -41,6 +41,9 @@ def write_json(fname, obj):
         
 def listfiles(mypath):
     return [ f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath,f)) ]
+
+def listdirs(mypath):
+    return [ d for d in os.listdir(mypath) if os.path.isdir(os.path.join(mypath,d)) ]
     
 def merge_dicts(dict1, dict2):
     merge = deepcopy(dict1)
@@ -50,12 +53,13 @@ def merge_dicts(dict1, dict2):
 def seconds():
     return int( time.time() )
 
-def copyglob(srcglob, dstdir):
+def copyglob(srcglob, dstdir, prefix=""):
     if not os.path.isdir(dstdir):
         raise ValueError("Destination of copyglob must be a directory")
     
     for src in glob.glob(expandfilename(srcglob)):
-        shutil.copy(src, dstdir)
+        _, fname = os.path.split(src)
+        shutil.copyfile(src, os.path.join(dstdir, prefix + fname))
 
 class Timer(object):
     def __init__(self):
