@@ -1,4 +1,5 @@
 import simcity, simcity.task, simcity.job
+from simcity import job, task
 import argparse
 import time
 import traceback
@@ -11,19 +12,20 @@ if __name__ == '__main__':
     parser.add_argument('-H', '--hours', type=int, help="number of hours ago the task was locked", default=0)
     parser.add_argument('-S', '--seconds', type=int, help="number of seconds ago the task was locked", default=0)
     parser.add_argument('-V', '--view', choices=task_views + job_views, default='locked', help="view to scrub")
+    parser.add_argument('-c', '--config', help="configuration file", default=None)
     args = parser.parse_args()
     
     arg_t = 60*((24*args.days) + args.hours) + args.seconds
     min_t = int( time.time() ) - arg_t
     
-    simcity.init()
+    simcity.init(configfile=args.config)
 
     if args.view in task_views:
-        db = simcity.task.database
+        db = task.database
         update = []
         for row in db.view(args.view):
             if arg_t <= 0 or row.value['lock'] < min_t:
-                task = simcity.task.get(row.id)
+                task = task.get(row.id)
                 update.append(task.scrub())
 
         if len(update) > 0:
@@ -35,11 +37,11 @@ if __name__ == '__main__':
     else:
         count = 0
         total = 0
-        for row in simcity.job.database.view(args.view):
+        for row in job.database.view(args.view):
             total += 1
             if arg_t <= 0 or row.value['queue'] < min_t:
                 try:
-                    simcity.job.archive(simcity.job.get(row.id))
+                    job.archive(job.get(row.id))
                     count += 1
                 except Exception as ex:
                     print "Failed to archive job", row.id, "-", type(ex), ":", str(ex), "...", traceback.format_exc(ex)

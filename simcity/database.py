@@ -9,6 +9,8 @@ Updated Wed Jan 28 17:12 2015
 @author: Joris Borgdorff
 """
 from simcity.document import Document
+from simcity import config
+from ConfigParser import NoSectionError
 import random
 import numpy as np
 
@@ -16,7 +18,7 @@ import numpy as np
 from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
 from couchdb.client import Server
-        
+
 class CouchDB(object):
     """Client class to handle communication with the CouchDB back-end.
     """
@@ -169,3 +171,18 @@ class CouchDB(object):
         """
         docs = self.get_from_view(view)
         return self.delete_documents(docs)
+
+def _load(name):
+    try:
+        cfg = config.section(name)
+    except NoSectionError:
+        raise EnvironmentError("Configuration file " + config.filename + " does not contain '" + name + "' section")
+
+    try:
+        return CouchDB(
+                url      = cfg['url'],
+                db       = cfg['database'],
+                username = cfg['username'],
+                password = cfg['password'])
+    except IOError as ex:
+        raise IOError("Cannot establish connection with " + name + " CouchDB <" + cfg['url'] + ">: " + str(ex))

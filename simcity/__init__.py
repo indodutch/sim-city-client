@@ -1,56 +1,37 @@
-from simcity.util import Config
-from simcity.database import CouchDB
-from ConfigParser import NoSectionError
-import os, simcity.task, simcity.job
+import simcity
+import simcity.task, simcity.job
 
 config = None
 is_initialized = False
+__is_initializing = True
 
 def _check_init():
     if not is_initialized:
         raise EnvironmentError("Databases are not initialized yet, please provide a valid configuration file to simcity.init()")
 
-def _load_database(name):
-    try:
-        cfg = config.section(name)
-    except NoSectionError:
-        raise ValueError("Configuration file " + config.filename + " does not contain '" + name + "' section")
-
-    try:
-        return CouchDB(
-                url      = cfg['url'],
-                db       = cfg['database'],
-                username = cfg['username'],
-                password = cfg['password'])
-    except IOError as ex:
-        raise IOError("Cannot establish connection with " + name + " CouchDB <" + cfg['url'] + ">: " + str(ex))
-    
-
-def init(configfile=None):
+def init(configfile):
     global is_initialized, config
     
-    if simcity.job.job_id is None and 'SIMCITY_JOBID' in os.environ:
-        simcity.job.job_id = os.environ['SIMCITY_JOBID']
-    
     try:
-        config = Config(configfile)
+        config = simcity.util.Config(configfile)
     except:
         # default initialization may fail
-        if configfile is not Config.DEFAULT_FILENAMES:
+        if not __is_initializing:
             raise
     else:
         try:
-            simcity.task.database = _load_database('task-db')
+            simcity.task.database = simcity.database._load('task-db')
         except:
-            if configfile is not Config.DEFAULT_FILENAMES:
+            if not __is_initializing:
                 raise
         
         try:
-            simcity.job.database = _load_database('job-db')
-        except NoSectionError:
+            simcity.job.database = simcity.database._load('job-db')
+        except EnvironmentError:
+            # job database not explicitly configured
             simcity.job.database = simcity.task.database
         except:
-            if configfile is not Config.DEFAULT_FILENAMES:
+            if not __is_initializing:
                 raise
         
         is_initialized = True
@@ -70,4 +51,6 @@ def overview_total():
     
     return num
 
-init(configfile=Config.DEFAULT_FILENAMES)
+
+init(None)
+__is_initializing = False

@@ -27,8 +27,8 @@ if __name__ == '__main__':
         print "Task could not be added to the database:", ex
         sys.exit(1)
 
-    job = simcity.job.start_if_needed(args.host, args.max)
+    job = simcity.job.submit_if_needed(args.host, args.max)
     if job is None:
-        print "Let job be processed by existing pilot-job scripts"
+        print "Let task be processed by existing pilot-job scripts"
     else:
         print "Job " + job['batch_id'] + " (ID: " + job.id + ") will process task"

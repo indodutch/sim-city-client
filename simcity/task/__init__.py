@@ -1,5 +1,6 @@
 import simcity
-from simcity.task.document import Task
+from .document import Task
+from .iterator import TaskViewIterator
 
 database = None
 
