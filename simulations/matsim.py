@@ -44,7 +44,8 @@ if __name__ == '__main__':
     subprocess.call([expandfilename([src, 'scripts', 'matsim-runner.sh']), model])
     
     # Copy output files to output directory
-    copyglob(expandfilename([outdir, '*.(log|gz|png|txt)']), out_dir)
+    for ftype in ('*.log', '*.gz', '*.png', '*.txt'):
+        copyglob(expandfilename([outdir, ftype]), out_dir)
     
     itersdir = expandfilename([outdir, 'ITERS'])
     for d in listdirs(itersdir):
