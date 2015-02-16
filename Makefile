@@ -18,7 +18,7 @@ pyflakes: pyflakes-exists
 
 unittest:
 	@echo "======= Unit Tests ========="
-	@python -m unittest discover tests
+	@nosetests
 
 test: pyflakes unittest
 
