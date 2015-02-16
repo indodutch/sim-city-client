@@ -16,8 +16,8 @@ class TestDocument(unittest.TestCase):
     
     def testNoId(self):
         doc = Document({'someattr': 1})
-        self.assertRaises(AttributeError, doc.getattr, 'id')
-        self.assertRaises(AttributeError, doc.getattr, 'rev'):
+        self.assertRaises(AttributeError, getattr, doc, 'id')
+        self.assertRaises(AttributeError, getattr, doc, 'rev')
 
     def testEmpty(self):
         Document({})
