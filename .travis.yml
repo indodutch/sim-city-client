@@ -2,4 +2,4 @@ language: python
 python:
     - "2.7"
 install: "make install"
-script: "nosetests --with-coverage"
+script: "make fulltest"
