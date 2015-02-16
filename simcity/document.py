@@ -24,14 +24,14 @@ class Document(object):
         try:
             return self.doc['_id']
         except KeyError:
-            raise KeyError("_id for document is not set")
+            raise AttributeError("_id for document is not set")
     
     @property
     def rev(self):
         try:
             return self.doc['_rev']
         except KeyError:
-            raise KeyError("_rev is not available: document is not retrieved from database")
+            raise AttributeError("_rev is not available: document is not retrieved from database")
 
     @id.setter
     def id(self, new_id):
