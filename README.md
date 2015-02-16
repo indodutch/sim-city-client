@@ -1,6 +1,6 @@
 # Run a simulation on SIM-CITY infrastructure
 
-SIM-CITY client 0.1. Uses a pilot job script to run multiple simulations in the same job.
+SIM-CITY client 0.2. Uses a pilot job script to run multiple simulations in the same job.
 
 ## Dependencies
 
@@ -21,15 +21,21 @@ Simply run
 
     make install
 
-Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings.
+Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings. There are two CouchDB database sections, one for the jobs and one for the tasks. If these are the same, you can remove the jobs database section.
 
 ## Usage
 
-**Load tokens** to your database: 
+**Run a script** on a cluster:
 
-	$ python scripts/createTokens.py COMMAND TOKEN_ID
+    $ python scripts/submitJob.py 'path/to/job/on/cluster' cluster
 
-The TOKEN_ID must be unique. Refresh the database to see the tokens.
+The cluster can be configured in the config.ini file, as a section [$CLUSTER_NAME-host].
+
+**Load tasks** to your database: 
+
+	$ python scripts/createTasks.py COMMAND TOKEN_ID
+
+The TOKEN_ID must be unique. Refresh the database to see the tasks.
 
 **Create basic views** (todo, locked, done, error, overview):
 
@@ -37,7 +43,7 @@ The TOKEN_ID must be unique. Refresh the database to see the tokens.
 
 Refresh the database to see the views. Unfold top right tab 'View:All documents' to inspect each view.
 
-**Run a simple example** that calculates the square of a set of tokens:
+**Run a simple example** that calculates the square of a set of tasks:
    
 	$ python scripts/runExample.py
 

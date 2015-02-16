@@ -1,10 +1,22 @@
-[CouchDB]
+[task-db]
 url = https://couch.example.com
 username = myuser
 password = mypassword
 database = mydatabase
 
+[job-db]
+url = https://couch.example.com
+username = myuser
+password = mypassword
+database = myjobdatabase
+
 [Execution]
 tmp_dir = $TMPDIR
 output_dir = $HOME/out
 input_dir = $HOME/in
+
+[lisa-host]
+path = path/to/submitscript
+script = submitscript.sh
+host = user@hostname
+method = ssh

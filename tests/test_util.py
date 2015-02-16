@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import unittest
-from simcity_client.util import Config, expandfilenames, merge_dicts, issequence, expandfilename, Timer
+from simcity.util import Config, expandfilenames, merge_dicts, issequence, expandfilename, Timer
 import os, tempfile
 import ConfigParser
 import time

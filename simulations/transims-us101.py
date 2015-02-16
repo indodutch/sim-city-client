@@ -1,13 +1,11 @@
 #!/usr/bin/env python
 
-#!/usr/bin/env python
-
 from __future__ import print_function
 import sys
 import json
 import os
 import subprocess
-from simcity_client.util import expandfilename, copyglob
+from simcity.util import expandfilename, copyglob
 
 if __name__ == '__main__':
     print("Input:")

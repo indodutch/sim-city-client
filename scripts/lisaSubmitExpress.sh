@@ -6,6 +6,7 @@
 # cd to the directory where the program is to be called:
 # call the program
 
-module load python/2.7.9
+module load python/2.7.3
 . ~/simcity/bin/activate
-python $PBS_O_WORKDIR/scripts/runExample.py
+cd $PBS_O_WORKDIR
+python runExample.py
