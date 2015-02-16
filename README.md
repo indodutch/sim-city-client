@@ -1,6 +1,6 @@
 # Run a simulation on SIM-CITY infrastructure
 
-SIM-CITY client 0.1. Uses a pilot job script to run multiple simulations in the same job.
+SIM-CITY client 0.2. Uses a pilot job script to run multiple simulations in the same job.
 
 ## Dependencies
 
@@ -21,9 +21,15 @@ Simply run
 
     make install
 
-Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings.
+Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings. There are two CouchDB database sections, one for the jobs and one for the tasks. If these are the same, you can remove the jobs database section.
 
 ## Usage
+
+**Run a script** on a cluster:
+
+    $ python scripts/submitJob.py 'path/to/job/on/cluster' cluster
+
+The cluster can be configured in the config.ini file, as a section [$CLUSTER_NAME-host].
 
 **Load tasks** to your database: 
 
