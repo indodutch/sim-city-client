@@ -11,8 +11,8 @@ if __name__ == '__main__':
     parser.add_argument('-D', '--days', type=int, help="number of days ago the task was locked", default=0)
     parser.add_argument('-H', '--hours', type=int, help="number of hours ago the task was locked", default=0)
     parser.add_argument('-S', '--seconds', type=int, help="number of seconds ago the task was locked", default=0)
-    parser.add_argument('-V', '--view', choices=task_views + job_views, default='locked', help="view to scrub")
     parser.add_argument('-c', '--config', help="configuration file", default=None)
+    parser.add_argument('view', choices=task_views + job_views, default='locked', help="view to scrub")
     args = parser.parse_args()
     
     arg_t = 60*((24*args.days) + args.hours) + args.seconds
