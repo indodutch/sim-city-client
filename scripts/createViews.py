@@ -24,7 +24,7 @@ function(doc) {
     '''
     erroneousMapCode = '''
 function(doc) {
-  if (doc.type == "task" && doc.done == -1) {
+  if (doc.type == "task" && doc.lock == -1) {
     emit(doc._id, doc.error);
   }
 }
@@ -44,7 +44,7 @@ function(doc) {
       emit("{{name}}", 1);
     }
   {{/tasks}}
-    if (doc.done == -1) {
+    if (doc.lock == -1) {
       emit("error", 1);
     }
   }
@@ -65,8 +65,8 @@ function (key, values, rereduce) {
     
     tasks = {
         'todo':   'doc.lock == 0',
-        'locked': 'doc.lock > 0  && doc.done == 0',
-        'done':   'doc.done > 0'
+        'locked': 'doc.lock > 0 && doc.done == 0',
+        'done':   'doc.lock > 0 && doc.done > 0'
     }
     jobs = {
         'pending_jobs':  'doc.start == 0 && doc.archive == 0',
