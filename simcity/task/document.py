@@ -86,7 +86,7 @@ class Task(Document):
         return self
 
     def has_error(self):
-        return self.doc['lock'] = -1
+        return self.doc['lock'] == -1
     
     def get_errors(self):
         try:
