@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import simcity
 import simcity.job
 from simcity.util import listfiles, write_json, Timer, expandfilename
@@ -9,43 +11,40 @@ from subprocess import call
 class RunActor(object):
     """Executor class to be overwritten in the client implementation.
     """
-    def __init__(self, task_db):
+    def __init__(self, db):
         """
         @param database: the database to get the tasks from.
         @param job_id: job id.
         """
-        if task_db is None:
+        if db is None:
             raise ValueError("Database must be initialized")
         
-        self.task_db = task_db
+        self.db = db
 
     def run(self, maxtime=-1):
         """Run method of the actor, executes the application code by iterating
         over the available tasks in CouchDB.
         """
-        job = simcity.job.start()
-        
         time = Timer()
         self.prepare_env()
-        for task in TaskViewIterator('todo', database=self.task_db):
-            self.prepare_run()
+        try:
+            for task in TaskViewIterator('todo', database=self.db):
+                self.prepare_run()
             
-            try:
-                self.process_task(task)
-            except Exception as ex:
-                msg = "Exception " + str(type(ex)) + " occurred during processing: " + str(ex)
-                task.error(msg, exception=ex)
-                print msg
+                try:
+                    self.process_task(task)
+                except Exception as ex:
+                    msg = "Exception {0} occurred during processing: {1}".format(type(ex), ex)
+                    task.error(msg, exception=ex)
+                    print(msg)
             
-            self.task_db.save(task)
-            self.cleanup_run()
+                self.db.save(task)
+                self.cleanup_run()
             
-            if maxtime > 0 and time.elapsed() > maxtime:
-                break
-        
-        self.cleanup_env()
-        
-        simcity.job.finish(job)
+                if maxtime > 0 and time.elapsed() > maxtime:
+                    break
+        finally:
+            self.cleanup_env()
         
     def prepare_env(self, *kargs, **kwargs):
         """Method to be called to prepare the environment to run the 
@@ -89,9 +88,15 @@ class ExecuteActor(RunActor):
             config = simcity.config
         self.config = config.section('Execution')
     
+    def prepare_env(self, *kargs, **kwargs):
+        self.job = simcity.job.start()
+    
+    def cleanup_env(self, *kargs, **kwargs):
+        simcity.job.finish(self.job)
+    
     def process_task(self, task):
-        print "-----------------------"
-        print "Working on task: " + task.id
+        print("-----------------------")
+        print("Working on task: {0}".format(task.id))
 
         dirs = self.create_dirs(task)
         params_file = os.path.join(dirs['input'], 'input.json')
@@ -119,8 +124,9 @@ class ExecuteActor(RunActor):
             with open(os.path.join(dirs['output'], filename), 'r') as f:
                 task.put_attachment(filename, f.read())
 
-        task.done()
-        print "-----------------------"
+        if not task.has_error(): # don't override error status
+            task.done()
+        print("-----------------------")
     
     def create_dirs(self, task):
         dir_map = {'tmp': 'tmp_dir', 'input': 'input_dir', 'output': 'output_dir'}

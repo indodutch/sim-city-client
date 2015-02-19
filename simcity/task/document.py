@@ -84,6 +84,9 @@ class Task(Document):
             self.doc['error'] = []
         self.doc['error'].append(error)
         return self
+
+    def has_error(self):
+        return self.doc['lock'] = -1
     
     def get_errors(self):
         try:
