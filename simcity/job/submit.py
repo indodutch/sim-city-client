@@ -2,11 +2,15 @@ from simcity.util import merge_dicts
 from simcity.job import Job, archive, queue
 import simcity, simcity.job
 
+from numbers import Number
 import httplib
 import subprocess
 from uuid import uuid4
 
 def submit_if_needed(hostname, max_jobs):
+    if not isinstance(max_jobs, Number):
+	raise ValueError("Max jobs must be a number")
+
     num = simcity.overview_total()
 
     num_jobs = num['active_jobs'] + num['pending_jobs']
