@@ -25,8 +25,8 @@ if __name__ == '__main__':
         update = []
         for row in db.view(args.view):
             if arg_t <= 0 or row.value['lock'] < min_t:
-                task = task.get(row.id)
-                update.append(task.scrub())
+                t = task.get(row.id)
+                update.append(t.scrub())
 
         if len(update) > 0:
             db.save_documents(update)
