@@ -1,15 +1,22 @@
-'''
-Created on 22 Dec 2014
+#!/usr/bin/env python
+# SIM-CITY client
+# 
+# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>, Anatoli Danezi <anatoli.danezi@surfsara.nl>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-@author: Anatoli Danezi <anatoli.danezi@surfsara.nl>
-@helpdesk: Grid Services <grid.support@surfsara.nl>
-                                         
-usage: python createViews.py [picas_db_name] [picas_username] [picas_pwd]   
-description: create the following Views in [picas_db_name]:                     
-    todo View : lock_timestamp == 0 && done_timestamp == 0              
-    locked View : lock_timestamp > 0 && done_timestamp == 0             
-    done View : lock_timestamp > 0 && done _timestamp > 0    
-    overview_total View : sum tasks per View (Map/Reduce)  
+'''
+Create views necessary to run simcity client with.
 '''
 import pystache
 import simcity, simcity.job, simcity.task
