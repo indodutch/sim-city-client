@@ -1,16 +1,20 @@
-.PHONY: all test clean pyflakes pyflakes-exists unittest install reinstall
+.PHONY: all requirements test-requirements test clean pyflakes pyflakes-exists unittest unittest-coverage fulltest install reinstall
 
 all: install
 
-install:
-	pip install .
+requirements:
+	@pip install -r requirements.txt
+
+test-requirements:
+	@pip install -r test_requirements.txt > /dev/null
+
+install: requirements
+	@pip install .
 	
 reinstall:
-	pip install --upgrade --no-deps .
+	@pip install --upgrade --no-deps .
 
-pyflakes-exists: ; @which pyflakes > /dev/null
-
-pyflakes: pyflakes-exists 
+pyflakes:
 	@echo "======= PyFlakes ========="
 	@find simcity -name '*.py' -exec pyflakes {} \;
 	@find scripts -name '*.py' -exec pyflakes {} \;
@@ -20,7 +24,13 @@ unittest:
 	@echo "======= Unit Tests ========="
 	@nosetests
 
-test: pyflakes unittest
+test: test-requirements pyflakes unittest
+
+unittest-coverage:
+	@echo "======= Unit Tests ========="
+	@nosetests --with-coverage
+
+fulltest: test-requirements pyflakes unittest-coverage
 
 clean: 
 	rm -rf build/
