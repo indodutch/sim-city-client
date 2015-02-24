@@ -1,4 +1,7 @@
-.PHONY: all requirements test-requirements test clean pyflakes pyflakes-exists unittest unittest-coverage fulltest install reinstall
+.PHONY: all requirements test-requirements test-license test clean pyflakes pyflakes-exists unittest unittest-coverage fulltest install reinstall
+
+PYTHON_FIND=find simcity scripts simulations tests -name '*.py'
+LICENSE_NAME="Apache License, Version 2.0"
 
 all: install
 
@@ -14,17 +17,19 @@ install: requirements
 reinstall:
 	@pip install --upgrade --no-deps .
 
+test-license: LICENSE
+	@echo "====== Check License ====="
+	@test $(shell $(PYTHON_FIND) | xargs grep $(LICENSE_NAME) | wc -l) -eq $(shell $(PYTHON_FIND) | wc -l)
+
 pyflakes:
 	@echo "======= PyFlakes ========="
-	@find simcity -name '*.py' -exec pyflakes {} \;
-	@find scripts -name '*.py' -exec pyflakes {} \;
-	@find tests -name '*.py' -exec pyflakes {} \;
+	@$(PYTHON_FIND) -exec pyflakes {} \;
 
 unittest:
 	@echo "======= Unit Tests ========="
 	@nosetests
 
-test: test-requirements pyflakes unittest
+test: test-requirements test-license pyflakes unittest
 
 unittest-coverage:
 	@echo "======= Unit Tests ========="
