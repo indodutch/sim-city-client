@@ -1,11 +1,22 @@
-'''
-Created on 22 Dec 2014
+#!/usr/bin/env python
+# SIM-CITY client
+# 
+# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-@author: Anatoli Danezi <anatoli.danezi@surfsara.nl>
-@helpdesk: Grid Services <grid.support@surfsara.nl>
-                                         
-usage: python createTasks.py [picas_db_name] [picas_username] [picas_pwd]
-description: create 5 tasks with basic fields and a random number for the input field
+'''
+description: create tasks with a single command
 '''
 import simcity
 import argparse
