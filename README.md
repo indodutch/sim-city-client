@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
 
-SIM-CITY client 0.2. Uses a pilot job script to run multiple simulations in the same job.
+SIM-CITY client 0.2.1. Uses a pilot job script to run multiple simulations in the same job.
 
 ## Dependencies
 
