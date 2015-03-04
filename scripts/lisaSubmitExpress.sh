@@ -9,4 +9,4 @@
 module load python/2.7.3
 . ~/simcity/bin/activate
 cd $PBS_O_WORKDIR
-python runExample.py -M 5
+python run.py -M 5
