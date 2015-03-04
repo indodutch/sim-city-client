@@ -62,7 +62,7 @@ def get(job_id = None):
     if job_id is None:
         job_id = simcity.job.job_id
     if job_id is None:
-        raise EnvironmentError("Job ID cannot be determined")
+        raise EnvironmentError("Job ID cannot be determined (from $SIMCITY_JOBID or command-line)")
     return Job(simcity.job.database.get(job_id))
 
 def start():
