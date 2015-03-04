@@ -36,7 +36,7 @@ if __name__ == '__main__':
     parser.add_argument('view', choices=task_views + job_views, default='locked', help="view to scrub")
     args = parser.parse_args()
     
-    arg_t = 60*((24*args.days) + args.hours) + args.seconds
+    arg_t = args.seconds + 60*(args.minutes + 60*(args.hours + (24*args.days)))
     min_t = int( time.time() ) - arg_t
     
     simcity.init(configfile=args.config)
