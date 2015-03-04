@@ -21,15 +21,26 @@ Client to run commands with.
 #python imports
 import simcity
 from simcity.job import ExecuteActor
-import sys
+import argparse
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        simcity.job.job_id = sys.argv[1]
+    parser = argparse.ArgumentParser(description="Make old locked tasks available for processing again (default: all)")
+    parser.add_argument('-D', '--days', type=int, help="number of days ago the task was locked", default=1)
+    parser.add_argument('-H', '--hours', type=int, help="number of hours ago the task was locked", default=0)
+    parser.add_argument('-M', '--minutes', type=int, help="number of seconds ago the task was locked", default=0)
+    parser.add_argument('-S', '--seconds', type=int, help="number of seconds ago the task was locked", default=0)
+    parser.add_argument('-p', '--padding', type=float, help="padding factor for average task time in calculating maximum time", default=1.5)
+    parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
+    
+    args = parser.parse_args()
+    arg_t = args.seconds + 60*(args.minutes + 60*(args.hours + (24*args.days)))
+    
+    if args.job_id is not None:
+        simcity.job.job_id = args.job_id
     
     actor = ExecuteActor()
 
     # Start work!
     print "Connected to the database sucessfully. Now starting work..."
-    actor.run()
+    actor.run(maxtime = arg_t, avg_time_factor = args.padding)
     print "No more tasks to process, done."
