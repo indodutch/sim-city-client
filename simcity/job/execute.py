@@ -36,8 +36,9 @@ class RunActor(object):
             raise ValueError("Database must be initialized")
         
         self.db = db
+        self.tasks_processed = 0
 
-    def run(self, maxtime=-1):
+    def run(self, maxtime=None, avg_time_factor=0.0):
         """Run method of the actor, executes the application code by iterating
         over the available tasks in CouchDB.
         """
@@ -56,9 +57,12 @@ class RunActor(object):
             
                 self.db.save(task)
                 self.cleanup_run()
-            
-                if maxtime > 0 and time.elapsed() > maxtime:
-                    break
+                self.tasks_processed += 1
+                
+                if maxtime is not None:
+                    will_elapse = (avg_time_factor + self.tasks_processed) * time.elapsed() / self.tasks_processed
+                    if will_elapse > maxtime:
+                        break
         finally:
             self.cleanup_env()
         
@@ -108,6 +112,7 @@ class ExecuteActor(RunActor):
         self.job = simcity.job.start()
     
     def cleanup_env(self, *kargs, **kwargs):
+        self.job['tasks_processed'] = self.tasks_processed
         simcity.job.finish(self.job)
     
     def process_task(self, task):
