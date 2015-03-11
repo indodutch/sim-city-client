@@ -81,7 +81,6 @@ class Timer(object):
     def __init__(self):
         self.t = time.time()
     
-    @property
     def elapsed(self):
         return time.time() - self.t
     
