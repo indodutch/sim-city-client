@@ -25,10 +25,10 @@ class TestDocument(unittest.TestCase):
         other_id = 'myotherdoc'
         doc = Document({'_id': _id})
         self.assertEqual(doc.id, _id)
-        self.assertDictEqual(doc.value, {'_id': _id})
+        self.assertEqual(doc.value, {'_id': _id})
         doc.id = other_id
         self.assertEqual(doc.id, other_id)
-        self.assertDictEqual(doc.value, {'_id': other_id})
+        self.assertEqual(doc.value, {'_id': other_id})
     
     def testNoId(self):
         doc = Document({'someattr': 1})
@@ -66,12 +66,12 @@ class TestTask(unittest.TestCase):
     def testDone(self):
         self.assertEqual(self.task['done'], 0)
         self.task.done()
-        self.assertGreaterEqual(self.task['done'], seconds() - 1)
+        self.assertTrue(self.task['done'] >= seconds() - 1)
 
     def testLock(self):
         self.assertEqual(self.task['lock'], 0)
         self.task.lock()
-        self.assertGreaterEqual(self.task['lock'], seconds() - 1)
+        self.assertTrue(self.task['lock'] >= seconds() - 1)
 
     def testScrub(self):
         self.task.lock()
@@ -96,4 +96,4 @@ class TestTask(unittest.TestCase):
     
     def testNoId(self):
         t = Task()
-        self.assertGreater(len(t.id), 10)
+        self.assertTrue(len(t.id) > 10)

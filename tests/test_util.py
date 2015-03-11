@@ -41,7 +41,7 @@ class TestConfig(unittest.TestCase):
         my = cfg.section('MySection')
         other = cfg.section('OtherSection')
         self.assertRaises(ConfigParser.NoSectionError, cfg.section, 'NonExistantSection')
-        self.assertIs(type(my), dict, "section is not a dictionary")
+        self.assertTrue(type(my) is dict, "section is not a dictionary")
         self.assertTrue('a' in my, "Value in section")
         self.assertEqual(my['a'], '4', "latest value does not overwrite earlier values")
         self.assertEqual(other['a'], '2', "value not contained to section")
@@ -90,20 +90,20 @@ class TestMerge(unittest.TestCase):
     
     def testMergeEmpty(self):
         c = merge_dicts(self.a, {})
-        self.assertDictEqual(c, self.a)
+        self.assertEqual(c, self.a)
 
     def testEmptyMerge(self):
         c = merge_dicts({}, self.a)
-        self.assertDictEqual(c, self.a)
+        self.assertEqual(c, self.a)
     
     def testEmptyEmptyMerge(self):
-        self.assertDictEqual(merge_dicts({}, {}), {})
+        self.assertEqual(merge_dicts({}, {}), {})
         
 class TestTimer(unittest.TestCase):
     def testTimer(self):
         timer = Timer()
         time.sleep(0.2)
-        self.assertGreaterEqual(timer.elapsed, 0.2)
-        self.assertLess(timer.elapsed, 0.4)
+        self.assertTrue(timer.elapsed >= 0.2)
+        self.assertTrue(timer.elapsed < 0.4)
         timer.reset()
-        self.assertLess(timer.elapsed, 0.2)
+        self.assertTrue(timer.elapsed < 0.2)
