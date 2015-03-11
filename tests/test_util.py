@@ -103,7 +103,7 @@ class TestTimer(unittest.TestCase):
     def testTimer(self):
         timer = Timer()
         time.sleep(0.2)
-        self.assertGreaterEqual(timer.elapsed, 0.2)
-        self.assertLess(timer.elapsed, 0.4)
+        self.assertGreaterEqual(timer.elapsed(), 0.2)
+        self.assertLess(timer.elapsed(), 0.4)
         timer.reset()
-        self.assertLess(timer.elapsed, 0.2)
+        self.assertLess(timer.elapsed(), 0.2)
