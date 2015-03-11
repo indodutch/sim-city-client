@@ -129,8 +129,9 @@ class ExecuteActor(RunActor):
         stdout = os.path.join(dirs['output'], 'stdout')
         stderr = os.path.join(dirs['output'], 'stderr')
         try:
-            with open(stdout, 'w') as fout, open(stderr, 'w') as ferr:
-                returnValue = call(command,stdout=fout, stderr=ferr)
+            with open(stdout, 'w') as fout:
+                with open(stderr, 'w') as ferr:
+                    returnValue = call(command,stdout=fout, stderr=ferr)
             
             if returnValue != 0:
                 task.error("Command failed")

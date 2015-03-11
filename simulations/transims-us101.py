@@ -37,7 +37,7 @@ if __name__ == '__main__':
     dst = expandfilename((tmp_dir, 'transims-us101'))
     
     dirnames = ['control', 'input', 'output', 'ArcGis']
-    dirs = {name: expandfilename([dst, name]) for name in dirnames}
+    dirs = dict((name, expandfilename([dst, name])) for name in dirnames)
 
     os.mkdir(dst)
     for dstdir in dirs.values():
