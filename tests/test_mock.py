@@ -23,8 +23,8 @@ class MockDB(object):
     TASKS = [{'_id': 'a', 'lock': 0}, {'_id': 'b', 'lock': 0}]
     JOBS = [{'_id': 'myjob'}]
     def __init__(self):
-        self.tasks = {t['_id']: t.copy() for t in MockDB.TASKS} # deep copy
-        self.jobs = {t['_id']: t.copy() for t in MockDB.JOBS}
+        self.tasks = dict((t['_id'], t.copy()) for t in MockDB.TASKS) # deep copy
+        self.jobs = dict((t['_id'], t.copy()) for t in MockDB.JOBS)
         self.saved = {}
 
     def get_single_from_view(self, view, **view_params):

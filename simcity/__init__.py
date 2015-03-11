@@ -57,7 +57,7 @@ def overview_total():
     _check_init()
     
     views = ['todo', 'locked', 'error', 'done', 'finished_jobs', 'active_jobs', 'pending_jobs']
-    num = {view: 0 for view in views}
+    num = dict((view, 0) for view in views)
 
     for view in simcity.task.database.view('overview_total', group=True):
         num[view.key] = view.value
