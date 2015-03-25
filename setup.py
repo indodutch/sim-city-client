@@ -37,4 +37,6 @@ setup(name='simcity',
         'Programming Language :: Python :: 2 :: Only',
         'Topic :: System :: Distributed Computing'
       ],
+      install_requires=['CouchDB', 'pystache'],
+      test_requires=['nose', 'pyflakes', 'pep8', 'coverage']
      )

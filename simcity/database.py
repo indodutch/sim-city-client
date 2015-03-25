@@ -1,13 +1,13 @@
 # SIM-CITY client
-# 
+#
 # Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,14 +34,18 @@ from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
 from couchdb.client import Server
 
+
 class CouchDB(object):
+
     """Client class to handle communication with the CouchDB back-end.
     """
+
     def __init__(self, url="http://localhost:5984", db="test",
-            username="", password="", design_document="Monitor"):
-        """Create a CouchClient object. 
-        :param url: the location where the CouchDB instance is located, 
-        including the port at which it's listening. Default: http://localhost:5984
+                 username="", password="", design_document="Monitor"):
+        """Create a CouchClient object.
+        :param url: the location where the CouchDB instance is located,
+                    including the port at which it's listening.
+                    Default: http://localhost:5984
         :param db: the database to use. Default: test.
         # """
         self.server = Server(url=url)
@@ -49,15 +53,16 @@ class CouchDB(object):
             self.server.resource.credentials = (username, password)
         self.db = self.server[db]
         self.design_doc = design_document
-    
+
     def __getitem__(self, idx):
         return self.db[idx]
-    
+
     def get_from_view(self, view, **view_params):
         """
         Get Documents from the specified view that has task _id as key.
         :param view: name of the view that has a row id coupled to a document
-        :param view_params: name of the view optional extra parameters for the view.
+        :param view_params: name of the view optional extra parameters for the
+                            view.
         :return: a list of Task objects in the view
         """
         result = []
@@ -65,8 +70,8 @@ class CouchDB(object):
             try:
                 result.append(self.get(doc.id))
             except:
-                pass # task was already deleted
-            
+                pass  # task was already deleted
+
         return result
 
     def get(self, id):
@@ -78,7 +83,7 @@ class CouchDB(object):
         if data is None:
             raise ValueError(id + " is not a document ID in the database")
         return Document(data)
-    
+
     def get_single_from_view(self, view, window_size=1, **view_params):
         """Get a task from the specified view.
         :param view: the view to get the task from.
@@ -89,42 +94,45 @@ class CouchDB(object):
         view = self.view(view, limit=window_size, **view_params)
         row = random.choice(view.rows)
         return self.get(row.id)
-    
+
     def view(self, view, **view_params):
         """
         Get the data from a view
-        
+
         :param view: name of the view
         :param view_params: the parameters that should be added to the view
         request. Optional.
         :return: iterator over the view; the rows property contains the rows.
         """
         return self.db.view(self.design_doc + '/' + view, **view_params)
-    
+
     def save(self, doc):
         """ Save a Document to the database.
-        
+
         Updates the document to have the new _rev value.
         :param doc: Document object
-        :throws couchdb.http.ResourceConflict: when document exists with different revision or was deleted.
+        :throws couchdb.http.ResourceConflict: when document exists with
+                different revision or was deleted.
         """
         _id, _rev = self.db.save(doc.value)
         doc['_rev'] = _rev
         doc['_id'] = _id
         return doc
-    
+
     def save_documents(self, docs):
         """Save a sequence of Documents to the database.
-        
+
         - If the task was newly created and the _id is already is in the
           database the task will not be added.
-        - If the task is an existing document, it will be updated if the _rev key
-          matches.
-        :param tasks [task1, task2, ...]; tasks for which the save was succesful will get new _rev values
+        - If the task is an existing document, it will be updated if the _rev
+          key matches.
+
+        :param tasks [task1, task2, ...]; tasks for which the save was
+                succesful will get new _rev values
         :return: a sequence of [succeeded1, succeeded2, ...] values.
         """
         updated = self.db.update([doc.value for doc in docs])
-        
+
         result = [False] * len(docs)
         for i in xrange(len(docs)):
             is_added, _id, _rev = updated[i]
@@ -132,7 +140,7 @@ class CouchDB(object):
                 docs[i]['_id'] = _id
                 docs[i]['_rev'] = _rev
                 result[i] = True
-        
+
         return result
 
     def add_view(self, view, map_fun, reduce_fun=None, *args, **kwargs):
@@ -142,15 +150,17 @@ class CouchDB(object):
         :param map_fun: string of the javascript map function
         :param reduce_fun: string of the javascript reduce function (optional)
         """
-        definition = ViewDefinition(self.design_doc, view, map_fun, reduce_fun, *args, **kwargs)
+        definition = ViewDefinition(
+            self.design_doc, view, map_fun, reduce_fun, *args, **kwargs)
         definition.sync(self.db)
 
     def delete(self, doc):
         """
         Delete a Document from the database
 
-        The Document must have a valid and current _id and _rev, so they must be
-        retrieved from the database and not be altered there in the mean time.
+        The Document must have a valid and current _id and _rev, so they must
+        be retrieved from the database and not be altered there in the mean
+        time.
         :param doc: Document object
         :raise: ResouceConflict: if the document was updated in the database
         """
@@ -159,18 +169,21 @@ class CouchDB(object):
     def delete_documents(self, docs):
         """
         Delete a sequence of Documents from the database.
-        
-        The Documents must have a valid and current _id and _rev, so they must be
-        retrieved from the database and not be altered there in the mean time.
+
+        The Documents must have a valid and current _id and _rev, so they must
+        be retrieved from the database and not be altered there in the mean
+        time.
         :param tasks: list of Document objects
-        :return: array of booleans indicating whether the respective Document was deleted.
+        :return: array of booleans indicating whether the respective Document
+                was deleted.
         """
-        result = [True]*len(docs)
+        result = [True] * len(docs)
         for i, doc in enumerate(docs):
             try:
                 self.delete(doc)
             except ResourceConflict as ex:
-                print "Could not delete document", doc.id, " (rev", doc.rev, ") due to resource conflict:", ex
+                print("Could not delete document", doc.id, " (rev", doc.rev,
+                      ") due to resource conflict:", ex)
                 result[i] = False
             except Exception as ex:
                 print "Could not delete document ", doc, ':', ex
@@ -181,24 +194,29 @@ class CouchDB(object):
     def delete_from_view(self, view):
         """
         Delete all documents in a view
-        
+
         :param view: name of the view
-        :return: array of booleans indicating whether the respective tasks were deleted
+        :return: array of booleans indicating whether the respective tasks
+                were deleted
         """
         docs = self.get_from_view(view)
         return self.delete_documents(docs)
+
 
 def _load(name):
     try:
         cfg = simcity.config.section(name)
     except NoSectionError:
-        raise EnvironmentError("Configuration file " + simcity.config.filename + " does not contain '" + name + "' section")
+        raise EnvironmentError(
+            "Configuration file " + simcity.config.filename +
+            " does not contain '" + name + "' section")
 
     try:
         return CouchDB(
-                url      = cfg['url'],
-                db       = cfg['database'],
-                username = cfg['username'],
-                password = cfg['password'])
+            url=cfg['url'],
+            db=cfg['database'],
+            username=cfg['username'],
+            password=cfg['password'])
     except IOError as ex:
-        raise IOError("Cannot establish connection with " + name + " CouchDB <" + cfg['url'] + ">: " + str(ex))
+        raise IOError("Cannot establish connection with " +
+                      name + " CouchDB <" + cfg['url'] + ">: " + str(ex))

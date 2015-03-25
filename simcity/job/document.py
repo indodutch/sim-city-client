@@ -1,13 +1,13 @@
 # SIM-CITY client
-# 
+#
 # Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ from simcity.document import Document
 from simcity.util import seconds
 from couchdb.http import ResourceConflict
 
+
 class Job(Document):
     __BASE = {
         'type': 'job',
@@ -29,19 +30,19 @@ class Job(Document):
         'method': '',
         'archive': 0
     }
-    
-    def __init__(self, job):        
+
+    def __init__(self, job):
         super(Job, self).__init__(job, Job.__BASE)
         if '_id' not in self.doc:
             raise ValueError('Job ID must be set')
-    
-    def queue(self, method, host = None):
+
+    def queue(self, method, host=None):
         self.doc['method'] = method
         if host is not None:
             self.doc['hostname'] = host
         self.doc['queue'] = seconds()
         return self
-    
+
     def start(self):
         self._update_hostname()
         self.doc['start'] = seconds()
@@ -50,28 +51,31 @@ class Job(Document):
     def finish(self):
         self.doc['done'] = seconds()
         return self
-    
+
     def archive(self):
         self.doc['archive'] = seconds()
         self.id = 'archived-' + self.id + '-' + str(seconds())
         del self.doc['_rev']
         return self
 
-def get(job_id = None):
+
+def get(job_id=None):
     simcity._check_init()
     if job_id is None:
         job_id = simcity.job.job_id
     if job_id is None:
-        raise EnvironmentError("Job ID cannot be determined (from $SIMCITY_JOBID or command-line)")
+        raise EnvironmentError("Job ID cannot be determined "
+                               "(from $SIMCITY_JOBID or command-line)")
     return Job(simcity.job.database.get(job_id))
+
 
 def start():
     simcity._check_init()
-    try: # EnvironmentError if job_id cannot be determined falls through
+    try:  # EnvironmentError if job_id cannot be determined falls through
         job = get()
-    except ValueError: # job ID was not yet added to database
+    except ValueError:  # job ID was not yet added to database
         job = Job({'_id': simcity.job.job_id})
-    
+
     try:
         return simcity.job.database.save(job.start())
     # Check for concurrent modification: the job may be added to the
@@ -79,7 +83,8 @@ def start():
     # Since this happens only once, we don't risk unlimited recursion
     except ResourceConflict:
         return start()
-    
+
+
 def finish(job):
     simcity._check_init()
     try:
@@ -93,7 +98,8 @@ def finish(job):
         if job['queue'] > 0:
             archive(job)
 
-def queue(job, method, host = None):
+
+def queue(job, method, host=None):
     simcity._check_init()
     try:
         return simcity.job.database.save(job.queue(method, host))
@@ -102,6 +108,7 @@ def queue(job, method, host = None):
     else:
         if job['done'] > 0:
             archive(job)
+
 
 def archive(job):
     simcity._check_init()

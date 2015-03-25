@@ -1,13 +1,13 @@
 # SIM-CITY client
-# 
+#
 # Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,13 +18,15 @@ import unittest
 from simcity.task.iterator import TaskViewIterator
 from test_mock import MockDB
 
+
 class TestTaskIter(unittest.TestCase):
+
     def testIterator(self):
         db = MockDB()
         for task in TaskViewIterator('view', database=db):
             self.assertTrue(task['lock'] > 0)
             self.assertEqual(task.rev, 'something')
             self.assertEqual(db.saved[task.id], task.value)
-            break # process one task only
-        
+            break  # process one task only
+
         self.assertEqual(len(db.saved), 1)

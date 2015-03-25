@@ -18,18 +18,22 @@ reinstall:
 	@pip install --upgrade --no-deps .
 
 test-license: LICENSE
-	@echo "====== Check License ====="
+	@echo "======= Check License ======"
 	@test $(shell $(PYTHON_FIND) | xargs grep $(LICENSE_NAME) | wc -l) -eq $(shell $(PYTHON_FIND) | wc -l)
 
 pyflakes:
-	@echo "======= PyFlakes ========="
+	@echo "=======  PyFlakes  ========="
 	@$(PYTHON_FIND) -exec pyflakes {} \;
+
+pep8:
+	@echo "=======   PEP8     ========="
+	@$(PYTHON_FIND) -exec pep8 {} \;
 
 unittest:
 	@echo "======= Unit Tests ========="
 	@nosetests
 
-test: test-requirements test-license pyflakes unittest
+test: test-requirements test-license pyflakes pep8 unittest
 
 unittest-coverage:
 	@echo "======= Unit Tests ========="
