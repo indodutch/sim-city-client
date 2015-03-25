@@ -19,7 +19,6 @@
 
 import simcity
 import argparse
-import numpy as np
 
 if __name__ == '__main__':
     task_views = ['todo', 'done', 'locked']
@@ -37,4 +36,4 @@ if __name__ == '__main__':
         db = simcity.job.database
 
     is_deleted = db.delete_from_view(args.view)
-    print "Deleted", np.sum(is_deleted), "out of", len(is_deleted), "tasks from view", args.view
+    print "Deleted", sum(is_deleted), "out of", len(is_deleted), "tasks from view", args.view

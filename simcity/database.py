@@ -28,7 +28,6 @@ from simcity.document import Document
 import simcity
 from ConfigParser import NoSectionError
 import random
-import numpy as np
 
 # Couchdb imports
 from couchdb.design import ViewDefinition
@@ -107,6 +106,7 @@ class CouchDB(object):
         
         Updates the document to have the new _rev value.
         :param doc: Document object
+        :throws couchdb.http.ResourceConflict: when document exists with different revision or was deleted.
         """
         _id, _rev = self.db.save(doc.value)
         doc['_rev'] = _rev
@@ -125,7 +125,7 @@ class CouchDB(object):
         """
         updated = self.db.update([doc.value for doc in docs])
         
-        result = np.zeros(len(docs), dtype=np.bool)
+        result = [False] * len(docs)
         for i in xrange(len(docs)):
             is_added, _id, _rev = updated[i]
             if is_added:
@@ -165,7 +165,7 @@ class CouchDB(object):
         :param tasks: list of Document objects
         :return: array of booleans indicating whether the respective Document was deleted.
         """
-        result = np.ones(len(docs),dtype=np.bool)
+        result = [True]*len(docs)
         for i, doc in enumerate(docs):
             try:
                 self.delete(doc)

@@ -1,3 +1,2 @@
 CouchDB==1.0
-numpy==1.9.1
 pystache==0.5.4
