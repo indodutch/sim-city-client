@@ -17,15 +17,23 @@ import random
 from picas.documents import Document
 
 
+class MockRow(object):
+    def __init__(self, key, value, id=None):
+        self.id = id
+        self.key = key
+        self.value = value
+
+
 class MockDB(object):
     TASKS = [{'_id': 'a', 'lock': 0}, {'_id': 'b', 'lock': 0}]
     JOBS = [{'_id': 'myjob'}, {'_id': 'myotherjob'}]
 
-    def __init__(self):
+    def __init__(self, view=[]):
         self.tasks = dict((t['_id'], t.copy())
                           for t in MockDB.TASKS)  # deep copy
         self.jobs = dict((t['_id'], t.copy()) for t in MockDB.JOBS)
         self.saved = {}
+        self.viewList = view
 
     def get_single_from_view(self, view, **view_params):
         idx = random.choice(self.tasks.keys())
@@ -64,3 +72,6 @@ class MockDB(object):
             del self.tasks[doc.id]
         elif doc.id in self.saved:
             del self.saved[doc.id]
+
+    def view(self, name, **view_options):
+        return self.viewList
