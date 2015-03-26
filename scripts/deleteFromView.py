@@ -16,7 +16,7 @@
 # limitations under the License.
 
 ''' Delete all documents from given view '''
-
+from __future__ import print_function
 import simcity
 import argparse
 
@@ -39,5 +39,5 @@ if __name__ == '__main__':
         db = simcity.job.database
 
     is_deleted = db.delete_from_view(args.view)
-    print("Deleted", sum(is_deleted), "out of", len(is_deleted),
-          "tasks from view", args.view)
+    print("Deleted %d out of %d tasks from view %s" %
+          (sum(is_deleted), len(is_deleted), args.view))

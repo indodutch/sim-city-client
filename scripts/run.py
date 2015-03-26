@@ -18,7 +18,7 @@
 '''
 Client to run commands with.
 '''
-# python imports
+from __future__ import print_function
 import simcity
 from simcity.job import ExecuteActor
 import argparse
@@ -48,6 +48,6 @@ if __name__ == '__main__':
     actor = ExecuteActor()
 
     # Start work!
-    print "Connected to the database sucessfully. Now starting work..."
+    print("Connected to the database sucessfully. Now starting work...")
     actor.run(maxtime=arg_t, avg_time_factor=args.padding)
-    print "No more tasks to process, done."
+    print("No more tasks to process, done.")

@@ -19,6 +19,7 @@
 Combines createTask and startJob, to create a task from a command and then
 start a job.
 '''
+from __future__ import print_function
 import simcity
 import argparse
 import sys
@@ -37,14 +38,14 @@ if __name__ == '__main__':
     simcity.init(configfile=args.config)
     try:
         task = simcity.task.add({'command': args.command})
-        print "task", task.id, "added to the database"
+        print("Task %s added to the database" % task.id)
     except Exception as ex:
-        print "Task could not be added to the database:", ex
+        print("Task could not be added to the database: %s" % str(ex),
+              file=sys.stderr)
         sys.exit(1)
 
     job = simcity.job.submit_if_needed(args.host, args.max)
     if job is None:
-        print "Let task be processed by existing pilot-job scripts"
+        print("Let task be processed by existing pilot-job scripts")
     else:
-        print("Job " + job['batch_id'] + " (ID: " + job.id +
-              ") will process task")
+        print("Job %s (ID: %s) will process task" % (job['batch_id'], job.id))

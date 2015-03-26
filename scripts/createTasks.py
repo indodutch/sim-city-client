@@ -18,7 +18,9 @@
 '''
 description: create tasks with a single command
 '''
+from __future__ import print_function
 import simcity
+import sys
 import argparse
 
 if __name__ == '__main__':
@@ -38,6 +40,6 @@ if __name__ == '__main__':
     for i in xrange(args.number):
         try:
             simcity.task.add({'command': args.command})
-            print "added task", i
+            print("added task %d" % i)
         except:
-            print "ERROR: task", i, "failed to be added"
+            print("ERROR: task %d failed to be added" % i, file=sys.stderr)
