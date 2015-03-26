@@ -37,7 +37,7 @@ test: test-requirements test-license pyflakes pep8 unittest
 
 unittest-coverage:
 	@echo "======= Unit Tests ========="
-	@nosetests --with-coverage
+	@nosetests --with-coverage --cover-package=simcity
 
 fulltest: test-requirements pyflakes unittest-coverage
 
