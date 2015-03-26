@@ -39,7 +39,7 @@ if __name__ == '__main__':
     # Load the tasks to the database
     for i in xrange(args.number):
         try:
-            simcity.task.add({'command': args.command})
+            simcity.add_task({'command': args.command})
             print("added task %d" % i)
         except:
             print("ERROR: task %d failed to be added" % i, file=sys.stderr)

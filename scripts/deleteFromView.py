@@ -34,9 +34,9 @@ if __name__ == '__main__':
     simcity.init(configfile=args.config)
 
     if args.view in task_views:
-        db = simcity.task.database
+        db = simcity.task_database
     else:
-        db = simcity.job.database
+        db = simcity.job_database
 
     is_deleted = db.delete_from_view(args.view)
     print("Deleted %d out of %d tasks from view %s" %

@@ -17,15 +17,18 @@
 '''
 Remove lock and done from tasks and remove queued and active from jobs.
 '''
-
-
+from __future__ import print_function
 import simcity
-import simcity.task
-import simcity.job
-from simcity import job, task
 import argparse
 import time
-import traceback
+
+
+def update_task(id):
+    return simcity.get_task(id).scrub()
+
+
+def update_job(id):
+    return simcity.get_job(id).archive()
 
 if __name__ == '__main__':
     task_views = ['locked', 'error']
@@ -45,39 +48,30 @@ if __name__ == '__main__':
                         default='locked', help="view to scrub")
     args = parser.parse_args()
 
-    arg_t = args.seconds + 60 * \
-        (args.minutes + 60 * (args.hours + (24 * args.days)))
+    hours = args.hours + (24 * args.days)
+    arg_t = args.seconds + 60 * (args.minutes + 60 * hours)
     min_t = int(time.time()) - arg_t
 
     simcity.init(configfile=args.config)
 
     if args.view in task_views:
-        db = task.database
-        update = []
-        for row in db.view(args.view):
-            if arg_t <= 0 or row.value['lock'] < min_t:
-                t = task.get(row.id)
-                update.append(t.scrub())
-
-        if len(update) > 0:
-            db.save_documents(update)
-            print "Scrubbed", len(update), "task(s)"
-        else:
-            print "No scrubbing required"
-
+        db = simcity.task_database
+        update = update_task
     else:
-        count = 0
-        total = 0
-        for row in job.database.view(args.view):
-            total += 1
-            if arg_t <= 0 or row.value['queue'] < min_t:
-                try:
-                    job.archive(job.get(row.id))
-                    count += 1
-                except Exception as ex:
-                    print("Failed to archive job", row.id, "-", type(ex), ":",
-                          str(ex), "...", traceback.format_exc(ex))
-        if total > 0:
-            print "Scrubbed", count, "out of", total, "jobs"
-        else:
-            print "No scrubbing required"
+        db = simcity.job_database
+        update = update_job
+
+    total = 0
+    updates = []
+    for row in db.view(args.view):
+        total += 1
+        if arg_t <= 0 or row.value['lock'] < min_t:
+            doc = update(id)
+            updates.append(doc)
+
+    if len(update) > 0:
+        db.save_documents(update)
+        print("Scrubbed %d out of %d documents from '%s'" %
+              (len(update), total, args.view))
+    else:
+        print("No scrubbing required")

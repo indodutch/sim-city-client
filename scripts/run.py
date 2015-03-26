@@ -43,7 +43,7 @@ if __name__ == '__main__':
         (args.minutes + 60 * (args.hours + (24 * args.days)))
 
     if args.job_id is not None:
-        simcity.job.job_id = args.job_id
+        simcity.running_job_id = args.job_id
 
     actor = ExecuteActor()
 

@@ -27,9 +27,10 @@ if __name__ == '__main__':
                                      "infrastructure to process the tasks.")
     parser.add_argument('host', help="host to run pilot job on")
     parser.add_argument('-m', '--max', default=2,
-        help="only run if there are less than MAX jobs running")
+                        help="only run if there are less than MAX jobs "
+                        "running")
     parser.add_argument('-c', '--config', default=None,
-        help="configuration file")
+                        help="configuration file")
     args = parser.parse_args()
 
     simcity.init(configfile=args.config)

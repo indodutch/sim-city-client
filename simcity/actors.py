@@ -17,9 +17,8 @@
 from __future__ import print_function
 
 import simcity
-import simcity.job
-from simcity.util import listfiles, write_json, expandfilename
-from picas.iterators import TaskViewIterator
+from .util import listfiles, write_json, expandfilename
+from picas.actors import RunActor
 
 import os
 from subprocess import call
@@ -29,18 +28,18 @@ class ExecuteActor(RunActor):
 
     def __init__(self, task_db=None, config=None):
         if task_db is None:
-            task_db = simcity.task.database
+            task_db = simcity.task_database
         super(ExecuteActor, self).__init__(task_db)
         if config is None:
             config = simcity.config
         self.config = config.section('Execution')
 
     def prepare_env(self, *kargs, **kwargs):
-        self.job = simcity.job.start()
+        self.job = simcity.start_job()
 
     def cleanup_env(self, *kargs, **kwargs):
         self.job['tasks_processed'] = self.tasks_processed
-        simcity.job.finish(self.job)
+        simcity.finish_job(self.job)
 
     def process_task(self, task):
         print("-----------------------")
@@ -77,7 +76,7 @@ class ExecuteActor(RunActor):
     def execute(self, command, stdoutFile, stderrFile):
         with open(stdoutFile, 'w') as fout:
             with open(stderrFile, 'w') as ferr:
-                returnValue = call(command, stdout=fout, stderr=ferr)
+                return call(command, stdout=fout, stderr=ferr)
 
     def create_dirs(self, task):
         dir_map = {

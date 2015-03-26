@@ -14,19 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import simcity
 from picas.documents import Task
-from picas.iterators import TaskViewIterator
-
-database = None
+from . import task_database, check_init
 
 
-def add(properties):
-    simcity._check_init()
+def add_task(properties):
+    check_init()
     t = Task(properties)
-    return database.save(t)
+    return task_database.save(t)
 
 
-def get(task_id):
-    simcity._check_init()
-    return Task(database.get(task_id))
+def get_task(task_id):
+    check_init()
+    return Task(task_database.get(task_id))

@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     simcity.init(configfile=args.config)
     try:
-        task = simcity.task.add({'command': args.command})
+        task = simcity.add_task({'command': args.command})
         print("Task %s added to the database" % task.id)
     except Exception as ex:
         print("Task could not be added to the database: %s" % str(ex),

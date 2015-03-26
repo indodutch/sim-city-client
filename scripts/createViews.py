@@ -102,20 +102,20 @@ function (key, values, rereduce) {
 
     for view in pystache_views['tasks']:
         mapCode = renderer.render(taskMapTemplate, view)
-        simcity.task.database.add_view(view['name'], mapCode)
+        simcity.task_database.add_view(view['name'], mapCode)
 
     for view in pystache_views['jobs']:
         mapCode = renderer.render(jobMapTemplate, view)
-        simcity.job.database.add_view(view['name'], mapCode)
+        simcity.job_database.add_view(view['name'], mapCode)
 
-    simcity.task.database.add_view('error', erroneousMapCode)
+    simcity.task_database.add_view('error', erroneousMapCode)
 
     # overview_total View -- lists all views and the number of tasks in each
     # view
     overviewMapCode = renderer.render(overviewMapTemplate, pystache_views)
-    simcity.task.database.add_view(
+    simcity.task_database.add_view(
         'overview_total', overviewMapCode, overviewReduceCode)
-    simcity.job.database.add_view(
+    simcity.job_database.add_view(
         'overview_total', overviewMapCode, overviewReduceCode)
 
 if __name__ == '__main__':

@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from simcity.util import merge_dicts
-from simcity.job import Job, archive, queue
+from picas.util import merge_dicts
+from picas.documents import Job
 import simcity
-import simcity.job
 
 from numbers import Number
 import httplib
@@ -25,7 +24,7 @@ import subprocess
 from uuid import uuid4
 
 
-def submit_if_needed(hostname, max_jobs):
+def submit_if_needed(hostname, max_jobs, submitter=None):
     if not isinstance(max_jobs, Number):
         raise ValueError("Max jobs must be a number")
 
@@ -38,8 +37,8 @@ def submit_if_needed(hostname, max_jobs):
         return None
 
 
-def submit(hostname):
-    simcity._check_init()
+def submit(hostname, submitter=None):
+    simcity.check_init()
 
     host = hostname + '-host'
     try:
@@ -49,26 +48,27 @@ def submit(hostname):
             hostname + ' not configured under ' + host + 'section')
 
     try:
-        if host_cfg['method'] == 'ssh':
-            submitter = SSHSubmitter(
-                database=simcity.job.database,
-                host=host_cfg['host'],
-                jobdir=host_cfg['path'],
-                prefix=hostname + '-')
-        elif host_cfg['method'] == 'osmium':
-            submitter = OsmiumSubmitter(
-                database=simcity.job.database,
-                port=host_cfg['port'],
-                jobdir=host_cfg['path'],
-                prefix=hostname + '-')
-        else:
-            raise EnvironmentError(
-                'Connection method for ' + hostname + ' unknown')
+        if submitter is None:
+            if host_cfg['method'] == 'ssh':
+                submitter = SSHSubmitter(
+                    database=simcity.job_database,
+                    host=host_cfg['host'],
+                    jobdir=host_cfg['path'],
+                    prefix=hostname + '-')
+            elif host_cfg['method'] == 'osmium':
+                submitter = OsmiumSubmitter(
+                    database=simcity.job_database,
+                    port=host_cfg['port'],
+                    jobdir=host_cfg['path'],
+                    prefix=hostname + '-')
+            else:
+                raise EnvironmentError(
+                    'Connection method for ' + hostname + ' unknown')
 
         script = [host_cfg['script']]
     except KeyError:
         raise EnvironmentError(
-            'Connection method for ' + hostname + ' not well configured')
+            "Connection method for %s not well configured" % hostname)
 
     return submitter.submit(script)
 
@@ -84,11 +84,11 @@ class Submitter(object):
 
     def submit(self, command):
         job_id = 'job_' + self.prefix + uuid4().hex
-        job = queue(Job({'_id': job_id}), self.method, self.host)
+        job = simcity.queue_job(Job({'_id': job_id}), self.method, self.host)
         try:
             job['batch_id'] = self._do_submit(job, command)
         except:
-            archive(job)
+            simcity.archive_job(job)
             raise
         else:
             self.database.save(job)
