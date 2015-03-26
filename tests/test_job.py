@@ -29,13 +29,13 @@ class TestJob():
         self.db = MockDB()
         self.test_id = MockDB.JOBS[0]['_id']
         self.test_other_id = MockDB.JOBS[1]['_id']
-        simcity.running_job_id = self.test_id
-        simcity.job_database = self.db
+        simcity.set_current_job_id(self.test_id)
+        simcity.management._job_db = self.db
 
     def test_get_job(self):
         job = simcity.get_job()
         assert_equals(job.id, self.test_id)
-        simcity.running_job_id = None
+        simcity.set_current_job_id(None)
         assert_raises(EnvironmentError, simcity.get_job)
         otherJob = simcity.get_job(self.test_other_id)
         assert_equals(otherJob.id, self.test_other_id)

@@ -15,15 +15,19 @@
 # limitations under the License.
 
 from picas.documents import Task
-from . import task_database, check_init
+from . import get_task_database
 
 
-def add_task(properties):
-    check_init()
+def add_task(properties, database=None):
+    if database is None:
+        database = get_task_database()
+
     t = Task(properties)
-    return task_database.save(t)
+    return database.save(t)
 
 
-def get_task(task_id):
-    check_init()
-    return Task(task_database.get(task_id))
+def get_task(task_id, database=None):
+    if database is None:
+        database = get_task_database()
+
+    return Task(database.get(task_id))

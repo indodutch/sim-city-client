@@ -30,6 +30,7 @@ def update_task(id):
 def update_job(id):
     return simcity.get_job(id).archive()
 
+
 if __name__ == '__main__':
     task_views = ['locked', 'error']
     job_views = ['pending_jobs', 'active_jobs', 'finished_jobs']
@@ -55,10 +56,10 @@ if __name__ == '__main__':
     simcity.init(configfile=args.config)
 
     if args.view in task_views:
-        db = simcity.task_database
+        db = simcity.get_task_database()
         update = update_task
     else:
-        db = simcity.job_database
+        db = simcity.get_job_database()
         update = update_job
 
     total = 0

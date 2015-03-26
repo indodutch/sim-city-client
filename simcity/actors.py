@@ -26,20 +26,25 @@ from subprocess import call
 
 class ExecuteActor(RunActor):
 
-    def __init__(self, task_db=None, config=None):
+    def __init__(self, task_db=None, job_db=None, config=None):
         if task_db is None:
-            task_db = simcity.task_database
+            task_db = simcity.get_task_database()
         super(ExecuteActor, self).__init__(task_db)
+
+        if job_db is None:
+            job_db = simcity.get_job_database()
+        self.job_db = job_db
+
         if config is None:
-            config = simcity.config
+            config = simcity.get_config()
         self.config = config.section('Execution')
 
     def prepare_env(self, *kargs, **kwargs):
-        self.job = simcity.start_job()
+        self.job = simcity.start_job(database=self.job_db)
 
     def cleanup_env(self, *kargs, **kwargs):
         self.job['tasks_processed'] = self.tasks_processed
-        simcity.finish_job(self.job)
+        simcity.finish_job(self.job, database=self.job_db)
 
     def process_task(self, task):
         print("-----------------------")

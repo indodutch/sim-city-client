@@ -38,32 +38,30 @@ def submit_if_needed(hostname, max_jobs, submitter=None):
 
 
 def submit(hostname, submitter=None):
-    simcity.check_init()
-
     host = hostname + '-host'
     try:
-        host_cfg = simcity.config.section(host)
+        host_cfg = simcity.get_config().section(host)
     except:
-        raise ValueError(
-            hostname + ' not configured under ' + host + 'section')
+        raise ValueError('%s not configured under %s section' %
+                         (hostname, host))
 
     try:
         if submitter is None:
             if host_cfg['method'] == 'ssh':
                 submitter = SSHSubmitter(
-                    database=simcity.job_database,
+                    database=simcity.get_job_database(),
                     host=host_cfg['host'],
                     jobdir=host_cfg['path'],
                     prefix=hostname + '-')
             elif host_cfg['method'] == 'osmium':
                 submitter = OsmiumSubmitter(
-                    database=simcity.job_database,
+                    database=simcity.get_job_database(),
                     port=host_cfg['port'],
                     jobdir=host_cfg['path'],
                     prefix=hostname + '-')
             else:
-                raise EnvironmentError(
-                    'Connection method for ' + hostname + ' unknown')
+                raise EnvironmentError('Connection method for %s unknown' %
+                                       hostname)
 
         script = [host_cfg['script']]
     except KeyError:
@@ -84,11 +82,12 @@ class Submitter(object):
 
     def submit(self, command):
         job_id = 'job_' + self.prefix + uuid4().hex
-        job = simcity.queue_job(Job({'_id': job_id}), self.method, self.host)
+        job = simcity.queue_job(Job({'_id': job_id}), self.method,
+                                host=self.host, database=self.database)
         try:
             job['batch_id'] = self._do_submit(job, command)
         except:
-            simcity.archive_job(job)
+            simcity.archive_job(job, database=self.database)
             raise
         else:
             self.database.save(job)

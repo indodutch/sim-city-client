@@ -21,46 +21,73 @@ import os
 from ConfigParser import NoSectionError
 
 try:
-    running_job_id = os.environ['SIMCITY_JOBID']
+    _current_job_id = os.environ['SIMCITY_JOBID']
 except:
-    running_job_id = None
+    _current_job_id = None
 
-config = None
+_config = None
 is_initialized = False
 _is_initializing = True
-task_database = None
-job_database = None
+_task_db = None
+_job_db = None
 
 
-def check_init():
+def get_config():
+    _check_init()
+    return _config
+
+
+def get_task_database():
+    _check_init()
+    return _task_db
+
+
+def get_job_database():
+    _check_init()
+    return _job_db
+
+
+def get_current_job_id():
+    return _current_job_id
+
+
+def set_current_job_id(job_id):
+    global _current_job_id
+    _current_job_id = job_id
+
+
+def _check_init():
     if not is_initialized:
         raise EnvironmentError(
             "Databases are not initialized yet, please provide a valid "
             "configuration file to simcity.init()")
 
 
-def init(configfile):
-    global is_initialized, _is_initializing, config, task_database
-    global job_database
+def init(configfile, job_id=None):
+    global is_initialized, _is_initializing, _config, _task_db
+    global _job_db, _current_job_id
+
+    if job_id is not None:
+        _current_job_id = job_id
 
     try:
-        config = Config(configfile)
+        _config = Config(configfile)
     except:
         # default initialization may fail
         if not _is_initializing:
             raise
     else:
         try:
-            task_database = _load_database('task-db')
+            _task_db = _load_database('task-db')
         except:
             if not _is_initializing:
                 raise
 
         try:
-            job_database = _load_database('job-db')
+            _job_db = _load_database('job-db')
         except EnvironmentError:
             # job database not explicitly configured
-            job_database = task_database
+            _job_db = _task_db
         except:
             if not _is_initializing:
                 raise
@@ -73,11 +100,11 @@ def init(configfile):
 
 def _load_database(name):
     try:
-        cfg = config.section(name)
+        cfg = get_config().section(name)
     except NoSectionError:
         raise EnvironmentError(
             "Configuration file %s does not contain '%s' section" %
-            (config.filename, name))
+            (get_config().filename, name))
 
     try:
         return CouchDB(
@@ -91,17 +118,15 @@ def _load_database(name):
 
 
 def overview_total():
-    check_init()
-
     views = ['todo', 'locked', 'error', 'done',
              'finished_jobs', 'active_jobs', 'pending_jobs']
     num = dict((view, 0) for view in views)
 
-    for view in task_database.view('overview_total', group=True):
+    for view in get_task_database().view('overview_total', group=True):
         num[view.key] = view.value
 
-    if job_database is not task_database:
-        for view in job_database.view('overview_total', group=True):
+    if get_job_database() is not get_task_database():
+        for view in get_job_database().view('overview_total', group=True):
             num[view.key] = view.value
 
     return num
