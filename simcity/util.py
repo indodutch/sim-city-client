@@ -41,7 +41,7 @@ class Config(object):
         else:
             self.parser = None
             self.filename = None
-        
+
         self.sections = {}
 
     def add_section(self, name, keyvalue):

@@ -58,6 +58,7 @@ def test_empty_config():
     cfg.add_section('my', {'a': 'b'})
     assert_equals(cfg.section('my')['a'], 'b')
 
+
 def test_seq():
     assert_true(issequence(()))
     assert_true(issequence(("a", "b")))

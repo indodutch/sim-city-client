@@ -22,6 +22,7 @@ from test_mock import MockDB
 import os
 import shutil
 
+
 def test_actor():
     cfg = simcity.util.Config(from_file=False)
     cfg.add_section('Execution', {
