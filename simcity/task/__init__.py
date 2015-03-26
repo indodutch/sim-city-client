@@ -15,8 +15,8 @@
 # limitations under the License.
 
 import simcity
-from .document import Task
-from .iterator import TaskViewIterator
+from picas.documents import Task
+from picas.iterators import TaskViewIterator
 
 database = None
 

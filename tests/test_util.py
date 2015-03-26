@@ -17,12 +17,11 @@
 from __future__ import print_function
 
 import unittest
-from simcity.util import (Config, expandfilenames, merge_dicts, issequence,
-                          expandfilename, Timer)
+from simcity.util import (Config, expandfilenames, issequence,
+                          expandfilename)
 import os
 import tempfile
 import ConfigParser
-import time
 
 
 class TestConfig(unittest.TestCase):
@@ -82,43 +81,3 @@ class TestExistingPath(unittest.TestCase):
         self.assertEqual(expandfilename('config.ini'), 'config.ini')
         self.assertEqual(
             expandfilename(['~', 'home']), os.path.expanduser('~/home'))
-
-
-class TestMerge(unittest.TestCase):
-
-    def setUp(self):
-        self.a = {'a': 1, 'b': 2}
-        self.b = {'a': 2, 'c': 3}
-
-    def testMergeAll(self):
-        c = merge_dicts(self.a, self.b)
-        self.assertEqual(c['a'], self.b['a'])
-        self.assertEqual(self.b['a'], 2)
-        self.assertEqual(self.a['a'], 1)
-        self.assertEqual(len(self.a), 2)
-        self.assertEqual(len(self.b), 2)
-        self.assertEqual(len(c), 3)
-        self.assertEqual(c['b'], self.a['b'])
-        self.assertEqual(c['c'], self.b['c'])
-
-    def testMergeEmpty(self):
-        c = merge_dicts(self.a, {})
-        self.assertEqual(c, self.a)
-
-    def testEmptyMerge(self):
-        c = merge_dicts({}, self.a)
-        self.assertEqual(c, self.a)
-
-    def testEmptyEmptyMerge(self):
-        self.assertEqual(merge_dicts({}, {}), {})
-
-
-class TestTimer(unittest.TestCase):
-
-    def testTimer(self):
-        timer = Timer()
-        time.sleep(0.2)
-        self.assertTrue(timer.elapsed() >= 0.2)
-        self.assertTrue(timer.elapsed() < 0.4)
-        timer.reset()
-        self.assertTrue(timer.elapsed() < 0.2)

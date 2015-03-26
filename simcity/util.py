@@ -17,10 +17,8 @@
 from ConfigParser import ConfigParser
 import json
 import os
-import time
 import glob
 import shutil
-from copy import deepcopy
 
 
 class Config(object):
@@ -77,16 +75,6 @@ def listdirs(mypath):
             if os.path.isdir(os.path.join(mypath, d))]
 
 
-def merge_dicts(dict1, dict2):
-    merge = deepcopy(dict1)
-    merge.update(dict2)
-    return merge
-
-
-def seconds():
-    return int(time.time())
-
-
 def copyglob(srcglob, dstdir, prefix=""):
     if not os.path.isdir(dstdir):
         raise ValueError("Destination of copyglob must be a directory")
@@ -94,18 +82,3 @@ def copyglob(srcglob, dstdir, prefix=""):
     for src in glob.glob(expandfilename(srcglob)):
         _, fname = os.path.split(src)
         shutil.copyfile(src, os.path.join(dstdir, prefix + fname))
-
-
-class Timer(object):
-
-    def __init__(self):
-        self.t = time.time()
-
-    def elapsed(self):
-        return time.time() - self.t
-
-    def reset(self):
-        new_t = time.time()
-        diff = new_t - self.t
-        self.t = new_t
-        return diff

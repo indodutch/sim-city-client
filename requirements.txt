@@ -1,2 +1,2 @@
-CouchDB==1.0
 pystache==0.5.4
+-e git+https://github.com/blootsvoets/picasclient.git@v0.2#egg=picas-0.2
