@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoSectionError
 import json
 import os
 import glob
@@ -25,21 +25,36 @@ class Config(object):
     DEFAULT_FILENAMES = [
         "config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
 
-    def __init__(self, filenames=None):
-        if filenames is None:
-            filenames = Config.DEFAULT_FILENAMES
+    def __init__(self, filenames=None, from_file=True):
+        if from_file:
+            if filenames is None:
+                filenames = Config.DEFAULT_FILENAMES
 
-        exp_filenames = expandfilenames(filenames)
+            exp_filenames = expandfilenames(filenames)
 
-        self.parser = ConfigParser()
-        self.filename = self.parser.read(exp_filenames)
-        if len(self.filename) == 0:
-            raise ValueError(
-                "No valid configuration files could be found: tried " +
-                str(exp_filenames))
+            self.parser = ConfigParser()
+            self.filename = self.parser.read(exp_filenames)
+            if len(self.filename) == 0:
+                raise ValueError(
+                    "No valid configuration files could be found: tried " +
+                    str(exp_filenames))
+        else:
+            self.parser = None
+            self.filename = None
+        
+        self.sections = {}
+
+    def add_section(self, name, keyvalue):
+        self.sections[name] = keyvalue
 
     def section(self, name):
-        return dict(self.parser.items(name))
+        try:
+            return self.sections[name]
+        except:
+            if self.parser is not None:
+                return dict(self.parser.items(name))
+            else:
+                raise NoSectionError(name)
 
 
 def issequence(obj):

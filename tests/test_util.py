@@ -52,6 +52,12 @@ def test_config_write_read():
     assert_equals(other['c'], 'wefa=feaf', "equals-sign allowed")
 
 
+def test_empty_config():
+    cfg = Config(from_file=False)
+    assert_raises(ConfigParser.NoSectionError, cfg.section, 'notexist')
+    cfg.add_section('my', {'a': 'b'})
+    assert_equals(cfg.section('my')['a'], 'b')
+
 def test_seq():
     assert_true(issequence(()))
     assert_true(issequence(("a", "b")))
