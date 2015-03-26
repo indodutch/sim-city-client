@@ -16,68 +16,66 @@
 
 from __future__ import print_function
 
-import unittest
 from simcity.util import (Config, expandfilenames, issequence,
                           expandfilename)
 import os
 import tempfile
 import ConfigParser
+from nose.tools import assert_true, assert_false, assert_equals, assert_raises
 
 
-class TestConfig(unittest.TestCase):
+def test_config_write_read():
+    fd, fname = tempfile.mkstemp()
+    f = os.fdopen(fd, 'w')
+    print('[MySection]', file=f)
+    print('a=1', file=f)
+    print('a=4', file=f)
+    print('[OtherSection]', file=f)
+    print('a=2', file=f)
+    print('b=wefa feaf', file=f)
+    print('c=wefa=feaf', file=f)
+    f.close()
 
-    def testWriteRead(self):
-        fd, fname = tempfile.mkstemp()
-        f = os.fdopen(fd, 'w')
-        print('[MySection]', file=f)
-        print('a=1', file=f)
-        print('a=4', file=f)
-        print('[OtherSection]', file=f)
-        print('a=2', file=f)
-        print('b=wefa feaf', file=f)
-        print('c=wefa=feaf', file=f)
-        f.close()
+    cfg = Config(fname)
+    os.remove(fname)
 
-        cfg = Config(fname)
-        os.remove(fname)
-
-        my = cfg.section('MySection')
-        other = cfg.section('OtherSection')
-        self.assertRaises(
-            ConfigParser.NoSectionError, cfg.section, 'NonExistantSection')
-        self.assertTrue(type(my) is dict, "section is not a dictionary")
-        self.assertTrue('a' in my, "Value in section")
-        self.assertEqual(
-            my['a'], '4', "latest value does not overwrite earlier values")
-        self.assertEqual(other['a'], '2', "value not contained to section")
-        self.assertEqual(other['b'], 'wefa feaf', "spaces allowed")
-        self.assertEqual(other['c'], 'wefa=feaf', "equals-sign allowed")
+    my = cfg.section('MySection')
+    other = cfg.section('OtherSection')
+    assert_raises(ConfigParser.NoSectionError, cfg.section,
+                  'NonExistantSection')
+    assert_true(type(my) is dict, "section is not a dictionary")
+    assert_true('a' in my, "Value in section")
+    assert_equals(
+        my['a'], '4', "latest value does not overwrite earlier values")
+    assert_equals(other['a'], '2', "value not contained to section")
+    assert_equals(other['b'], 'wefa feaf', "spaces allowed")
+    assert_equals(other['c'], 'wefa=feaf', "equals-sign allowed")
 
 
-class TestExistingPath(unittest.TestCase):
+def test_seq():
+    assert_true(issequence(()))
+    assert_true(issequence(("a", "b")))
+    assert_true(issequence([]))
+    assert_true(issequence(["a"]))
+    assert_false(issequence(""))
+    assert_false(issequence("a"))
+    assert_false(issequence(1))
+    assert_false(issequence({}))
+    assert_false(issequence(set()))
 
-    def testSeq(self):
-        self.assertTrue(issequence(()))
-        self.assertTrue(issequence(("a", "b")))
-        self.assertTrue(issequence([]))
-        self.assertTrue(issequence(["a"]))
-        self.assertFalse(issequence(""))
-        self.assertFalse(issequence("a"))
-        self.assertFalse(issequence(1))
-        self.assertFalse(issequence({}))
-        self.assertFalse(issequence(set()))
 
-    def testPaths(self):
-        value = expandfilenames(
-            ['config.ini', ['~', 'home'], ('..', 'config.ini')])
-        expected = [
-            'config.ini', os.path.expanduser('~/home'), '../config.ini']
-        self.assertEqual(value, expected)
+def test_paths():
+    value = expandfilenames(
+        ['config.ini', ['~', 'home'], ('..', 'config.ini')])
+    expected = [
+        'config.ini', os.path.expanduser('~/home'), '../config.ini']
+    assert_equals(value, expected)
 
-        self.assertEqual(expandfilenames('config.ini'), ['config.ini'])
-        self.assertEqual(expandfilenames([]), [])
+    assert_equals(expandfilenames('config.ini'), ['config.ini'])
+    assert_equals(expandfilenames([]), [])
 
-    def testPath(self):
-        self.assertEqual(expandfilename('config.ini'), 'config.ini')
-        self.assertEqual(
-            expandfilename(['~', 'home']), os.path.expanduser('~/home'))
+
+def test_path():
+    assert_equals(expandfilename('config.ini'), 'config.ini')
+    assert_equals(
+        expandfilename(['~', 'home']), os.path.expanduser('~/home'))

@@ -56,18 +56,22 @@ def finish_job(job):
         return finish_job(get_job())
     else:
         if job['queue'] > 0:
-            archive_job(job)
+            return archive_job(job)
+        else:
+            return job
 
 
 def queue_job(job, method, host=None):
     simcity.check_init()
     try:
-        return simcity.job_database.save(job.queue(method, host))
+        job = simcity.job_database.save(job.queue(method, host))
     except ResourceConflict:
         return queue_job(get_job(job.id), method)
     else:
         if job['done'] > 0:
-            archive_job(job)
+            return archive_job(job)
+        else:
+            return job
 
 
 def archive_job(job):
