@@ -29,6 +29,19 @@ def get_job(job_id=None):
     return Job(simcity.job_database.get(job_id))
 
 
+def queue_job(job, method, host=None):
+    simcity.check_init()
+    try:
+        job = simcity.job_database.save(job.queue(method, host))
+    except ResourceConflict:
+        return queue_job(get_job(job.id), method)
+    else:
+        if job['done'] > 0:
+            return archive_job(job)
+        else:
+            return job
+
+
 def start_job():
     simcity.check_init()
     try:  # EnvironmentError if job_id cannot be determined falls through
@@ -56,18 +69,9 @@ def finish_job(job):
         return finish_job(get_job())
     else:
         if job['queue'] > 0:
-            archive_job(job)
-
-
-def queue_job(job, method, host=None):
-    simcity.check_init()
-    try:
-        return simcity.job_database.save(job.queue(method, host))
-    except ResourceConflict:
-        return queue_job(get_job(job.id), method)
-    else:
-        if job['done'] > 0:
-            archive_job(job)
+            return archive_job(job)
+        else:
+            return job
 
 
 def archive_job(job):
