@@ -24,11 +24,12 @@ import shutil
 
 
 def test_actor():
+    os.mkdir('tests/tmp')
     cfg = simcity.util.Config(from_file=False)
     cfg.add_section('Execution', {
-        'tmp_dir': '$TMPDIR/tmp_alala',
-        'output_dir': '$TMPDIR/out_alala',
-        'input_dir': '$TMPDIR/in_alala',
+        'tmp_dir': 'tests/tmp/tmp_alala',
+        'output_dir': 'tests/tmp/out_alala',
+        'input_dir': 'tests/tmp/in_alala',
     })
     db = MockDB()
     db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo'}}
@@ -40,9 +41,7 @@ def test_actor():
     actor.run()
     assert_true(db.jobs['myjob']['done'] > 0)
     assert_true(db.saved['mytask']['done'] > 0)
-    assert_true(os.path.exists(os.path.expandvars('$TMPDIR/tmp_alala')))
-    assert_true(os.path.exists(os.path.expandvars('$TMPDIR/out_alala')))
-    assert_true(os.path.exists(os.path.expandvars('$TMPDIR/in_alala')))
-    shutil.rmtree(os.path.expandvars('$TMPDIR/tmp_alala'))
-    shutil.rmtree(os.path.expandvars('$TMPDIR/out_alala'))
-    shutil.rmtree(os.path.expandvars('$TMPDIR/in_alala'))
+    assert_true(os.path.exists('tests/tmp/tmp_alala'))
+    assert_true(os.path.exists('tests/tmp/out_alala'))
+    assert_true(os.path.exists('tests/tmp/in_alala'))
+    shutil.rmtree('tests/tmp')
