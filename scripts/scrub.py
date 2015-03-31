@@ -41,6 +41,8 @@ if __name__ == '__main__':
                         help="number of days ago the task was locked")
     parser.add_argument('-H', '--hours', type=int, default=0,
                         help="number of hours ago the task was locked")
+    parser.add_argument('-M', '--minutes', type=int, default=0,
+                        help="number of minutes ago the task was locked")
     parser.add_argument('-S', '--seconds', type=int, default=0,
                         help="number of seconds ago the task was locked")
     parser.add_argument('-c', '--config', default=None,
@@ -57,22 +59,22 @@ if __name__ == '__main__':
 
     if args.view in task_views:
         db = simcity.get_task_database()
-        update = update_task
+        do_update = update_task
     else:
         db = simcity.get_job_database()
-        update = update_job
+        do_update = update_job
 
     total = 0
     updates = []
     for row in db.view(args.view):
         total += 1
         if arg_t <= 0 or row.value['lock'] < min_t:
-            doc = update(id)
+            doc = do_update(row.id)
             updates.append(doc)
 
-    if len(update) > 0:
-        db.save_documents(update)
+    if len(updates) > 0:
+        db.save_documents(updates)
         print("Scrubbed %d out of %d documents from '%s'" %
-              (len(update), total, args.view))
+              (len(updates), total, args.view))
     else:
         print("No scrubbing required")

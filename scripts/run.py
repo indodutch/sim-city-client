@@ -39,8 +39,8 @@ if __name__ == '__main__':
     parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
 
     args = parser.parse_args()
-    arg_t = args.seconds + 60 * \
-        (args.minutes + 60 * (args.hours + (24 * args.days)))
+    hours = args.hours + (24 * args.days)
+    arg_t = args.seconds + 60 * (args.minutes + 60 * hours)
 
     if args.job_id is not None:
         simcity.set_current_job_id(args.job_id)
