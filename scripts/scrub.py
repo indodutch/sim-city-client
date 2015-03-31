@@ -27,8 +27,10 @@ def update_task(id):
     return simcity.get_task(id).scrub()
 
 
-def update_job(id):
-    return simcity.get_job(id).archive()
+def update_job(id, db):
+    job = simcity.get_job(id)
+    db.delete(job)
+    return job.archive()
 
 
 if __name__ == '__main__':
@@ -69,7 +71,7 @@ if __name__ == '__main__':
     for row in db.view(args.view):
         total += 1
         if arg_t <= 0 or row.value['lock'] < min_t:
-            doc = do_update(row.id)
+            doc = do_update(row.id, db)
             updates.append(doc)
 
     if len(updates) > 0:
