@@ -26,15 +26,14 @@ from nose.tools import assert_true, assert_false, assert_equals, assert_raises
 
 def test_config_write_read():
     fd, fname = tempfile.mkstemp()
-    f = os.fdopen(fd, 'w')
-    print('[MySection]', file=f)
-    print('a=1', file=f)
-    print('a=4', file=f)
-    print('[OtherSection]', file=f)
-    print('a=2', file=f)
-    print('b=wefa feaf', file=f)
-    print('c=wefa=feaf', file=f)
-    f.close()
+    with os.fdopen(fd, 'w') as f:
+        print('[MySection]', file=f)
+        print('a=1', file=f)
+        print('a=4', file=f)
+        print('[OtherSection]', file=f)
+        print('a=2', file=f)
+        print('b=wefa feaf', file=f)
+        print('c=wefa=feaf', file=f)
 
     cfg = Config(fname)
     os.remove(fname)
