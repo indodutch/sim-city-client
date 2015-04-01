@@ -23,7 +23,7 @@ import argparse
 import time
 
 
-def update_task(id):
+def update_task(id, _):
     return simcity.get_task(id).scrub()
 
 
