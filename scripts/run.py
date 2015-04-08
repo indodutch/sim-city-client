@@ -84,9 +84,7 @@ if __name__ == '__main__':
 
     actor = simcity.ExecuteActor(iterator=iterator)
 
-    for sig_name in ['HUP', 'INT', 'QUIT', 'ABRT', 'SYS', 'PIPE', 'ALRM',
-                     'TERM', 'TTIN', 'TTOU', 'XCPU', 'XFSZ', 'PROF', 'USR1',
-                     'USR2']:
+    for sig_name in ['HUP', 'INT', 'QUIT', 'ABRT', 'TERM']:
         try:
             sig = signal.__dict__['SIG%s' % sig_name]
         except Exception as ex:
