@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
 
-SIM-CITY client 0.2.2. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
+SIM-CITY client 0.3. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
 
 ## Dependencies
 
@@ -45,11 +45,11 @@ The TOKEN_ID must be unique. Refresh the database to see the tasks.
 
 Refresh the database to see the views. Unfold top right tab 'View:All documents' to inspect each view.
 
-**Run a simple example** that calculates the square of a set of tasks:
+**Run the client** to process tokens in the database:
    
-	$ python scripts/runExample.py
+	$ python scripts/run.py
 
-This will run an executable on your local machine. To submit the same on a cluster, you need to add the 'python runExample.py' command for example in a shell script and submit this with qsub. See for example `scripts/lisaSubmitExpress.sh`.
+This will run an executable on your local machine. To submit the same on a cluster, you need to add the 'python run.py' command for example in a shell script and submit this with qsub. See for example `scripts/lisaSubmitExpress.sh`.
 
 ## Contributing
 
@@ -57,4 +57,6 @@ We use git-flow for managing branches. To add a feature, first run
 
     make test
 
-and then commit, to make sure the change didn't break any code.
+and then commit, to make sure the change didn't break any code. Before a creating a pull-request, run
+
+    make fulltest
