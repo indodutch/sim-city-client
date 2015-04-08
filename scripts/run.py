@@ -25,6 +25,7 @@ from picas.iterators import (PrioritizedViewIterator, TaskViewIterator,
 import argparse
 import sys
 import signal
+import traceback
 
 
 def is_cancelled():
@@ -32,12 +33,12 @@ def is_cancelled():
     try:
         job_id = simcity.get_current_job_id()
         db.get(job_id)['cancel'] > 0
-    except:
+    except KeyError:
         return False
 
 
 def signal_handler(signal, frame):
-    print('Caught signal; finishing job.', file=sys.stderr)
+    print('Caught signal %d; finishing job.' % signal, file=sys.stderr)
     try:
         simcity.finish_job(simcity.get_job())
     except:
@@ -94,5 +95,11 @@ if __name__ == '__main__':
 
     # Start work!
     print("Connected to the database sucessfully. Now starting work...")
-    actor.run(maxtime=arg_t, avg_time_factor=args.padding)
+    try:
+        actor.run(maxtime=arg_t, avg_time_factor=args.padding)
+    except Exception as ex:
+        print("Error occurred: %s: %s" % (str(type(ex)), str(ex)),
+              file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
+              
     print("No more tasks to process, done.")
