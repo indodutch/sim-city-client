@@ -84,16 +84,18 @@ def finish_job(job, database=None):
         else:
             return job
 
+
 def cancel_endless_job(job, database=None):
     if database is None:
         database = get_job_database()
-    
+
     try:
         job['cancel'] = seconds()
         return database.save(job)
     except ResourceConflict:
         job = get_job(job_id=job.id, database=database)
         return cancel_endless_job(job, database=database)
+
 
 def archive_job(job, database=None):
     if database is None:
@@ -102,7 +104,7 @@ def archive_job(job, database=None):
     try:
         database.delete(job)
     except ResourceConflict:
-        job = get_job(job_id=job.id, databse=database)
+        job = get_job(job_id=job.id, database=database)
         return archive_job(job, database=database)
     else:
         return database.save(job.archive())

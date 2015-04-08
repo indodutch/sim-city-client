@@ -24,6 +24,7 @@ from picas.iterators import (PrioritizedViewIterator, TaskViewIterator,
                              EndlessViewIterator)
 import argparse
 
+
 def is_cancelled():
     db = simcity.get_job_database()
     try:
@@ -64,7 +65,7 @@ if __name__ == '__main__':
         iterator = PrioritizedViewIterator(db, 'todo_priority', 'todo')
     else:
         iterator = TaskViewIterator(db, 'todo')
-    
+
     if args.endless:
         iterator = EndlessViewIterator(iterator, stop_callback=is_cancelled)
 
