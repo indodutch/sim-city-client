@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
 
-SIM-CITY client 0.2.2. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
+SIM-CITY client 0.3. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
 
 ## Dependencies
 
@@ -57,4 +57,6 @@ We use git-flow for managing branches. To add a feature, first run
 
     make test
 
-and then commit, to make sure the change didn't break any code.
+and then commit, to make sure the change didn't break any code. Before a creating a pull-request, run
+
+    make fulltest
