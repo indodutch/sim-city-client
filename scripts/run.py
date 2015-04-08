@@ -48,7 +48,7 @@ if __name__ == '__main__':
                              "calculating maximum time")
     parser.add_argument('-e', '--endless', action="store_true",
                         help="run until cancelled, even if no ")
-    parser.add_argument('-p', '--prioritize', action="store_true",
+    parser.add_argument('-P', '--prioritize', action="store_true",
                         help="prioritize tasks")
     parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
 
