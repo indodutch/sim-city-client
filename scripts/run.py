@@ -23,6 +23,8 @@ import simcity
 from picas.iterators import (PrioritizedViewIterator, TaskViewIterator,
                              EndlessViewIterator)
 import argparse
+import sys
+import signal
 
 
 def is_cancelled():
@@ -32,6 +34,17 @@ def is_cancelled():
         db.get(job_id)['cancel'] > 0
     except:
         return False
+
+
+def signal_handler(signal, frame):
+    print('Caught signal; finishing job.', file=sys.stderr)
+    try:
+        simcity.finish_job(simcity.get_job())
+    except:
+        pass
+
+    sys.exit(1)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run time")
@@ -70,6 +83,16 @@ if __name__ == '__main__':
         iterator = EndlessViewIterator(iterator, stop_callback=is_cancelled)
 
     actor = simcity.ExecuteActor(iterator=iterator)
+
+    for sig_name in ['HUP', 'INT', 'QUIT', 'ABRT', 'SYS', 'PIPE', 'ALRM',
+                     'TERM', 'TTIN', 'TTOU', 'XCPU', 'XFSZ', 'PROF', 'USR1',
+                     'USR2']:
+        try:
+            sig = signal.__dict__['SIG%s' % sig_name]
+        except Exception as ex:
+            print(ex, file=sys.stderr)
+        else:
+            signal.signal(sig, signal_handler)
 
     # Start work!
     print("Connected to the database sucessfully. Now starting work...")
