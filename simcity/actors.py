@@ -26,10 +26,10 @@ from subprocess import call
 
 class ExecuteActor(RunActor):
 
-    def __init__(self, task_db=None, job_db=None, config=None):
+    def __init__(self, task_db=None, iterator=None, job_db=None, config=None):
         if task_db is None:
             task_db = simcity.get_task_database()
-        super(ExecuteActor, self).__init__(task_db)
+        super(ExecuteActor, self).__init__(task_db, iterator=iterator)
 
         if job_db is None:
             job_db = simcity.get_job_database()

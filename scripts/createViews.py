@@ -82,9 +82,10 @@ function (key, values, rereduce) {
     '''
 
     tasks = {
-        'todo':   'doc.lock === 0',
-        'locked': 'doc.lock > 0 && doc.done === 0',
-        'done':   'doc.lock > 0 && doc.done > 0'
+        'todo':     'doc.lock === 0',
+        'todo_priority': 'doc.lock === 0 && doc.priority === "high"',
+        'locked':   'doc.lock > 0 && doc.done === 0',
+        'done':     'doc.lock > 0 && doc.done > 0'
     }
     jobs = {
         'pending_jobs':  'doc.start === 0 && doc.archive === 0',

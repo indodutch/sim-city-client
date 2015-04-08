@@ -20,8 +20,17 @@ Client to run commands with.
 '''
 from __future__ import print_function
 import simcity
-from simcity.job import ExecuteActor
+from picas.iterators import (PrioritizedViewIterator, TaskViewIterator,
+                             EndlessViewIterator)
 import argparse
+
+def is_cancelled():
+    db = simcity.get_job_database()
+    try:
+        job_id = simcity.get_current_job_id()
+        db.get(job_id)['cancel'] > 0
+    except:
+        return False
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run time")
@@ -36,6 +45,10 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--padding', type=float, default=1.5,
                         help="padding factor for average task time in "
                              "calculating maximum time")
+    parser.add_argument('-e', '--endless', action="store_true",
+                        help="run until cancelled, even if no ")
+    parser.add_argument('-p', '--prioritize', action="store_true",
+                        help="prioritize tasks")
     parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
 
     args = parser.parse_args()
@@ -45,7 +58,17 @@ if __name__ == '__main__':
     if args.job_id is not None:
         simcity.set_current_job_id(args.job_id)
 
-    actor = ExecuteActor()
+    db = simcity.get_task_database()
+
+    if args.prioritize:
+        iterator = PrioritizedViewIterator(db, 'todo_priority', 'todo')
+    else:
+        iterator = TaskViewIterator(db, 'todo')
+    
+    if args.endless:
+        iterator = EndlessViewIterator(iterator, stop_callback=is_cancelled)
+
+    actor = simcity.ExecuteActor(iterator=iterator)
 
     # Start work!
     print("Connected to the database sucessfully. Now starting work...")
