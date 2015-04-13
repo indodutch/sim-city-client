@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
 
-SIM-CITY client 0.3. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
+SIM-CITY client 0.3.1. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
 
 ## Dependencies
 
@@ -50,6 +50,10 @@ Refresh the database to see the views. Unfold top right tab 'View:All documents'
 	$ python scripts/run.py
 
 This will run an executable on your local machine. To submit the same on a cluster, you need to add the 'python run.py' command for example in a shell script and submit this with qsub. See for example `scripts/lisaSubmitExpress.sh`.
+
+## API
+
+The API consists of all methods exported in `__init__.py`. It assumes that a configuration file is available to set the databases and execution options with. The `simcity.init(configfile)` need only be called if the config file cannot be found at the default location.
 
 ## Contributing
 
