@@ -21,7 +21,7 @@ except ImportError:
 
 
 setup(name='simcity',
-      version='0.3.1',
+      version='0.3.1.1',
       description='Python SIM-CITY client using CouchDB as a task pool server.',
       author='Joris Borgdorff',
       author_email='j.borgdorff@esciencecenter.nl',
