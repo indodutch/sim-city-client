@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
     simcity.init(configfile=args.config)
 
-    job = simcity.job.submit_if_needed(args.host, args.max)
+    job = simcity.submit_if_needed(args.host, args.max)
     if job is None:
         print("No tasks to process or already %d jobs running (increase "
               "maximum number of jobs with -m)" % args.max)
