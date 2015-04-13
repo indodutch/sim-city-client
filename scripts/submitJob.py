@@ -44,7 +44,7 @@ if __name__ == '__main__':
               file=sys.stderr)
         sys.exit(1)
 
-    job = simcity.job.submit_if_needed(args.host, args.max)
+    job = simcity.submit_if_needed(args.host, args.max)
     if job is None:
         print("Let task be processed by existing pilot-job scripts")
     else:

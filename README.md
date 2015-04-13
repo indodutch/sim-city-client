@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
 
-SIM-CITY client 0.3.1. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
+SIM-CITY client 0.3.1.1. Uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
 
 ## Dependencies
 
