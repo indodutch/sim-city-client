@@ -17,6 +17,7 @@
 from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
 from picas.documents import Job
+from picas.util import seconds
 
 
 def get_job(job_id=None, database=None):
@@ -38,8 +39,8 @@ def queue_job(job, method, host=None, database=None):
     try:
         job = database.save(job.queue(method, host))
     except ResourceConflict:
-        return queue_job(get_job(job.id), method, host=host,
-                         database=database)
+        job = get_job(job_id=job.id, database=database)
+        return queue_job(job, method, host=host, database=database)
     else:
         if job['done'] > 0:
             return archive_job(job, database)
@@ -75,12 +76,25 @@ def finish_job(job, database=None):
     # database by the submission script after starting.
     # Since this happens only once, we don't risk unlimited recursion
     except ResourceConflict:
-        return finish_job(get_job(), database=database)
+        job = get_job(job_id=job.id, database=database)
+        return finish_job(job, database=database)
     else:
         if job['queue'] > 0:
             return archive_job(job, database=database)
         else:
             return job
+
+
+def cancel_endless_job(job, database=None):
+    if database is None:
+        database = get_job_database()
+
+    try:
+        job['cancel'] = seconds()
+        return database.save(job)
+    except ResourceConflict:
+        job = get_job(job_id=job.id, database=database)
+        return cancel_endless_job(job, database=database)
 
 
 def archive_job(job, database=None):
@@ -90,6 +104,7 @@ def archive_job(job, database=None):
     try:
         database.delete(job)
     except ResourceConflict:
-        return archive_job(get_job(job.id), database=database)
+        job = get_job(job_id=job.id, database=database)
+        return archive_job(job, database=database)
     else:
         return database.save(job.archive())

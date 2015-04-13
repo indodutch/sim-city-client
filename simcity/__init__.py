@@ -15,7 +15,8 @@
 # limitations under the License.
 
 from .actors import ExecuteActor
-from .job import (get_job, start_job, queue_job, finish_job, archive_job)
+from .job import (get_job, start_job, queue_job, finish_job, archive_job,
+                  cancel_endless_job)
 from .management import (overview_total, get_config, init,
                          get_task_database, get_job_database,
                          get_current_job_id,
@@ -28,6 +29,7 @@ __all__ = ['ExecuteActor', 'overview_total', 'get_config', 'init',
            'get_task_database', 'get_job_database', 'get_current_job_id',
            'set_current_job_id', 'is_initialized',
            'get_job', 'start_job', 'queue_job', 'finish_job', 'archive_job',
+           'cancel_endless_job',
            'add_task', 'get_task', 'submit', 'submit_if_needed', 'Submitter',
            'OsmiumSubmitter', 'SSHSubmitter']
 
