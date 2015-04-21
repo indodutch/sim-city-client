@@ -45,3 +45,4 @@ clean:
 	rm -rf build/
 	find . -name *.pyc -delete
 	find . -name *.pyo -delete
+	rm -rf tests/tmp
