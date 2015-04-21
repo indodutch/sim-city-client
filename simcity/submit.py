@@ -31,7 +31,11 @@ def submit_if_needed(hostname, max_jobs, submitter=None):
     num = simcity.overview_total()
 
     num_jobs = num['active_jobs'] + num['pending_jobs']
-    if num_jobs < num['todo'] and num_jobs < max_jobs:
+    if ((num_jobs < num['todo'] and num_jobs < max_jobs) or
+            # active jobs should be scrubbed, some of them are not running
+            # anymore
+            (num['pending_jobs'] == 0 and num['todo'] > 0 and
+             num['locked'] == 0)):
         return submit(hostname)
     else:
         return None
