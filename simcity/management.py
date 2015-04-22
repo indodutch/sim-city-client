@@ -32,43 +32,51 @@ _job_db = None
 
 
 def get_config():
+    """ Get the global SIM-CITY configuration. """
     _check_init(_config)
     return _config
 
 
 def set_config(cfg):
+    """ Set the global SIM-CITY configuration. """
     global _config
     _config = cfg
     _init_databases()
 
 
 def set_task_database(database):
+    """ Set the global SIM-CITY task database. """
     global _task_db
     _task_db = database
     _reset_init()
 
 
 def set_job_database(database):
+    """ Set the global SIM-CITY job database. """
     global _job_db
     _job_db = database
     _reset_init()
 
 
 def get_task_database():
+    """ Get the global SIM-CITY task database. """
     _check_init(_task_db)
     return _task_db
 
 
 def get_job_database():
+    """ Get the global SIM-CITY job database. """
     _check_init(_job_db)
     return _job_db
 
 
 def get_current_job_id():
+    """ Get the global SIM-CITY job id of the currently running job. """
     return _current_job_id
 
 
 def set_current_job_id(job_id):
+    """ Set the global SIM-CITY job id of the currently running job. """
     global _current_job_id
     _current_job_id = job_id
 
@@ -81,6 +89,11 @@ def _check_init(myvalue=None):
 
 
 def init(configfile, job_id=None):
+    """
+    Initialize the SIM-CITY infrastructure.
+
+    The configfile is the INI file containing all needed global configuration.
+    """
     global _is_initializing, _config, _current_job_id
 
     if job_id is not None:
@@ -147,6 +160,11 @@ def _load_database(name):
 
 
 def overview_total():
+    """
+    Overview of all tasks and jobs.
+
+    Returns a dict with the numbers of each type of job and task.
+    """
     views = ['todo', 'locked', 'error', 'done',
              'finished_jobs', 'active_jobs', 'pending_jobs']
     num = dict((view, 0) for view in views)

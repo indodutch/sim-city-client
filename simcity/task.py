@@ -19,6 +19,9 @@ from . import get_task_database
 
 
 def add_task(properties, database=None):
+    """
+    Add a picas.documents.Task object to the database with given properties.
+    """
     if database is None:
         database = get_task_database()
 
@@ -27,6 +30,9 @@ def add_task(properties, database=None):
 
 
 def get_task(task_id, database=None):
+    """
+    Get the picas.documents.Task object with given ID.
+    """
     if database is None:
         database = get_task_database()
 

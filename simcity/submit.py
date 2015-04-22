@@ -29,6 +29,11 @@ from uuid import uuid4
 
 
 def submit_if_needed(hostname, max_jobs, submitter=None):
+    """
+    Submit a new job if not enough jobs are already running or queued.
+
+    Host configuration is extracted from an entry in the global config file.
+    """
     if not isinstance(max_jobs, Number):
         raise ValueError("Max jobs must be a number")
 
@@ -46,6 +51,7 @@ def submit_if_needed(hostname, max_jobs, submitter=None):
 
 
 def submit(hostname, submitter=None):
+    """ Submit a new job to given host. """
     host = hostname + '-host'
     try:
         host_cfg = simcity.get_config().section(host)
@@ -80,7 +86,7 @@ def submit(hostname, submitter=None):
 
 
 class Submitter(object):
-
+    """ Submits a job """
     def __init__(self, database, host, prefix, jobdir, method):
         self.database = database
         self.host = host
@@ -106,6 +112,7 @@ class Submitter(object):
 
 
 class OsmiumSubmitter(Submitter):
+    """ Submits a job to Osmium. """
     __BASE = {
         "executable": "/usr/bin/qsub",
         "arguments": ["lisaSubmitExpress.sh"],
@@ -141,6 +148,7 @@ class OsmiumSubmitter(Submitter):
 
 
 class SSHSubmitter(Submitter):
+    """ Submits a job over SSH. """
 
     def __init__(self, database, host, prefix, jobdir="~"):
         super(SSHSubmitter, self).__init__(
