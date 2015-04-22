@@ -21,6 +21,12 @@ from picas.util import seconds
 
 
 def get_job(job_id=None, database=None):
+    """
+    Get a job from the job database.
+
+    If no job_id is given, the job ID of the current process is used, if
+    specified. If no database is provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -33,6 +39,13 @@ def get_job(job_id=None, database=None):
 
 
 def queue_job(job, method, host=None, database=None):
+    """
+    Mark a job from the job database as being queued.
+
+    The job is a Job object, the method a string with the type of queue being
+    used, the host is the hostname that it was queued on. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -49,6 +62,12 @@ def queue_job(job, method, host=None, database=None):
 
 
 def start_job(database=None):
+    """
+    Mark a job from the job database as being started.
+
+    The job ID of the current process is used. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -67,6 +86,12 @@ def start_job(database=None):
 
 
 def finish_job(job, database=None):
+    """
+    Mark a job from the job database as being finished.
+
+    The job is a Job object. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -86,6 +111,12 @@ def finish_job(job, database=None):
 
 
 def cancel_endless_job(job, database=None):
+    """
+    Mark a job from the job database for cancellation.
+
+    The job is a Job object. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -98,6 +129,12 @@ def cancel_endless_job(job, database=None):
 
 
 def archive_job(job, database=None):
+    """
+    Archive a job in the job database.
+
+    The job is a Job object. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 

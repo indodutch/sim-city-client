@@ -19,7 +19,11 @@ from picas.documents import Job
 import simcity
 
 from numbers import Number
-import httplib
+try:
+    from httplib import HTTPConnection
+except ImportError:
+    from http.client import HTTPConnection
+
 import subprocess
 from uuid import uuid4
 
@@ -124,7 +128,7 @@ class OsmiumSubmitter(Submitter):
             'environment': {'SIMCITY_JOBID': job.id}
         })
 
-        conn = httplib.HTTPConnection(self.host, self.port)
+        conn = HTTPConnection(self.host, self.port)
         conn.request("POST", request)
         response = conn.getresponse()
         conn.close()
