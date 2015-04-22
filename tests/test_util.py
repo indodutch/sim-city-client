@@ -20,7 +20,7 @@ from simcity.util import (Config, expandfilenames, issequence,
                           expandfilename)
 import os
 import tempfile
-import ConfigParser
+
 from nose.tools import assert_true, assert_false, assert_equals, assert_raises
 
 
@@ -40,7 +40,7 @@ def test_config_write_read():
 
     my = cfg.section('MySection')
     other = cfg.section('OtherSection')
-    assert_raises(ConfigParser.NoSectionError, cfg.section,
+    assert_raises(KeyError, cfg.section,
                   'NonExistantSection')
     assert_true(type(my) is dict, "section is not a dictionary")
     assert_true('a' in my, "Value in section")
@@ -53,7 +53,7 @@ def test_config_write_read():
 
 def test_empty_config():
     cfg = Config(from_file=False)
-    assert_raises(ConfigParser.NoSectionError, cfg.section, 'notexist')
+    assert_raises(KeyError, cfg.section, 'notexist')
     cfg.add_section('my', {'a': 'b'})
     assert_equals(cfg.section('my')['a'], 'b')
 

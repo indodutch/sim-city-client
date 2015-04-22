@@ -14,7 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from ConfigParser import ConfigParser, NoSectionError
+try:
+    from ConfigParser import ConfigParser
+except ImportError:
+    from configparser import ConfigParser
+
 import json
 import os
 import glob
@@ -48,13 +52,13 @@ class Config(object):
         self.sections[name] = keyvalue
 
     def section(self, name):
-        try:
+        if name in self.sections:
             return self.sections[name]
-        except:
-            if self.parser is not None:
-                return dict(self.parser.items(name))
-            else:
-                raise NoSectionError(name)
+        elif self.parser is not None and (name == 'DEFAULT' or
+                                          self.parser.has_section(name)):
+            return dict(self.parser.items(name))
+        else:
+            raise KeyError(name)
 
 
 def issequence(obj):

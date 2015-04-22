@@ -18,7 +18,6 @@ from picas.clients import CouchDB
 from .util import Config
 
 import os
-from ConfigParser import NoSectionError
 
 try:
     _current_job_id = os.environ['SIMCITY_JOBID']
@@ -131,7 +130,7 @@ def _reset_init():
 def _load_database(name):
     try:
         cfg = _config.section(name)
-    except NoSectionError:
+    except KeyError:
         raise EnvironmentError(
             "Configuration file %s does not contain '%s' section" %
             (_config.filename, name))
