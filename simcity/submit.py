@@ -45,7 +45,7 @@ def submit_if_needed(hostname, max_jobs, submitter=None):
             # anymore
             (num['pending_jobs'] == 0 and num['todo'] > 0 and
              num['locked'] == 0)):
-        return submit(hostname)
+        return submit(hostname, submitter)
     else:
         return None
 
@@ -136,7 +136,8 @@ class OsmiumSubmitter(Submitter):
         })
 
         conn = HTTPConnection(self.host, self.port)
-        conn.request("POST", request)
+        url = 'http://%s:%d' % (self.host, self.port)
+        conn.request("POST", url, request)
         response = conn.getresponse()
         conn.close()
 
@@ -167,6 +168,6 @@ class SSHSubmitter(Submitter):
         try:
             # get the (before)last line
             return lines[-2]
-        except:
+        except IndexError:
             raise IOError("Cannot parse job ID from stdout: '" +
                           stdout + "'\n==== stderr ====\n'" + stderr + "'")
