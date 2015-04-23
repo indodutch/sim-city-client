@@ -24,6 +24,7 @@ from .management import (overview_total, get_config, init,
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter)
 from .task import add_task, get_task
+from .util import Config
 
 __all__ = ['ExecuteActor', 'overview_total', 'get_config', 'init',
            'get_task_database', 'get_job_database', 'get_current_job_id',
@@ -31,6 +32,6 @@ __all__ = ['ExecuteActor', 'overview_total', 'get_config', 'init',
            'get_job', 'start_job', 'queue_job', 'finish_job', 'archive_job',
            'cancel_endless_job',
            'add_task', 'get_task', 'submit', 'submit_if_needed', 'Submitter',
-           'OsmiumSubmitter', 'SSHSubmitter']
+           'OsmiumSubmitter', 'SSHSubmitter', 'Config']
 
 init(None)

@@ -88,7 +88,7 @@ def _check_init(myvalue=None):
             "configuration file to simcity.init()")
 
 
-def init(configfile, job_id=None):
+def init(config, job_id=None):
     """
     Initialize the SIM-CITY infrastructure.
 
@@ -99,17 +99,20 @@ def init(configfile, job_id=None):
     if job_id is not None:
         _current_job_id = job_id
 
-    try:
-        _config = Config(configfile)
-    except:
-        # default initialization may fail
-        if not _is_initializing:
-            raise
-    else:
+    if isinstance(config, Config):
+        _config = config
         _init_databases()
+    else:
+        try:
+            _config = Config(config)
+        except ValueError:
+            # default initialization may fail
+            if not _is_initializing:
+                raise
+        else:
+            _init_databases()
 
-    if _is_initializing:
-        _is_initializing = False
+    _is_initializing = False
 
 
 def _init_databases():
@@ -117,7 +120,7 @@ def _init_databases():
 
     try:
         _task_db = _load_database('task-db')
-    except:
+    except (EnvironmentError, IOError):
         if not _is_initializing:
             raise
 
@@ -126,7 +129,7 @@ def _init_databases():
     except EnvironmentError:
         # job database not explicitly configured
         _job_db = _task_db
-    except:
+    except IOError:
         if not _is_initializing:
             raise
 
