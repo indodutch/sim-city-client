@@ -164,10 +164,11 @@ class SSHSubmitter(Submitter):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         (stdout, stderr) = process.communicate()
-        lines = stdout.split('\n')
+        lines = stdout.decode('utf-8').split('\n')
         try:
             # get the (before)last line
             return lines[-2]
         except IndexError:
-            raise IOError("Cannot parse job ID from stdout: '" +
-                          stdout + "'\n==== stderr ====\n'" + stderr + "'")
+            raise IOError("Cannot parse job ID from stdout: '%s'\n"
+                          "==== stderr ====\n'%s'"
+                          % (stdout, stderr))
