@@ -2,7 +2,7 @@
 url = https://couch.example.com
 username = myuser
 password = mypassword
-database = mydatabase
+database = mytaskdatabase
 
 [job-db]
 url = https://couch.example.com
@@ -15,7 +15,7 @@ tmp_dir = $TMPDIR
 output_dir = $HOME/out
 input_dir = $HOME/in
 
-[lisa-host]
+[mycluster-host]
 path = path/to/submitscript
 script = submitscript.sh
 host = user@hostname
