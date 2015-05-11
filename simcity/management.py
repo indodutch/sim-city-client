@@ -157,7 +157,7 @@ def _load_database(name):
         verify_ssl = cfg['ssl_verification'].lower() in truthy
     except KeyError:
         verify_ssl = False
-    
+
     try:
         return CouchDB(
             url=cfg['url'],
