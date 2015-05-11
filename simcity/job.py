@@ -18,9 +18,16 @@ from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
 from picas.documents import Job
 from picas.util import seconds
+import time
 
 
 def get_job(job_id=None, database=None):
+    """
+    Get a job from the job database.
+
+    If no job_id is given, the job ID of the current process is used, if
+    specified. If no database is provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -33,6 +40,13 @@ def get_job(job_id=None, database=None):
 
 
 def queue_job(job, method, host=None, database=None):
+    """
+    Mark a job from the job database as being queued.
+
+    The job is a Job object, the method a string with the type of queue being
+    used, the host is the hostname that it was queued on. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -49,6 +63,12 @@ def queue_job(job, method, host=None, database=None):
 
 
 def start_job(database=None):
+    """
+    Mark a job from the job database as being started.
+
+    The job ID of the current process is used. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -67,6 +87,12 @@ def start_job(database=None):
 
 
 def finish_job(job, database=None):
+    """
+    Mark a job from the job database as being finished.
+
+    The job is a Job object. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -86,6 +112,12 @@ def finish_job(job, database=None):
 
 
 def cancel_endless_job(job, database=None):
+    """
+    Mark a job from the job database for cancellation.
+
+    The job is a Job object. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -98,6 +130,12 @@ def cancel_endless_job(job, database=None):
 
 
 def archive_job(job, database=None):
+    """
+    Archive a job in the job database.
+
+    The job is a Job object. If no database is
+    provided, the standard job database is used.
+    """
     if database is None:
         database = get_job_database()
 
@@ -108,3 +146,27 @@ def archive_job(job, database=None):
         return archive_job(job, database=database)
     else:
         return database.save(job.archive())
+
+
+def scrub_jobs(view, age=24*60*60, database=None):
+    views = ['pending_jobs', 'active_jobs', 'finished_jobs']
+    if view not in views:
+        raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
+
+    if database is None:
+        database = get_job_database()
+
+    min_t = int(time.time()) - age
+    total = 0
+    updates = []
+    for row in database.view(view):
+        total += 1
+        if age <= 0 or row.value['lock'] < min_t:
+            job = get_job(row.id, database=database)
+            database.delete(job)
+            updates.append(job.archive())
+
+    if len(updates) > 0:
+        database.save_documents(updates)
+
+    return (len(updates), total)

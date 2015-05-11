@@ -20,17 +20,6 @@ Remove lock and done from tasks and remove queued and active from jobs.
 from __future__ import print_function
 import simcity
 import argparse
-import time
-
-
-def update_task(id, _):
-    return simcity.get_task(id).scrub()
-
-
-def update_job(id, db):
-    job = simcity.get_job(id)
-    db.delete(job)
-    return job.archive()
 
 
 if __name__ == '__main__':
@@ -54,29 +43,17 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     hours = args.hours + (24 * args.days)
-    arg_t = args.seconds + 60 * (args.minutes + 60 * hours)
-    min_t = int(time.time()) - arg_t
+    age = args.seconds + 60 * (args.minutes + 60 * hours)
 
     simcity.init(configfile=args.config)
 
     if args.view in task_views:
-        db = simcity.get_task_database()
-        do_update = update_task
+        scrubbed, total = simcity.scrub_tasks(args.view, age=age)
     else:
-        db = simcity.get_job_database()
-        do_update = update_job
+        scrubbed, total = simcity.scrub_jobs(args.view, age=age)
 
-    total = 0
-    updates = []
-    for row in db.view(args.view):
-        total += 1
-        if arg_t <= 0 or row.value['lock'] < min_t:
-            doc = do_update(row.id, db)
-            updates.append(doc)
-
-    if len(updates) > 0:
-        db.save_documents(updates)
+    if scrubbed > 0:
         print("Scrubbed %d out of %d documents from '%s'" %
-              (len(updates), total, args.view))
+              (scrubbed, total, args.view))
     else:
         print("No scrubbing required")

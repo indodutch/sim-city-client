@@ -36,7 +36,7 @@ class MockDB(object):
         self.viewList = view
 
     def get_single_from_view(self, view, **view_params):
-        idx = random.choice(self.tasks.keys())
+        idx = random.choice(list(self.tasks.keys()))
         return Document(self.tasks[idx])
 
     def get(self, idx):

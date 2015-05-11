@@ -25,7 +25,18 @@ from subprocess import call
 
 
 class ExecuteActor(RunActor):
+    """
+    Executes a job locally, all tasks provided by its iterator.
 
+    Tasks are assumed to have input parameters. It creates a new input, output
+    and temporary directory for each tasks, and attaches files that are
+    generated in the output directory to the task when the task is finished.
+
+    If the command exits with non-zero, the task is assumed to have failed.
+
+    At the start of a job, it is registered to the job database, when it is
+    finished, it is archived.
+    """
     def __init__(self, task_db=None, iterator=None, job_db=None, config=None):
         if task_db is None:
             task_db = simcity.get_task_database()
@@ -85,10 +96,13 @@ class ExecuteActor(RunActor):
 
     def create_dirs(self, task):
         dir_map = {
-            'tmp': 'tmp_dir', 'input': 'input_dir', 'output': 'output_dir'}
+            'tmp':    'tmp_dir',
+            'input':  'input_dir',
+            'output': 'output_dir'
+        }
 
         dirs = {}
-        for d, conf in dir_map.iteritems():
+        for d, conf in dir_map.items():
             superdir = expandfilename(self.config[conf])
             try:
                 os.mkdir(superdir)

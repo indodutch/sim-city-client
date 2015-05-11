@@ -18,7 +18,6 @@ from picas.clients import CouchDB
 from .util import Config
 
 import os
-from ConfigParser import NoSectionError
 
 try:
     _current_job_id = os.environ['SIMCITY_JOBID']
@@ -33,43 +32,51 @@ _job_db = None
 
 
 def get_config():
+    """ Get the global SIM-CITY configuration. """
     _check_init(_config)
     return _config
 
 
 def set_config(cfg):
+    """ Set the global SIM-CITY configuration. """
     global _config
     _config = cfg
     _init_databases()
 
 
 def set_task_database(database):
+    """ Set the global SIM-CITY task database. """
     global _task_db
     _task_db = database
     _reset_init()
 
 
 def set_job_database(database):
+    """ Set the global SIM-CITY job database. """
     global _job_db
     _job_db = database
     _reset_init()
 
 
 def get_task_database():
+    """ Get the global SIM-CITY task database. """
     _check_init(_task_db)
     return _task_db
 
 
 def get_job_database():
+    """ Get the global SIM-CITY job database. """
     _check_init(_job_db)
     return _job_db
 
 
 def get_current_job_id():
+    """ Get the global SIM-CITY job id of the currently running job. """
     return _current_job_id
 
 
 def set_current_job_id(job_id):
+    """ Set the global SIM-CITY job id of the currently running job. """
     global _current_job_id
     _current_job_id = job_id
 
@@ -81,23 +88,31 @@ def _check_init(myvalue=None):
             "configuration file to simcity.init()")
 
 
-def init(configfile, job_id=None):
+def init(config, job_id=None):
+    """
+    Initialize the SIM-CITY infrastructure.
+
+    The configfile is the INI file containing all needed global configuration.
+    """
     global _is_initializing, _config, _current_job_id
 
     if job_id is not None:
         _current_job_id = job_id
 
-    try:
-        _config = Config(configfile)
-    except:
-        # default initialization may fail
-        if not _is_initializing:
-            raise
-    else:
+    if isinstance(config, Config):
+        _config = config
         _init_databases()
+    else:
+        try:
+            _config = Config(config)
+        except ValueError:
+            # default initialization may fail
+            if not _is_initializing:
+                raise
+        else:
+            _init_databases()
 
-    if _is_initializing:
-        _is_initializing = False
+    _is_initializing = False
 
 
 def _init_databases():
@@ -105,7 +120,7 @@ def _init_databases():
 
     try:
         _task_db = _load_database('task-db')
-    except:
+    except (EnvironmentError, IOError):
         if not _is_initializing:
             raise
 
@@ -114,7 +129,7 @@ def _init_databases():
     except EnvironmentError:
         # job database not explicitly configured
         _job_db = _task_db
-    except:
+    except IOError:
         if not _is_initializing:
             raise
 
@@ -131,7 +146,7 @@ def _reset_init():
 def _load_database(name):
     try:
         cfg = _config.section(name)
-    except NoSectionError:
+    except KeyError:
         raise EnvironmentError(
             "Configuration file %s does not contain '%s' section" %
             (_config.filename, name))
@@ -145,18 +160,3 @@ def _load_database(name):
     except IOError as ex:
         raise IOError("Cannot establish connection with %s CouchDB <%s>: %s" %
                       (name, cfg['url'], str(ex)))
-
-
-def overview_total():
-    views = ['todo', 'locked', 'error', 'done',
-             'finished_jobs', 'active_jobs', 'pending_jobs']
-    num = dict((view, 0) for view in views)
-
-    for view in get_task_database().view('overview_total', group=True):
-        num[view.key] = view.value
-
-    if get_job_database() is not get_task_database():
-        for view in get_job_database().view('overview_total', group=True):
-            num[view.key] = view.value
-
-    return num

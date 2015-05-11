@@ -101,5 +101,5 @@ if __name__ == '__main__':
         print("Error occurred: %s: %s" % (str(type(ex)), str(ex)),
               file=sys.stderr)
         traceback.print_exc(file=sys.stderr)
-              
+
     print("No more tasks to process, done.")

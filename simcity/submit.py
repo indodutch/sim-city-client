@@ -19,25 +19,39 @@ from picas.documents import Job
 import simcity
 
 from numbers import Number
-import httplib
+try:
+    from httplib import HTTPConnection
+except ImportError:
+    from http.client import HTTPConnection
+
 import subprocess
 from uuid import uuid4
 
 
 def submit_if_needed(hostname, max_jobs, submitter=None):
+    """
+    Submit a new job if not enough jobs are already running or queued.
+
+    Host configuration is extracted from an entry in the global config file.
+    """
     if not isinstance(max_jobs, Number):
         raise ValueError("Max jobs must be a number")
 
     num = simcity.overview_total()
 
     num_jobs = num['active_jobs'] + num['pending_jobs']
-    if num_jobs < num['todo'] and num_jobs < max_jobs:
-        return submit(hostname)
+    if ((num_jobs < num['todo'] and num_jobs < max_jobs) or
+            # active jobs should be scrubbed, some of them are not running
+            # anymore
+            (num['pending_jobs'] == 0 and num['todo'] > 0 and
+             num['locked'] == 0)):
+        return submit(hostname, submitter)
     else:
         return None
 
 
 def submit(hostname, submitter=None):
+    """ Submit a new job to given host. """
     host = hostname + '-host'
     try:
         host_cfg = simcity.get_config().section(host)
@@ -72,7 +86,7 @@ def submit(hostname, submitter=None):
 
 
 class Submitter(object):
-
+    """ Submits a job """
     def __init__(self, database, host, prefix, jobdir, method):
         self.database = database
         self.host = host
@@ -98,6 +112,7 @@ class Submitter(object):
 
 
 class OsmiumSubmitter(Submitter):
+    """ Submits a job to Osmium. """
     __BASE = {
         "executable": "/usr/bin/qsub",
         "arguments": ["lisaSubmitExpress.sh"],
@@ -120,8 +135,9 @@ class OsmiumSubmitter(Submitter):
             'environment': {'SIMCITY_JOBID': job.id}
         })
 
-        conn = httplib.HTTPConnection(self.host, self.port)
-        conn.request("POST", request)
+        conn = HTTPConnection(self.host, self.port)
+        url = 'http://%s:%d' % (self.host, self.port)
+        conn.request("POST", url, request)
         response = conn.getresponse()
         conn.close()
 
@@ -133,6 +149,7 @@ class OsmiumSubmitter(Submitter):
 
 
 class SSHSubmitter(Submitter):
+    """ Submits a job over SSH. """
 
     def __init__(self, database, host, prefix, jobdir="~"):
         super(SSHSubmitter, self).__init__(
@@ -147,10 +164,11 @@ class SSHSubmitter(Submitter):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
         (stdout, stderr) = process.communicate()
-        lines = stdout.split('\n')
+        lines = stdout.decode('utf-8').split('\n')
         try:
             # get the (before)last line
             return lines[-2]
-        except:
-            raise IOError("Cannot parse job ID from stdout: '" +
-                          stdout + "'\n==== stderr ====\n'" + stderr + "'")
+        except IndexError:
+            raise IOError("Cannot parse job ID from stdout: '%s'\n"
+                          "==== stderr ====\n'%s'"
+                          % (stdout, stderr))

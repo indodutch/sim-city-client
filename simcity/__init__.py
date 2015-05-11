@@ -16,21 +16,28 @@
 
 from .actors import ExecuteActor
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
-                  cancel_endless_job)
-from .management import (overview_total, get_config, init,
+                  cancel_endless_job, scrub_jobs)
+from .integration import overview_total, run_task
+from .management import (get_config, init, is_initialized,
                          get_task_database, get_job_database,
-                         get_current_job_id,
-                         is_initialized, set_current_job_id)
+                         get_current_job_id, set_current_job_id)
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter)
-from .task import add_task, get_task
+from .task import add_task, get_task, scrub_tasks
+from .util import Config
 
-__all__ = ['ExecuteActor', 'overview_total', 'get_config', 'init',
-           'get_task_database', 'get_job_database', 'get_current_job_id',
-           'set_current_job_id', 'is_initialized',
-           'get_job', 'start_job', 'queue_job', 'finish_job', 'archive_job',
-           'cancel_endless_job',
-           'add_task', 'get_task', 'submit', 'submit_if_needed', 'Submitter',
-           'OsmiumSubmitter', 'SSHSubmitter']
+__all__ = [
+    'ExecuteActor',
+    'get_job', 'start_job', 'queue_job', 'finish_job', 'archive_job',
+    'cancel_endless_job', 'scrub_jobs',
+    'overview_total', 'run_task',
+    'get_config', 'init', 'is_initialized',
+    'get_task_database', 'get_job_database',
+    'get_current_job_id', 'set_current_job_id',
+    'submit', 'submit_if_needed', 'Submitter', 'OsmiumSubmitter',
+    'SSHSubmitter',
+    'add_task', 'get_task', 'scrub_tasks',
+    'Config',
+]
 
 init(None)

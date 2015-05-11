@@ -37,7 +37,7 @@ if __name__ == '__main__':
     simcity.init(configfile=args.config)
 
     # Load the tasks to the database
-    for i in xrange(args.number):
+    for i in range(args.number):
         try:
             simcity.add_task({'command': args.command})
             print("added task %d" % i)
