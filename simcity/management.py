@@ -92,7 +92,8 @@ def init(config, job_id=None):
     """
     Initialize the SIM-CITY infrastructure.
 
-    The configfile is the INI file containing all needed global configuration.
+    The config is the INI file containing all needed global configuration or
+    a simcity.Config object.
     """
     global _is_initializing, _config, _current_job_id
 
@@ -126,12 +127,12 @@ def _init_databases():
 
     try:
         _job_db = _load_database('job-db')
-    except EnvironmentError:
-        # job database not explicitly configured
-        _job_db = _task_db
     except IOError:
         if not _is_initializing:
             raise
+    except EnvironmentError:
+        # job database not explicitly configured
+        _job_db = _task_db
 
     is_initialized = True
 
@@ -152,11 +153,19 @@ def _load_database(name):
             (_config.filename, name))
 
     try:
+        truthy = ['1', 'true', 'yes', 'on']
+        verify_ssl = cfg['ssl_verification'].lower() in truthy
+    except KeyError:
+        verify_ssl = False
+    
+    try:
         return CouchDB(
             url=cfg['url'],
             db=cfg['database'],
             username=cfg['username'],
-            password=cfg['password'])
+            password=cfg['password'],
+            ssl_verification=verify_ssl,
+            )
     except IOError as ex:
         raise IOError("Cannot establish connection with %s CouchDB <%s>: %s" %
                       (name, cfg['url'], str(ex)))

@@ -45,7 +45,7 @@ if __name__ == '__main__':
     hours = args.hours + (24 * args.days)
     age = args.seconds + 60 * (args.minutes + 60 * hours)
 
-    simcity.init(configfile=args.config)
+    simcity.init(config=args.config)
 
     if args.view in task_views:
         scrubbed, total = simcity.scrub_tasks(args.view, age=age)

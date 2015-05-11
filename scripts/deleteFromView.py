@@ -31,7 +31,7 @@ if __name__ == '__main__':
                         default=None)
     args = parser.parse_args()
 
-    simcity.init(configfile=args.config)
+    simcity.init(config=args.config)
 
     if args.view in task_views:
         db = simcity.get_task_database()
