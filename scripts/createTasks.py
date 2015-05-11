@@ -34,7 +34,7 @@ if __name__ == '__main__':
         '-c', '--config', help="configuration file", default=None)
     args = parser.parse_args()
 
-    simcity.init(configfile=args.config)
+    simcity.init(config=args.config)
 
     # Load the tasks to the database
     for i in range(args.number):

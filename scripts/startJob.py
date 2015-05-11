@@ -33,7 +33,7 @@ if __name__ == '__main__':
                         help="configuration file")
     args = parser.parse_args()
 
-    simcity.init(configfile=args.config)
+    simcity.init(config=args.config)
 
     job = simcity.submit_if_needed(args.host, args.max)
     if job is None:

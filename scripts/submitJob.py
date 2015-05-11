@@ -35,7 +35,7 @@ if __name__ == '__main__':
         '-c', '--config', help="configuration file", default=None)
     args = parser.parse_args()
 
-    simcity.init(configfile=args.config)
+    simcity.init(config=args.config)
     try:
         task, job = simcity.run_task({'command': args.command},
                                      args.host, args.max)
