@@ -57,7 +57,7 @@ def _set_host_config(hostname, method='local'):
     })
     try:
         simcity.init(cfg)
-    except EnvironmentError:
+    except KeyError:
         pass  # ignore mal-configured databases in this config
 
 

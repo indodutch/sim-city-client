@@ -18,6 +18,7 @@ from picas.clients import CouchDB
 from .util import Config
 
 import os
+from numbers import Number
 
 try:
     _current_job_id = os.environ['SIMCITY_JOBID']
@@ -121,7 +122,7 @@ def _init_databases():
 
     try:
         _task_db = _load_database('task-db')
-    except (EnvironmentError, IOError):
+    except (KeyError, IOError):
         if not _is_initializing:
             raise
 
@@ -130,7 +131,7 @@ def _init_databases():
     except IOError:
         if not _is_initializing:
             raise
-    except EnvironmentError:
+    except KeyError:
         # job database not explicitly configured
         _job_db = _task_db
 
@@ -145,16 +146,14 @@ def _reset_init():
 
 
 def _load_database(name):
-    try:
-        cfg = _config.section(name)
-    except KeyError:
-        raise EnvironmentError(
-            "Configuration file %s does not contain '%s' section" %
-            (_config.filename, name))
+    cfg = _config.section(name)
 
     try:
         truthy = ['1', 'true', 'yes', 'on']
-        verify_ssl = cfg['ssl_verification'].lower() in truthy
+        if isinstance(cfg['ssl_verification'], Number):
+            verify_ssl = bool(cfg['ssl_verification'])
+        else:
+            verify_ssl = cfg['ssl_verification'].lower() in truthy
     except KeyError:
         verify_ssl = False
 

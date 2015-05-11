@@ -52,13 +52,14 @@ class Config(object):
         self.sections[name] = keyvalue
 
     def section(self, name):
-        if name in self.sections:
+        try:
             return self.sections[name]
-        elif self.parser is not None and (name == 'DEFAULT' or
-                                          self.parser.has_section(name)):
-            return dict(self.parser.items(name))
-        else:
-            raise KeyError(name)
+        except KeyError:
+            if (self.parser is not None and (name == 'DEFAULT' or
+                                             self.parser.has_section(name))):
+                return dict(self.parser.items(name))
+
+            raise
 
 
 def issequence(obj):

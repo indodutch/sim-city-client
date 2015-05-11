@@ -23,7 +23,7 @@ from nose.tools import assert_raises, assert_not_equals
 def test_init():
     assert_raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
     cfg = simcity.Config(from_file=False)
-    assert_raises(EnvironmentError, simcity.init, cfg)
+    assert_raises(KeyError, simcity.init, cfg)
     cfg.add_section('task-db', {
         'url': 'http://doesnotexistforsure_atleasti_think_so.nl/',
         'username': 'example',

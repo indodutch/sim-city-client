@@ -84,3 +84,7 @@ def test_path():
     assert_equals(expandfilename('config.ini'), 'config.ini')
     assert_equals(
         expandfilename(['~', 'home']), os.path.expanduser('~/home'))
+
+
+def test_nonexistant():
+    assert_raises(ValueError, Config, 'nonexistant.ini')

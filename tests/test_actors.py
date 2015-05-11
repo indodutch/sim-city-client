@@ -24,6 +24,11 @@ import shutil
 
 
 def test_actor():
+    try:
+        shutil.rmtree('tests/tmp')
+    except OSError:
+        pass
+
     os.mkdir('tests/tmp')
     cfg = simcity.util.Config(from_file=False)
     cfg.add_section('Execution', {
@@ -33,7 +38,7 @@ def test_actor():
     })
     db = MockDB()
     db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo'}}
-    assert_raises(EnvironmentError, simcity.management.set_config, cfg)
+    assert_raises(KeyError, simcity.management.set_config, cfg)
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)
     simcity.management.set_current_job_id('myjob')
