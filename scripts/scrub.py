@@ -20,7 +20,6 @@ Remove lock and done from tasks and remove queued and active from jobs.
 from __future__ import print_function
 import simcity
 import argparse
-import time
 
 
 if __name__ == '__main__':
