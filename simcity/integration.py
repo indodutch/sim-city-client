@@ -20,7 +20,7 @@ from .submit import submit_if_needed
 import time
 
 
-def run_task(self, task_properties, host, max_jobs, polling_time=None):
+def run_task(task_properties, host, max_jobs, polling_time=None):
     task = add_task(task_properties)
     job = submit_if_needed(host, max_jobs)
 
