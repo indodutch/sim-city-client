@@ -37,14 +37,15 @@ if __name__ == '__main__':
 
     simcity.init(configfile=args.config)
     try:
-        task = simcity.add_task({'command': args.command})
-        print("Task %s added to the database" % task.id)
+        task, job = simcity.run_task({'command': args.command},
+                                     args.host, args.max)
     except Exception as ex:
         print("Task could not be added to the database: %s" % str(ex),
               file=sys.stderr)
         sys.exit(1)
 
-    job = simcity.submit_if_needed(args.host, args.max)
+    print("Task %s added to the database" % task.id)
+
     if job is None:
         print("Let task be processed by existing pilot-job scripts")
     else:

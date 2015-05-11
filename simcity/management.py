@@ -160,23 +160,3 @@ def _load_database(name):
     except IOError as ex:
         raise IOError("Cannot establish connection with %s CouchDB <%s>: %s" %
                       (name, cfg['url'], str(ex)))
-
-
-def overview_total():
-    """
-    Overview of all tasks and jobs.
-
-    Returns a dict with the numbers of each type of job and task.
-    """
-    views = ['todo', 'locked', 'error', 'done',
-             'finished_jobs', 'active_jobs', 'pending_jobs']
-    num = dict((view, 0) for view in views)
-
-    for view in get_task_database().view('overview_total', group=True):
-        num[view.key] = view.value
-
-    if get_job_database() is not get_task_database():
-        for view in get_job_database().view('overview_total', group=True):
-            num[view.key] = view.value
-
-    return num
