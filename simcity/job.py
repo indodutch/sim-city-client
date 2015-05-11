@@ -18,6 +18,7 @@ from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
 from picas.documents import Job
 from picas.util import seconds
+import time
 
 
 def get_job(job_id=None, database=None):
@@ -147,10 +148,10 @@ def archive_job(job, database=None):
         return database.save(job.archive())
 
 
-def scrub_jobs(type, age=24*60*60, database=None):
-    types = ['pending_jobs', 'active_jobs', 'finished_jobs']
-    if type not in types:
-        raise ValueError('Type "%s" not one of "%s"' % (type, str(types)))
+def scrub_jobs(view, age=24*60*60, database=None):
+    views = ['pending_jobs', 'active_jobs', 'finished_jobs']
+    if view not in views:
+        raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
 
     if database is None:
         database = get_job_database()
@@ -158,9 +159,9 @@ def scrub_jobs(type, age=24*60*60, database=None):
     min_t = int(time.time()) - age
     total = 0
     updates = []
-    for row in database.view(args.view):
+    for row in database.view(view):
         total += 1
-        if arg_t <= 0 or row.value['lock'] < min_t:
+        if age <= 0 or row.value['lock'] < min_t:
             job = get_job(row.id, database=database)
             database.delete(job)
             updates.append(job.archive())

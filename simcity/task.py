@@ -15,7 +15,8 @@
 # limitations under the License.
 
 from picas.documents import Task
-from . import get_task_database
+from .management import get_task_database
+import time
 
 
 def add_task(properties, database=None):
@@ -39,10 +40,10 @@ def get_task(task_id, database=None):
     return Task(database.get(task_id))
 
 
-def scrub_tasks(type, age=24*60*60, database=None):
-    types = ['locked', 'error']
-    if type not in types:
-        raise ValueError('Type "%s" not one of "%s"' % (type, str(types)))
+def scrub_tasks(view, age=24*60*60, database=None):
+    views = ['locked', 'error']
+    if view not in views:
+        raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
 
     if database is None:
         database = get_task_database()
@@ -50,9 +51,9 @@ def scrub_tasks(type, age=24*60*60, database=None):
     min_t = int(time.time()) - age
     total = 0
     updates = []
-    for row in database.view(args.view):
+    for row in database.view(view):
         total += 1
-        if arg_t <= 0 or row.value['lock'] < min_t:
+        if age <= 0 or row.value['lock'] < min_t:
             task = get_task(row.id)
             updates.append(task.scrub())
 
