@@ -37,3 +37,26 @@ def get_task(task_id, database=None):
         database = get_task_database()
 
     return Task(database.get(task_id))
+
+
+def scrub_tasks(type, age=24*60*60, database=None):
+    types = ['locked', 'error']
+    if type not in types:
+        raise ValueError('Type "%s" not one of "%s"' % (type, str(types)))
+
+    if database is None:
+        database = get_task_database()
+
+    min_t = int(time.time()) - age
+    total = 0
+    updates = []
+    for row in database.view(args.view):
+        total += 1
+        if arg_t <= 0 or row.value['lock'] < min_t:
+            task = get_task(row.id)
+            updates.append(task.scrub())
+
+    if len(updates) > 0:
+        database.save_documents(updates)
+
+    return (len(updates), total)

@@ -145,3 +145,27 @@ def archive_job(job, database=None):
         return archive_job(job, database=database)
     else:
         return database.save(job.archive())
+
+
+def scrub_jobs(type, age=24*60*60, database=None):
+    types = ['pending_jobs', 'active_jobs', 'finished_jobs']
+    if type not in types:
+        raise ValueError('Type "%s" not one of "%s"' % (type, str(types)))
+
+    if database is None:
+        database = get_job_database()
+
+    min_t = int(time.time()) - age
+    total = 0
+    updates = []
+    for row in database.view(args.view):
+        total += 1
+        if arg_t <= 0 or row.value['lock'] < min_t:
+            job = get_job(row.id, database=database)
+            database.delete(job)
+            updates.append(job.archive())
+
+    if len(updates) > 0:
+        database.save_documents(updates)
+
+    return (len(updates), total)
