@@ -161,7 +161,7 @@ def scrub_jobs(view, age=24*60*60, database=None):
     updates = []
     for row in database.view(view):
         total += 1
-        if age <= 0 or row.value['lock'] < min_t:
+        if age <= 0 or row.value['start'] < min_t:
             job = get_job(row.id, database=database)
             database.delete(job)
             updates.append(job.archive())
