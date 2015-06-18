@@ -23,6 +23,7 @@ from __future__ import print_function
 import simcity
 import argparse
 import sys
+import json
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="start a job")
@@ -33,11 +34,21 @@ if __name__ == '__main__':
         help="only run if there are less than MAX jobs running", default=2)
     parser.add_argument(
         '-c', '--config', help="configuration file", default=None)
+    parser.add_argument(
+        '-i', '--input', help="JSON parameter file", default=None)
     args = parser.parse_args()
 
     simcity.init(config=args.config)
     try:
-        task, job = simcity.run_task({'command': args.command},
+        properties = {'command': args.command}
+
+        try:
+            with open(args.input) as f:
+                properties['input'] = json.load(f)
+        except TypeError:
+            pass
+
+        task, job = simcity.run_task(properties,
                                      args.host, args.max)
     except Exception as ex:
         print("Task could not be added to the database: %s" % str(ex),
