@@ -21,8 +21,7 @@ Create views necessary to run simcity client with.
 '''
 import pystache
 import simcity
-import simcity.job
-import simcity.task
+import argparse
 
 
 def createViews():
@@ -122,5 +121,12 @@ function (key, values, rereduce) {
         'overview_total', overviewMapCode, overviewReduceCode)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="create views in the database")
+    parser.add_argument(
+        '-c', '--config', help="configuration file", default=None)
+    args = parser.parse_args()
+
+    simcity.init(config=args.config)
     # Create the Views in database
     createViews()
