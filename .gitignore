@@ -2,3 +2,4 @@ config*.ini
 *.pyc
 /build
 /.coverage
+.ipynb_checkpoints/
