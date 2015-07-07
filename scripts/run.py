@@ -20,8 +20,8 @@ Client to run commands with.
 '''
 from __future__ import print_function
 import simcity
-from picas.iterators import (PrioritizedViewIterator, TaskViewIterator,
-                             EndlessViewIterator)
+from picas import (PrioritizedViewIterator, TaskViewIterator,
+    EndlessViewIterator)
 import argparse
 import sys
 import signal

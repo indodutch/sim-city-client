@@ -18,7 +18,7 @@ from __future__ import print_function
 
 import simcity
 from .util import listfiles, write_json, expandfilename
-from picas.actors import RunActor
+from picas import RunActor
 
 import os
 from subprocess import call
