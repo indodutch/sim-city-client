@@ -40,14 +40,14 @@ if __name__ == '__main__':
     try:
         simcity.init(config=args.config)
     except couchdb.http.ResourceNotFound:
-        pass # database does not exist yet
+        pass  # database does not exist yet
     except couchdb.http.Unauthorized:
-        pass # user does not exist yet
+        pass  # user does not exist yet
 
     if args.password is None:
         try:
             args.password = getpass.getpass('Password:')
-        except KeyboardInterrupt: # cancel password prompt
+        except KeyboardInterrupt:  # cancel password prompt
             print("")
             sys.exit(1)
 

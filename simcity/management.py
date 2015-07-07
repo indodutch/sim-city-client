@@ -125,24 +125,24 @@ def create(admin_user, admin_password):
     try:
         _create_user(taskcfg, admin_user, admin_password)
         print("Created database user %s in CouchDB %s" %
-                (taskcfg['username'], taskcfg['url']))
+              (taskcfg['username'], taskcfg['url']))
     except couchdb.http.ResourceConflict:
         print("User %s exists in CouchDB %s" %
-                (taskcfg['username'], taskcfg['url']))
+              (taskcfg['username'], taskcfg['url']))
 
     try:
         _task_db = _load_database('task-db', admin_user, admin_password)
         print("Created task database %s at URL %s" %
-                (taskcfg['database'], taskcfg['url']))
+              (taskcfg['database'], taskcfg['url']))
         taskdb_existed = False
         usernames = [taskcfg['username']]
         _task_db.set_users(admins=usernames, members=usernames)
         print("Added user %s to task database %s" %
-                (taskcfg['username'], taskcfg['database']))
+              (taskcfg['username'], taskcfg['database']))
     except couchdb.http.PreconditionFailed:
         _task_db = _load_database('task-db')
         print("Loaded existing task database %s at URL %s" %
-                (taskcfg['database'], taskcfg['url']))
+              (taskcfg['database'], taskcfg['url']))
         taskdb_existed = True
 
     try:
@@ -158,10 +158,10 @@ def create(admin_user, admin_password):
             try:
                 _create_user(jobcfg, admin_user, admin_password)
                 print("Created database user %s in CouchDB %s" %
-                        (jobcfg['username'], jobcfg['url']))
+                      (jobcfg['username'], jobcfg['url']))
             except couchdb.http.ResourceConflict:
                 print("User %s exists in CouchDB %s" %
-                        (jobcfg['username'], jobcfg['url']))
+                      (jobcfg['username'], jobcfg['url']))
 
         if same_db:
             print("Using shared task/job database")
@@ -171,19 +171,19 @@ def create(admin_user, admin_password):
                 usernames = [taskcfg['username'], jobcfg['username']]
                 _job_db.set_users(admins=usernames, members=usernames)
                 print("Added user %s to shared task/job database %s" %
-                        (jobcfg['username'], jobcfg['database']))
+                      (jobcfg['username'], jobcfg['database']))
         else:
             try:
                 _job_db = _load_database('job-db', admin_user, admin_password)
                 print("Created job database %s in CouchDB %s" %
-                        (jobcfg['database'], jobcfg['url']))
+                      (jobcfg['database'], jobcfg['url']))
                 usernames = [jobcfg['username']]
                 _job_db.set_users(admins=usernames, members=usernames)
                 print("Added user %s to job database %s" %
-                        (jobcfg['username'], jobcfg['database']))
+                      (jobcfg['username'], jobcfg['database']))
             except couchdb.http.PreconditionFailed:
                 print("Loaded existing job database %s from CouchDB %s" %
-                        (jobcfg['database'], jobcfg['url']))
+                      (jobcfg['database'], jobcfg['url']))
     except KeyError:
         pass
 

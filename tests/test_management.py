@@ -17,7 +17,7 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_raises, assert_not_equals
+from nose.tools import assert_raises
 
 
 def test_init():
@@ -30,7 +30,4 @@ def test_init():
         'password': 'example',
         'database': 'example',
     })
-    simcity.init(cfg)
-    db = simcity.get_task_database()
-    assert_not_equals(db, None)
-    assert_raises(IOError, db.get, 'myid')
+    assert_raises(IOError, simcity.init, cfg)
