@@ -16,6 +16,7 @@
 
 from picas.clients import CouchDB
 from .util import Config
+import pystache
 
 import os
 from numbers import Number
@@ -115,6 +116,102 @@ def init(config, job_id=None):
             _init_databases()
 
     _is_initializing = False
+
+
+def create_views():
+    '''
+    Create views necessary to run simcity client with.
+    '''
+    taskMapTemplate = '''
+    function(doc) {
+      if(doc.type === 'task' && {{condition}}) {
+        emit(doc._id, {
+            lock: doc.lock,
+            done: doc.done,
+        });
+      }
+    }
+        '''
+    erroneousMapCode = '''
+    function(doc) {
+      if (doc.type === 'task' && doc.lock == -1) {
+        emit(doc._id, doc.error);
+      }
+    }
+        '''
+    jobMapTemplate = '''
+    function(doc) {
+      if (doc.type == 'job' && {{condition}}) {
+        emit(doc._id, {
+            queue: doc.queue,
+            start: doc.start,
+            done: doc.done,
+        });
+      }
+    }
+        '''
+    overviewMapTemplate = '''
+    function(doc) {
+      if(doc.type === 'task') {
+      {{#tasks}}
+        if ({{condition}}) {
+          emit("{{name}}", 1);
+        }
+      {{/tasks}}
+        if (doc.lock === -1) {
+          emit("error", 1);
+        }
+      }
+      if (doc.type === 'job') {
+      {{#jobs}}
+        if ({{condition}}) {
+          emit('{{name}}', 1);
+        }
+      {{/jobs}}
+      }
+    }
+    '''
+    overviewReduceCode = '''
+    function (key, values, rereduce) {
+       return sum(values);
+    }
+    '''
+
+    tasks = {
+        'todo':     'doc.lock === 0',
+        'todo_priority': 'doc.lock === 0 && doc.priority === "high"',
+        'locked':   'doc.lock > 0 && doc.done === 0',
+        'done':     'doc.lock > 0 && doc.done > 0'
+    }
+    jobs = {
+        'pending_jobs':  'doc.start === 0 && doc.archive === 0',
+        'active_jobs':  'doc.start > 0 && doc.done == 0 && doc.archive === 0',
+        'finished_jobs': 'doc.done > 0',
+        'archived_jobs': 'doc.archive > 0'
+    }
+    pystache_views = {
+        'tasks': [{'name': view, 'condition': condition}
+                  for view, condition in tasks.items()],
+        'jobs':  [{'name': view, 'condition': condition}
+                  for view, condition in jobs.items()]
+    }
+    renderer = pystache.renderer.Renderer(escape=lambda u: u)
+
+    for view in pystache_views['tasks']:
+        mapCode = renderer.render(taskMapTemplate, view)
+        _task_db.add_view(view['name'], mapCode)
+
+    for view in pystache_views['jobs']:
+        mapCode = renderer.render(jobMapTemplate, view)
+        _job_db.add_view(view['name'], mapCode)
+
+    _task_db.add_view('error', erroneousMapCode)
+
+    # overview_total View -- lists all views and the number of tasks in each
+    # view
+    overviewMapCode = renderer.render(overviewMapTemplate, pystache_views)
+    _task_db.add_view('overview_total', overviewMapCode, overviewReduceCode)
+    _job_db.add_view('overview_total', overviewMapCode, overviewReduceCode)
 
 
 def _init_databases():
