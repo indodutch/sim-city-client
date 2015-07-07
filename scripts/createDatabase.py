@@ -17,18 +17,42 @@
 # limitations under the License.
 
 '''
-Create views necessary to run simcity client with.
+Create the databases and views
 '''
+from __future__ import print_function
 import simcity
 import argparse
-
+import getpass
+import couchdb
+import sys
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="create views in the database")
+        description="create databases and views for the simcity client")
     parser.add_argument(
         '-c', '--config', help="configuration file", default=None)
+    parser.add_argument(
+        '-p', '--password', help="admin password", default=None)
+    parser.add_argument(
+        'admin', help="admin user", default=None)
     args = parser.parse_args()
 
-    simcity.init(config=args.config)
-    simcity.create_views()
+    try:
+        simcity.init(config=args.config)
+    except couchdb.http.ResourceNotFound:
+        pass # database does not exist yet
+    except couchdb.http.Unauthorized:
+        pass # user does not exist yet
+
+    if args.password is None:
+        try:
+            args.password = getpass.getpass('Password:')
+        except KeyboardInterrupt: # cancel password prompt
+            print("")
+            sys.exit(1)
+
+    try:
+        simcity.create(args.admin, args.password)
+    except couchdb.http.Unauthorized:
+        print("User and/or password incorrect")
+        sys.exit(1)

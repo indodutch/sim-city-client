@@ -20,7 +20,8 @@ from .job import (get_job, start_job, queue_job, finish_job, archive_job,
 from .integration import overview_total, run_task
 from .management import (get_config, init, is_initialized,
                          get_task_database, get_job_database,
-                         get_current_job_id, set_current_job_id)
+                         get_current_job_id, set_current_job_id,
+                         create, create_views)
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter)
 from .task import add_task, get_task, scrub_tasks
@@ -33,6 +34,7 @@ __all__ = [
     'overview_total', 'run_task',
     'get_config', 'init', 'is_initialized',
     'get_task_database', 'get_job_database',
+    'create', 'create_views',
     'get_current_job_id', 'set_current_job_id',
     'submit', 'submit_if_needed', 'Submitter', 'OsmiumSubmitter',
     'SSHSubmitter',

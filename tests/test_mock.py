@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # SIM-CITY client
 #
 # Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
@@ -14,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-from picas.documents import Document
+from picas import Document
 
 
 class MockRow(object):

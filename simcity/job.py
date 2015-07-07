@@ -16,7 +16,7 @@
 
 from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
-from picas.documents import Job
+from picas import Job
 from picas.util import seconds
 import time
 

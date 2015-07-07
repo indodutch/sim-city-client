@@ -17,7 +17,7 @@
 from __future__ import print_function
 
 import simcity
-from picas.documents import Job
+from picas import Job
 from nose.tools import (assert_true, assert_equals, assert_raises,
                         assert_not_equals)
 from test_mock import MockDB

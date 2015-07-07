@@ -15,7 +15,7 @@
 # limitations under the License.
 
 from picas.util import merge_dicts
-from picas.documents import Job
+from picas import Job
 import simcity
 
 from numbers import Number

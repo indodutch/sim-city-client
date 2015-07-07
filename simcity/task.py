@@ -14,14 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from picas.documents import Task
+from picas import Task
 from .management import get_task_database
 import time
 
 
 def add_task(properties, database=None):
     """
-    Add a picas.documents.Task object to the database with given properties.
+    Add a picas.Task object to the database with given properties.
     """
     if database is None:
         database = get_task_database()
@@ -32,7 +32,7 @@ def add_task(properties, database=None):
 
 def get_task(task_id, database=None):
     """
-    Get the picas.documents.Task object with given ID.
+    Get the picas.Task object with given ID.
     """
     if database is None:
         database = get_task_database()
