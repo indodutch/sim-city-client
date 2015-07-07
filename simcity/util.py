@@ -50,7 +50,7 @@ class Config(object):
         self.sections = {}
 
     def add_section(self, name, keyvalue):
-        self.sections[name] = keyvalue
+        self.sections[name] = dict_value_expandvar(keyvalue)
 
     def section(self, name):
         try:
@@ -58,9 +58,18 @@ class Config(object):
         except KeyError:
             if (self.parser is not None and (name == 'DEFAULT' or
                                              self.parser.has_section(name))):
-                return dict(self.parser.items(name))
+                return dict_value_expandvar(dict(self.parser.items(name)))
 
             raise
+
+
+def dict_value_expandvar(d):
+    for key in d:
+        try:
+            d[key] = os.path.expandvars(d[key])
+        except TypeError:
+            pass  # d[key] is not a string
+    return d
 
 
 def get_truthy(value):
