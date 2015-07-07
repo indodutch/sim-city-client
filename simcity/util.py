@@ -23,6 +23,7 @@ import json
 import os
 import glob
 import shutil
+from numbers import Number
 
 
 class Config(object):
@@ -60,6 +61,14 @@ class Config(object):
                 return dict(self.parser.items(name))
 
             raise
+
+
+def get_truthy(value):
+    truthy = ['1', 'true', 'yes', 'on']
+    if isinstance(value, Number):
+        return bool(value)
+    else:
+        return value.lower() in truthy
 
 
 def issequence(obj):
