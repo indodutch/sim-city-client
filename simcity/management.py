@@ -304,7 +304,7 @@ def _init_databases():
 
     try:
         _task_db = _load_database('task-db')
-    except (KeyError, IOError):
+    except (KeyError, IOError, couchdb.http.ResourceNotFound):
         if not _is_initializing:
             raise
 
@@ -317,7 +317,7 @@ def _init_databases():
             _job_db = _task_db
         else:
             _job_db = _load_database('job-db')
-    except IOError:
+    except (IOError, couchdb.http.ResourceNotFound):
         if not _is_initializing:
             raise
     except KeyError:
