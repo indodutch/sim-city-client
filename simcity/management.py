@@ -17,6 +17,7 @@
 import picas
 from .util import Config, get_truthy
 import couchdb
+from couchdb.http import ResourceNotFound, Unauthorized
 import pystache
 
 import os
@@ -304,7 +305,7 @@ def _init_databases():
 
     try:
         _task_db = _load_database('task-db')
-    except (KeyError, IOError, couchdb.http.ResourceNotFound):
+    except (KeyError, IOError, ResourceNotFound, Unauthorized):
         if not _is_initializing:
             raise
 
@@ -317,7 +318,7 @@ def _init_databases():
             _job_db = _task_db
         else:
             _job_db = _load_database('job-db')
-    except (IOError, couchdb.http.ResourceNotFound):
+    except (IOError, ResourceNotFound, Unauthorized):
         if not _is_initializing:
             raise
     except KeyError:
