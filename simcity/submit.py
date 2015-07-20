@@ -17,6 +17,7 @@
 from picas.util import merge_dicts
 from picas import Job
 import simcity
+import json
 
 from numbers import Number
 try:
@@ -55,7 +56,7 @@ def submit(hostname, submitter=None):
     host = hostname + '-host'
     try:
         host_cfg = simcity.get_config().section(host)
-    except:
+    except KeyError:
         raise ValueError('%s not configured under %s section' %
                          (hostname, host))
 
@@ -68,16 +69,23 @@ def submit(hostname, submitter=None):
                     jobdir=host_cfg['path'],
                     prefix=hostname + '-')
             elif host_cfg['method'] == 'osmium':
+                try:
+                    osmium_cfg = simcity.get_config().section('osmium')
+                except KeyError:
+                    osmium_cfg = {'host': 'localhost:9998'}
+
                 submitter = OsmiumSubmitter(
                     database=simcity.get_job_database(),
-                    port=host_cfg['port'],
+                    launcher=host_cfg.get('launcher'),
+                    url=host_cfg.get('host', osmium_cfg['host']),
                     jobdir=host_cfg['path'],
-                    prefix=hostname + '-')
+                    prefix=hostname + '-',
+                    max_time=host_cfg.get('max_time'))
             else:
                 raise EnvironmentError('Connection method for %s unknown' %
                                        hostname)
 
-        script = [host_cfg['script']]
+        script = [host_cfg['script']] + host_cfg.get('arguments', '').split()
     except KeyError:
         raise EnvironmentError(
             "Connection method for %s not well configured" % hostname)
@@ -86,7 +94,9 @@ def submit(hostname, submitter=None):
 
 
 class Submitter(object):
+
     """ Submits a job """
+
     def __init__(self, database, host, prefix, jobdir, method):
         self.database = database
         self.host = host
@@ -112,43 +122,58 @@ class Submitter(object):
 
 
 class OsmiumSubmitter(Submitter):
+
     """ Submits a job to Osmium. """
     __BASE = {
-        "executable": "/usr/bin/qsub",
-        "arguments": ["lisaSubmitExpress.sh"],
-        "stderr": "stderr.txt",
-        "stdout": "stdout.txt",
         "prestaged": [],
         "poststaged": [],
         "environment": {}
     }
 
-    def __init__(self, database, port, prefix, host="localhost", jobdir="~"):
+    def __init__(self, database, url, prefix, launcher, jobdir="~",
+                 max_time=None):
         super(OsmiumSubmitter, self).__init__(
-            database, host, prefix, jobdir, method="osmium")
-        self.port = port
+            database, url, prefix, jobdir, method="osmium")
+        self.launcher = launcher
+        self.max_time = max_time
+
+    def _request(self, location="/", method="GET", data=None):
+        conn = HTTPConnection(self.host)
+        url = 'http://%s%s' % (self.host, location)
+        conn.request(method, url, data)
+        response = conn.getresponse()
+        conn.close()
+        if response.status < 200 or response.status >= 300:
+            raise IOError("Request failed " + response.reason +
+                          "(HTTP status " + response.status + ")")
+        return response
 
     def _do_submit(self, job, command):
         request = merge_dicts(OsmiumSubmitter.__BASE, {
-            'arguments':   command,
+            'executable':  command[0],
+            'arguments':   command[1:],
             'jobdir':      self.jobdir,
-            'environment': {'SIMCITY_JOBID': job.id}
+            'environment': {'SIMCITY_JOBID': job.id},
         })
+        if self.launcher is not None:
+            request['launcher'] = self.launcher
+        if self.max_time is not None:
+            request['max_time'] = int(self.max_time)
 
-        conn = HTTPConnection(self.host, self.port)
-        url = 'http://%s:%d' % (self.host, self.port)
-        conn.request("POST", url, request)
-        response = conn.getresponse()
-        conn.close()
-
-        if response.status != 201:
-            raise IOError("Cannot submit job: " + response.reason +
-                          "(HTTP status " + response.status + ")")
-
+        response = self._request(method="POST", data=request)
         return response.location.split('/')[-1]
+
+    def status(self, job_id):
+        response = self._request('/job/%s' % (self.host, job_id))
+        return json.loads(response.data)
+
+    def jobs(self):
+        response = self._request('/job')
+        return json.loads(response.data)
 
 
 class SSHSubmitter(Submitter):
+
     """ Submits a job over SSH. """
 
     def __init__(self, database, host, prefix, jobdir="~"):

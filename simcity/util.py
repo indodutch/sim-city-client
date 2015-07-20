@@ -56,11 +56,11 @@ class Config(object):
         try:
             return self.sections[name]
         except KeyError:
-            if (self.parser is not None and (name == 'DEFAULT' or
-                                             self.parser.has_section(name))):
+            if self.parser is not None and (name == 'DEFAULT' or
+                                            self.parser.has_section(name)):
                 return dict_value_expandvar(dict(self.parser.items(name)))
-
-            raise
+            else:
+                raise
 
 
 def dict_value_expandvar(d):
