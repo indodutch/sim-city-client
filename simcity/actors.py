@@ -82,7 +82,7 @@ class ExecuteActor(RunActor):
         # Read all files in as attachments
         out_files = listfiles(dirs['output'])
         for filename in out_files:
-            with open(os.path.join(dirs['output'], filename), 'r') as f:
+            with open(os.path.join(dirs['output'], filename), 'rb') as f:
                 task.put_attachment(filename, f.read())
 
         if not task.has_error():  # don't override error status
