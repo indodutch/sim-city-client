@@ -25,19 +25,22 @@ if __name__ == '__main__':
     job_views = [
         'pending_jobs', 'active_jobs', 'finished_jobs', 'archived_jobs']
     parser = argparse.ArgumentParser(description="Remove all tasks in a view")
-    parser.add_argument('view', choices=task_views + job_views,
-                        help="View to remove documents from")
-    parser.add_argument('-c', '--config', help="configuration file",
-                        default=None)
+    parser.add_argument(
+        'view', help="View to remove documents from (usually one of {})"
+        .format(task_views + job_views))
+    parser.add_argument(
+        '-c', '--config', help="configuration file", default=None)
+    parser.add_argument(
+        '-d', '--design', help="design document in CouchDB", default='Monitor')
     args = parser.parse_args()
 
     simcity.init(config=args.config)
 
-    if args.view in task_views:
-        db = simcity.get_task_database()
-    else:
+    if args.view in job_views:
         db = simcity.get_job_database()
+    else:
+        db = simcity.get_task_database()
 
-    is_deleted = db.delete_from_view(args.view)
+    is_deleted = db.delete_from_view(args.view, design_doc=args.design)
     print("Deleted %d out of %d tasks from view %s" %
           (sum(is_deleted), len(is_deleted), args.view))
