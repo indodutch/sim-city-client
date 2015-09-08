@@ -40,6 +40,16 @@ _job_db = None
 _webdav = {}
 
 
+def _reset_globals():
+    global _config, _task_db, _job_db, _webdav, is_initialized
+    global _webdav
+    _config = None
+    is_initialized = False
+    _task_db = None
+    _job_db = None
+    _webdav = {}
+
+
 def get_config():
     """ Get the global SIM-CITY configuration. """
     _check_init(_config)
@@ -101,10 +111,9 @@ def get_webdav(process=None):
 
     Connections cannot be shared between processes, so provide a process ID if
     multiprocessing/threading is used. """
-    if not uses_webdav():
-        raise EnvironmentError("Webdav is not configured")
-
     if process not in _webdav:
+        if not uses_webdav():
+            raise EnvironmentError("Webdav is not configured")
         dav_cfg = _config.section('webdav')
 
         url = urlparse(dav_cfg['url'])

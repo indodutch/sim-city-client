@@ -18,14 +18,16 @@ from __future__ import print_function
 
 import simcity
 from picas import Job
+from picas.util import seconds
 from nose.tools import (assert_true, assert_equals, assert_raises,
                         assert_not_equals)
-from test_mock import MockDB
+from test_mock import MockDB, MockRow
 
 
 class TestJob():
 
     def setup(self):
+        simcity.management._reset_globals()
         self.db = MockDB()
         self.test_id = MockDB.JOBS[0]['_id']
         self.test_other_id = MockDB.JOBS[1]['_id']
@@ -73,3 +75,51 @@ class TestJob():
         self.db.save(job)
         job = simcity.archive_job(simcity.get_job())
         assert_not_equals(job.id, self.test_id)
+
+    def test_cancel_job(self):
+        job = simcity.get_job()
+        simcity.cancel_endless_job(job)
+        assert_true(job['cancel'] >= seconds() - 1)
+        assert_true(job['cancel'] <= seconds())
+
+    def test_scrub_job(self):
+        job = simcity.get_job()
+        job.start()
+        assert_equals(0, job['archive'])
+        self.db.jobs[job.id]['_rev'] = 'myrev'
+        self.db.jobs[job.id]['done'] = 0
+        self.db.viewList = [MockRow(job.id, job.value, job.id)]
+        assert_equals(0, len(self.db.saved))
+
+        simcity.scrub_jobs('active_jobs', age=0)
+        assert_equals(1, len(self.db.saved))
+        old_job_id = job.id
+        job_id, job = self.db.saved.popitem()
+        assert_true(job_id.startswith('archived'))
+        assert_not_equals(-1, job_id.find(old_job_id))
+        assert_true(job['archive'] > 0)
+
+    def test_scrub_old_job_none(self):
+        job = simcity.get_job()
+        job.start()
+        assert_equals(0, len(self.db.saved))
+        self.db.viewList = [MockRow(job.id, job.value, job.id)]
+        simcity.scrub_jobs('active_jobs', age=2)
+        assert_equals(0, len(self.db.saved))
+
+    def test_scrub_old_job(self):
+        job = simcity.get_job()
+        job['start'] = seconds() - 100
+        assert_equals(0, job['archive'])
+        self.db.jobs[job.id]['_rev'] = 'myrev'
+        self.db.jobs[job.id]['done'] = 0
+        self.db.viewList = [MockRow(job.id, job.value, job.id)]
+        assert_equals(0, len(self.db.saved))
+
+        simcity.scrub_jobs('active_jobs', age=2)
+        assert_equals(1, len(self.db.saved))
+        old_job_id = job.id
+        job_id, job = self.db.saved.popitem()
+        assert_true(job_id.startswith('archived'))
+        assert_not_equals(-1, job_id.find(old_job_id))
+        assert_true(job['archive'] > 0)

@@ -118,6 +118,7 @@ def delete_attachment(task, filename):
         dav = get_webdav()
         path = _webdav_url_to_path(task.uploads[filename], dav)
         dav.delete(path)
+        del task.uploads[filename]
     else:
         del task['_attachments'][filename]
 

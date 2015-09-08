@@ -62,30 +62,37 @@ def _set_host_config(hostname, method='local'):
 
 
 def test_max_not_number():
+    simcity.management._reset_globals()
     assert_raises(ValueError, simcity.submit_if_needed, 'something', '2')
 
 
 def test_submit_if_needed_already_active():
+    simcity.management._reset_globals()
     _set_database(1, 1, 1, 0)
     assert_equal(simcity.submit_if_needed('nohost', 2), None)
 
 
 def test_submit_if_needed_pending():
+    simcity.management._reset_globals()
     _set_database(0, 1, 0, 1)
     assert_equal(simcity.submit_if_needed('nohost', 2), None)
 
 
 def test_submit_if_needed_maxed():
+    simcity.management._reset_globals()
     _set_database(2, 5, 2, 0)
     assert_equal(simcity.submit_if_needed('nohost', 2), None)
 
 
 def test_unconfigured():
+    simcity.management._reset_globals()
     _set_database(0, 1, 0, 0)
+    _set_host_config('otherhost')
     assert_raises(ValueError, simcity.submit_if_needed, 'nohost', 2)
 
 
 def test_submit_if_needed_notactive():
+    simcity.management._reset_globals()
     _set_host_config('nohost')
     db = _set_database(0, 1, 0, 0)
     submitter = MockSubmitter(db)
@@ -97,6 +104,7 @@ def test_submit_if_needed_notactive():
 
 
 def test_submit_if_needed_notreallyactive():
+    simcity.management._reset_globals()
     _set_host_config('nohost')
     db = _set_database(0, 1, 5, 0)
     submitter = MockSubmitter(db)
@@ -105,6 +113,7 @@ def test_submit_if_needed_notreallyactive():
 
 
 def test_submit_error():
+    simcity.management._reset_globals()
     _set_host_config('nohost')
     db = _set_database(0, 1, 5, 0)
     submitter = MockSubmitter(db, do_raise=True)
@@ -117,15 +126,20 @@ def test_submit_error():
 
 
 def test_submit_method_not_configured():
+    simcity.management._reset_globals()
     _set_host_config('nohost')
     assert_raises(EnvironmentError, simcity.submit, 'nohost')
 
 
 def test_SSH_submit_method():
+    simcity.management._reset_globals()
     _set_host_config('nohost', method='ssh')
+    _set_database(0, 0, 0, 0)
     assert_raises(IOError, simcity.submit, 'nohost')
 
 
 def test_Osmium_submit_method():
+    simcity.management._reset_globals()
     _set_host_config('nohost', method='osmium')
+    _set_database(0, 0, 0, 0)
     assert_raises(IOError, simcity.submit, 'nohost')

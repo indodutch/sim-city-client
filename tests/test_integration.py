@@ -17,11 +17,13 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_equals
+import picas
+from nose.tools import assert_equals, assert_true, assert_is_none
 from test_mock import MockDB, MockRow
 
 
 def test_overview():
+    simcity.management._reset_globals()
     db = MockDB(view=[MockRow('done', 1),
                       MockRow('todo', 3),
                       MockRow('finished_jobs', 2)])
@@ -31,3 +33,16 @@ def test_overview():
     assert_equals(overview['done'], 1)
     assert_equals(overview['finished_jobs'], 2)
     assert_equals(overview['pending_jobs'], 0)
+
+
+def test_run():
+    simcity.management._reset_globals()
+    task_db = MockDB()
+    simcity.management.set_task_database(task_db)
+    job_db = MockDB(view=[MockRow('active_jobs', 1)])
+    simcity.management.set_job_database(job_db)
+
+    task, job = simcity.run_task({'key': 'value'}, 'myhost', 1)
+    assert_true(isinstance(task, picas.Task))
+    assert_is_none(job)
+    assert_true(task_db.get(task.id) is not None)

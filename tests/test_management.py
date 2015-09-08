@@ -17,10 +17,12 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_raises
+from test_mock import MockDB
+from nose.tools import assert_raises, assert_in, assert_not_in
 
 
 def test_init():
+    simcity.management._reset_globals()
     assert_raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
     cfg = simcity.Config(from_file=False)
     assert_raises(KeyError, simcity.init, cfg)
@@ -31,3 +33,17 @@ def test_init():
         'database': 'example',
     })
     assert_raises(IOError, simcity.init, cfg)
+
+
+def test_views():
+    simcity.management._reset_globals()
+    simcity.management._job_db = MockDB()
+    simcity.management._task_db = MockDB()
+    simcity.create_views()
+    assert_in('active_jobs',      simcity.management._job_db.views)
+    assert_in('overview_total',   simcity.management._job_db.views)
+    assert_not_in('todo',     simcity.management._job_db.views)
+
+    assert_in('todo',             simcity.management._task_db.views)
+    assert_in('overview_total',   simcity.management._task_db.views)
+    assert_not_in('active_jobs', simcity.management._task_db.views)

@@ -24,6 +24,7 @@ import shutil
 
 
 def test_actor():
+    simcity.management._reset_globals()
     try:
         shutil.rmtree('tests/tmp')
     except OSError:

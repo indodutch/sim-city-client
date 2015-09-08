@@ -1,4 +1,4 @@
-.PHONY: all requirements test-requirements test-license test clean pyflakes pyflakes-exists unittest unittest-coverage fulltest install reinstall
+.PHONY: all requirements test-requirements test-license test clean pyflakes pyflakes-exists unittest coverage fulltest install reinstall
 
 PYTHON_FIND=find simcity scripts simulations tests -name '*.py'
 LICENSE_NAME="Apache License, Version 2.0"
@@ -35,11 +35,11 @@ unittest:
 
 test: test-requirements test-license pyflakes pep8 unittest
 
-unittest-coverage:
+coverage:
 	@echo "======= Unit Tests ========="
 	@nosetests --with-coverage --cover-package=simcity
 
-fulltest: test-requirements test-license pyflakes pep8 unittest-coverage
+fulltest: test-requirements test-license pyflakes pep8 coverage
 
 clean: 
 	rm -rf build/

@@ -29,15 +29,27 @@ class MockDAV(object):
     def __init__(self, files={}):
         self.files = files
         self.baseurl = 'https://my.example.com'
+        self.removed = []
 
-    def upload(self, filename, path):
-        self.files[path] = filename
+    def upload(self, file_obj, path):
+        self.files[path] = file_obj.read()
 
     def exists(self, dirname):
         return True
 
     def _get_url(self, path):
         return self.baseurl + path
+
+    def rmdir(self, dirname):
+        self.removed.append(dirname)
+
+    def delete(self, path):
+        del self.files[path]
+
+    def download(self, path, file_path):
+        print("file path: {}".format(file_path))
+        with open(file_path, 'wb') as f:
+            f.write(self.files[path])
 
 
 class MockDB(object):
@@ -50,6 +62,7 @@ class MockDB(object):
         self.jobs = dict((t['_id'], t.copy()) for t in MockDB.JOBS)
         self.saved = {}
         self.viewList = view
+        self.views = {}
 
     def get_single_from_view(self, view, **view_params):
         idx = random.choice(list(self.tasks.keys()))
@@ -81,6 +94,10 @@ class MockDB(object):
 
         return doc
 
+    def save_documents(self, docs):
+        for doc in docs:
+            self.save(doc)
+
     def delete(self, doc):
         if doc.id in self.jobs:
             del self.jobs[doc.id]
@@ -91,3 +108,15 @@ class MockDB(object):
 
     def view(self, name, **view_options):
         return self.viewList
+
+    def set_users(self, admins=None, members=None, admin_roles=None,
+                  member_roles=None):
+        pass
+
+    def add_view(self, view, map_fun, reduce_fun=None, design_doc="Monitor",
+                 *args, **kwargs):
+        self.views[view] = {
+            'map': map_fun,
+            'reduce': reduce_fun,
+            'design': design_doc
+        }
