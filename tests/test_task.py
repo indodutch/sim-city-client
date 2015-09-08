@@ -64,8 +64,8 @@ def _upload_attachment(use_dav):
     fd, path = tempfile.mkstemp()
     os.close(fd)
     dirname, filename = os.path.split(path)
-    with open(path, 'w') as f:
-        f.write('ab')
+    with open(path, 'wb') as f:
+        f.write(b'ab')
 
     simcity.upload_attachment(task, dirname, filename)
     os.remove(path)
@@ -84,7 +84,7 @@ def test_upload_attachment_couchdb():
     assert_true(filename in task['_attachments'])
     assert_true(filename not in task.uploads)
     assert_true('data' in task['_attachments'][filename])
-    assert_equal('ab', task.get_attachment(filename)['data'])
+    assert_equal(b'ab', task.get_attachment(filename)['data'])
 
 
 def test_upload_attachment_webdav():
@@ -94,7 +94,7 @@ def test_upload_attachment_webdav():
     assert_true(filename in task.uploads)
     assert_equal(dav.baseurl + dav_path, task.uploads[filename])
     assert_true(dav_path in dav.files)
-    assert_equal('ab', dav.files[dav_path])
+    assert_equal(b'ab', dav.files[dav_path])
 
 
 def test_download_attachment_webdav():
@@ -105,7 +105,7 @@ def test_download_attachment_webdav():
     simcity.download_attachment(task, dirname, filename)
     assert_true(os.path.exists(path))
     with open(path, 'rb') as f:
-        assert_equal('ab', f.read())
+        assert_equal(b'ab', f.read())
     os.remove(path)
 
 
@@ -117,7 +117,7 @@ def test_download_attachment_couchdb():
     simcity.download_attachment(task, dirname, filename)
     assert_true(os.path.exists(path))
     with open(path, 'rb') as f:
-        assert_equal('ab', f.read())
+        assert_equal(b'ab', f.read())
     os.remove(path)
 
 
