@@ -26,7 +26,7 @@ if __name__ == '__main__':
         'pending_jobs', 'active_jobs', 'finished_jobs', 'archived_jobs']
     parser = argparse.ArgumentParser(description="Remove all tasks in a view")
     parser.add_argument(
-        'view', help="View to remove documents from (usually one of {})"
+        'view', help="View to remove documents from (usually one of {0})"
         .format(task_views + job_views))
     parser.add_argument(
         '-c', '--config', help="configuration file", default=None)

@@ -135,7 +135,7 @@ def _webdav_url_to_path(url, webdav=None):
     # Check that the same webdav system was used
     if not url.startswith(webdav.baseurl):
         raise EnvironmentError(
-            'webdav for {} not configured'.format(url))
+            'webdav for {0} not configured'.format(url))
     # Remove the webdav base url from the URL to get the relative path
     path = url[len(webdav.baseurl):]
     # Use absolute path

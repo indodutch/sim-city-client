@@ -47,7 +47,7 @@ class MockDAV(object):
         del self.files[path]
 
     def download(self, path, file_path):
-        print("file path: {}".format(file_path))
+        print("file path: {0}".format(file_path))
         with open(file_path, 'wb') as f:
             f.write(self.files[path])
 
