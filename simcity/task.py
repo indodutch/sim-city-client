@@ -49,12 +49,17 @@ def delete_task(task, database=None):
         database = get_task_database()
 
     database.delete(task)
-    for filename in task.uploads:
-        delete_attachment(task, filename)
-    dav = get_webdav()
-    task_dir = _webdav_id_to_path(task.id)[1]
-    if dav.exists(task_dir):
-        dav.rmdir(task_dir)
+
+    if len(task.uploads) > 0:
+        # Not a for loop, since task.uploads is modified in delete_attachment.
+        while len(task.uploads) > 0:
+            filename = next(iter(task.uploads.keys()))
+            delete_attachment(task, filename)
+
+        dav = get_webdav()
+        task_dir = _webdav_id_to_path(task.id)[1]
+        if dav.exists(task_dir):
+            dav.rmdir(task_dir)
 
 
 def scrub_tasks(view, age=24 * 60 * 60, database=None):

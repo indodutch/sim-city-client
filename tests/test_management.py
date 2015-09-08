@@ -18,7 +18,7 @@ from __future__ import print_function
 
 import simcity
 from test_mock import MockDB
-from nose.tools import assert_raises, assert_in, assert_not_in
+from nose.tools import assert_raises, assert_true
 
 
 def test_init():
@@ -40,10 +40,10 @@ def test_views():
     simcity.management._job_db = MockDB()
     simcity.management._task_db = MockDB()
     simcity.create_views()
-    assert_in('active_jobs',      simcity.management._job_db.views)
-    assert_in('overview_total',   simcity.management._job_db.views)
-    assert_not_in('todo',     simcity.management._job_db.views)
+    assert_true('active_jobs' in simcity.management._job_db.views)
+    assert_true('overview_total' in simcity.management._job_db.views)
+    assert_true('todo' not in simcity.management._job_db.views)
 
-    assert_in('todo',             simcity.management._task_db.views)
-    assert_in('overview_total',   simcity.management._task_db.views)
-    assert_not_in('active_jobs', simcity.management._task_db.views)
+    assert_true('todo' in simcity.management._task_db.views)
+    assert_true('overview_total' in simcity.management._task_db.views)
+    assert_true('active_jobs' not in simcity.management._task_db.views)

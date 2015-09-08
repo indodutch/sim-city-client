@@ -14,8 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from nose.tools import (assert_equal, assert_true, assert_not_in, assert_in,
-                        assert_not_equal)
+from nose.tools import assert_equal, assert_true, assert_not_equal
 from test_mock import MockDB, MockDAV, MockRow
 import simcity
 from picas.util import seconds
@@ -40,13 +39,17 @@ def test_get_task():
 
 def test_delete_task():
     simcity.management._reset_globals()
-    simcity.management._config = simcity.util.Config()
+    simcity.management._config = simcity.Config(from_file=False)
     simcity.management.set_task_database(MockDB())
-    simcity.management._webdav[None] = MockDAV()
+    dav = MockDAV()
+    simcity.management._webdav[None] = dav
     assert_equal(0, len(simcity.management._webdav[None].removed))
     task = simcity.get_task(MockDB.TASKS[0]['_id'])
+    dav.files['/myfile'] = 'ab'
+    task.uploads['myfile'] = dav.baseurl + '/myfile'
     simcity.delete_task(task)
-    assert_not_in(MockDB.TASKS[0]['_id'], simcity.get_task_database().tasks)
+    assert_true(MockDB.TASKS[0]['_id'] not in
+                simcity.get_task_database().tasks)
     assert_equal(1, len(simcity.management._webdav[None].removed))
 
 
@@ -77,10 +80,10 @@ def _upload_attachment(use_dav):
 def test_upload_attachment_couchdb():
     task, dirname, filename = _upload_attachment(use_dav=False)
 
-    assert_in('_attachments', task)
-    assert_in(filename, task['_attachments'])
-    assert_not_in(filename, task.uploads)
-    assert_in('data', task['_attachments'][filename])
+    assert_true('_attachments' in task)
+    assert_true(filename in task['_attachments'])
+    assert_true(filename not in task.uploads)
+    assert_true('data' in task['_attachments'][filename])
     assert_equal('ab', task.get_attachment(filename)['data'])
 
 
@@ -88,9 +91,9 @@ def test_upload_attachment_webdav():
     task, dirname, filename, dav, dav_path = _upload_attachment(use_dav=True)
 
     assert_true('_attachments' not in task)
-    assert_in(filename, task.uploads)
+    assert_true(filename in task.uploads)
     assert_equal(dav.baseurl + dav_path, task.uploads[filename])
-    assert_in(dav_path, dav.files)
+    assert_true(dav_path in dav.files)
     assert_equal('ab', dav.files[dav_path])
 
 
@@ -121,19 +124,19 @@ def test_download_attachment_couchdb():
 def test_delete_attachment_webdav():
     task, dirname, filename, dav, dav_path = _upload_attachment(use_dav=True)
 
-    assert_in(dav_path, dav.files)
-    assert_in(filename, task.uploads)
+    assert_true(dav_path in dav.files)
+    assert_true(filename in task.uploads)
     simcity.delete_attachment(task, filename)
-    assert_not_in(dav_path, dav.files)
-    assert_not_in(filename, task.uploads)
+    assert_true(dav_path not in dav.files)
+    assert_true(filename not in task.uploads)
 
 
 def test_delete_attachment_couchdb():
     task, dirname, filename = _upload_attachment(use_dav=False)
 
-    assert_in(filename, task['_attachments'])
+    assert_true(filename in task['_attachments'])
     simcity.delete_attachment(task, filename)
-    assert_not_in(filename, task['_attachments'])
+    assert_true(filename not in task['_attachments'])
 
 
 def _get_task():
