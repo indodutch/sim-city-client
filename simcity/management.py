@@ -19,6 +19,11 @@ from .util import Config, get_truthy
 import couchdb
 from couchdb.http import ResourceNotFound, Unauthorized
 import pystache
+import easywebdav
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 import os
 
@@ -32,6 +37,7 @@ is_initialized = False
 _is_initializing = True
 _task_db = None
 _job_db = None
+_webdav = {}
 
 
 def get_config():
@@ -84,7 +90,42 @@ def set_current_job_id(job_id):
     _current_job_id = job_id
 
 
+def uses_webdav():
+    _check_init(_config)
+    dav_cfg = _config.section('webdav')
+    return len(dav_cfg) > 0 and get_truthy(dav_cfg.get('enabled', True))
+
+
+def get_webdav(process=None):
+    """ Gets or creates a webdav connection.
+
+    Connections cannot be shared between processes, so provide a process ID if
+    multiprocessing/threading is used. """
+    if not uses_webdav():
+        raise EnvironmentError("Webdav is not configured")
+
+    if process not in _webdav:
+        dav_cfg = _config.section('webdav')
+
+        url = urlparse(dav_cfg['url'])
+        _webdav[process] = easywebdav.connect(
+            host=url.hostname,
+            protocol=url.scheme,
+            port=url.port,
+            path=url.path[1:],
+            auth=(dav_cfg['username'], dav_cfg['password']),
+            verify_ssl=get_truthy(dav_cfg.get('ssl_verification', True)),
+            cert=dav_cfg.get('certificate'))
+
+    return _webdav[process]
+
+
 def _check_init(myvalue=None):
+    """ Check whether simcity is initialized.
+
+    It checks a single value, such as _task_db or _config for null.
+    Raises an EnvironmentError if not initialized.
+    """
     if myvalue is None:
         raise EnvironmentError(
             "Databases are not initialized yet, please provide a valid "
@@ -120,6 +161,16 @@ def init(config, job_id=None):
 
 
 def create(admin_user, admin_password):
+    """ Create a SIM-CITY infrastructure.
+
+    Tries to load CouchDB databases and creates users, databases and views that
+    are not yet configured.
+    param admin_user:
+        user on the CouchDB databases that is allowed to create users and
+        databases
+    param admin_password:
+        password of the admin user
+    """
     global _task_db, _job_db
 
     taskcfg = _config.section('task-db')

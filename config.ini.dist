@@ -10,6 +10,11 @@ username = myuser
 password = mypassword
 database = myjobdatabase
 
+[webdav]
+url = https://webdav.example.com
+username = myuser
+password = mypassword
+
 [Execution]
 tmp_dir = $TMPDIR
 output_dir = $HOME/out
@@ -20,3 +25,4 @@ path = path/to/submitscript
 script = submitscript.sh
 host = user@hostname
 method = ssh
+

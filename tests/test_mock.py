@@ -25,6 +25,21 @@ class MockRow(object):
         self.value = value
 
 
+class MockDAV(object):
+    def __init__(self, files={}):
+        self.files = files
+        self.baseurl = 'https://my.example.com'
+
+    def upload(self, filename, path):
+        self.files[path] = filename
+
+    def exists(self, dirname):
+        return True
+
+    def _get_url(self, path):
+        return self.baseurl + path
+
+
 class MockDB(object):
     TASKS = [{'_id': 'a', 'lock': 0}, {'_id': 'b', 'lock': 0}]
     JOBS = [{'_id': 'myjob'}, {'_id': 'myotherjob'}]

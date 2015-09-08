@@ -24,7 +24,8 @@ from .management import (get_config, init, is_initialized,
                          create, create_views)
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter)
-from .task import add_task, get_task, scrub_tasks
+from .task import (add_task, get_task, delete_task, scrub_tasks,
+                   upload_attachment, download_attachment, delete_attachment)
 from .util import Config
 
 __all__ = [
@@ -38,7 +39,8 @@ __all__ = [
     'get_current_job_id', 'set_current_job_id',
     'submit', 'submit_if_needed', 'Submitter', 'OsmiumSubmitter',
     'SSHSubmitter',
-    'add_task', 'get_task', 'scrub_tasks',
+    'add_task', 'get_task', 'delete_task', 'scrub_tasks',
+    'upload_attachment', 'download_attachment', 'delete_attachment',
     'Config',
 ]
 

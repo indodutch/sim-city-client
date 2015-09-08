@@ -18,6 +18,7 @@ from __future__ import print_function
 
 import simcity
 from .util import listfiles, write_json, expandfilename
+from .task import upload_attachment
 from picas import RunActor
 
 import os
@@ -82,8 +83,7 @@ class ExecuteActor(RunActor):
         # Read all files in as attachments
         out_files = listfiles(dirs['output'])
         for filename in out_files:
-            with open(os.path.join(dirs['output'], filename), 'rb') as f:
-                task.put_attachment(filename, f.read())
+            upload_attachment(task, dirs['output'], filename)
 
         if not task.has_error():  # don't override error status
             task.done()

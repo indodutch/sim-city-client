@@ -18,7 +18,7 @@ from __future__ import print_function
 
 import simcity
 from nose.tools import assert_true, assert_raises
-from test_mock import MockDB
+from test_mock import MockDB, MockDAV
 import os
 import shutil
 
@@ -36,6 +36,10 @@ def test_actor():
         'output_dir': 'tests/tmp/out_alala',
         'input_dir': 'tests/tmp/in_alala',
     })
+    cfg.add_section('webdav', {
+        'url': 'https://my.example.com'
+    })
+    simcity.management._webdav[None] = MockDAV()
     db = MockDB()
     db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo'}}
     assert_raises(KeyError, simcity.management.set_config, cfg)

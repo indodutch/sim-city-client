@@ -15,8 +15,9 @@
 # limitations under the License.
 
 from picas import Task
-from .management import get_task_database
+from .management import get_task_database, get_webdav
 import time
+import os
 
 
 def add_task(properties, database=None):
@@ -40,7 +41,23 @@ def get_task(task_id, database=None):
     return Task(database.get(task_id))
 
 
-def scrub_tasks(view, age=24*60*60, database=None):
+def delete_task(task, database=None):
+    """
+    Delete a task and associated attachments from the database and webdav.
+    """
+    if database is None:
+        database = get_task_database()
+
+    database.delete(task)
+    for filename in task.uploads:
+        delete_attachment(task, filename)
+    dav = get_webdav()
+    task_dir = _webdav_id_to_path(task.id)[1]
+    if dav.exists(task_dir):
+        dav.rmdir(task_dir)
+
+
+def scrub_tasks(view, age=24 * 60 * 60, database=None):
     views = ['locked', 'error']
     if view not in views:
         raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
@@ -61,3 +78,67 @@ def scrub_tasks(view, age=24*60*60, database=None):
         database.save_documents(updates)
 
     return (len(updates), total)
+
+
+def upload_attachment(task, directory, filename, mimetype=None):
+    with open(os.path.join(directory, filename), 'rb') as f:
+        try:
+            dav = get_webdav()
+            path, task_dir, id_hash = _webdav_id_to_path(task.id, filename)
+            if len(task.uploads) == 0:
+                # an exists() call may be expensive, only use it once if
+                # possible
+                if not dav.exists(id_hash):
+                    dav.mkdir(id_hash)
+                    dav.mkdir(task_dir)
+                elif not dav.exists(task_dir):
+                    dav.mkdir(task_dir)
+
+            dav.upload(f, path)
+            task.uploads[filename] = dav._get_url(path)
+        except EnvironmentError:
+            task.put_attachment(filename, f.read(), mimetype)
+
+
+def download_attachment(task, directory, filename, task_db=None):
+    if filename in task.uploads:
+        dav = get_webdav()
+        path = _webdav_url_to_path(task.uploads[filename], dav)
+        dav.download(path, os.path.join(directory, filename))
+    else:
+        if task_db is None:
+            task_db = get_task_database()
+        attach = task.get_attachment(filename, retrieve_from_database=task_db)
+        with open(os.path.join(directory, filename), 'wb') as f:
+            f.write(attach['data'])
+
+
+def delete_attachment(task, filename):
+    if filename in task.uploads:
+        dav = get_webdav()
+        path = _webdav_url_to_path(task.uploads[filename], dav)
+        dav.delete(path)
+    else:
+        del task['_attachments'][filename]
+
+
+def _webdav_url_to_path(url, webdav=None):
+    if webdav is None:
+        webdav = get_webdav()
+
+    # Check that the same webdav system was used
+    if not url.startswith(webdav.baseurl):
+        raise EnvironmentError(
+            'webdav for {} not configured'.format(url))
+    # Remove the webdav base url from the URL to get the relative path
+    path = url[len(webdav.baseurl):]
+    # Use absolute path
+    if not path.startswith('/'):
+        path = '/' + path
+    return path
+
+
+def _webdav_id_to_path(task_id, filename=''):
+    task_hash = '/' + task_id[5:7]
+    task_dir = task_hash + '/' + task_id
+    return (task_dir + '/' + filename, task_dir, task_hash)
