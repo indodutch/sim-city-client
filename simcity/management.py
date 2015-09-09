@@ -117,14 +117,16 @@ def get_webdav(process=None):
         dav_cfg = _config.section('webdav')
 
         url = urlparse(dav_cfg['url'])
+        verify = get_truthy(dav_cfg.get('ssl_verification', True))
+        if verify and 'certificate' in dav_cfg:
+            verify = dav_cfg['certificate']
         _webdav[process] = easywebdav.connect(
             host=url.hostname,
             protocol=url.scheme,
             port=url.port,
             path=url.path[1:],
             auth=(dav_cfg['username'], dav_cfg['password']),
-            verify_ssl=get_truthy(dav_cfg.get('ssl_verification', True)),
-            cert=dav_cfg.get('certificate'))
+            verify_ssl=verify)
 
     return _webdav[process]
 
