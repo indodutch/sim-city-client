@@ -1,28 +1,51 @@
 [task-db]
+# CouchDB task database configuration
 url = https://couch.example.com
 username = myuser
 password = mypassword
 database = mytaskdatabase
 
+# To turn off SSL verification, uncomment the next line
+# ssl_verification = off
+
 [job-db]
+# CouchDB job database configuration. Remove this section
+# to use the task database for storing jobs.
 url = https://couch.example.com
 username = myuser
 password = mypassword
 database = myjobdatabase
 
+# To turn off SSL verification, uncomment the next line
+# ssl_verification = off
+
 [webdav]
+# WebDAV configuration for storing files. Remove this
+# section to have attachments stored in the task database.
 url = https://webdav.example.com
 username = myuser
 password = mypassword
+# Uncomment the next line to disable webdav.
+# enabled = false
+
+# Uncomment the next line to turn off SSL verification, 
+# ssl_verification = off
+
+# Uncomment the next line and enter a filename or directory
+# to use the CA certificate chain at that path
+# certificate = path/to/ca-chain.pem
 
 [Execution]
+# Fire storage during task execution
 tmp_dir = $TMPDIR
 output_dir = $HOME/out
 input_dir = $HOME/in
 
 [mycluster-host]
+# Configuration of a single job host
 path = path/to/submitscript
 script = submitscript.sh
 host = user@hostname
+# Method is either ssh or osmium.
 method = ssh
 
