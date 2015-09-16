@@ -47,20 +47,28 @@ class Config(object):
             self.parser = None
             self.filename = None
 
-        self.sections = {}
+        self._sections = {}
 
     def add_section(self, name, keyvalue):
-        self.sections[name] = dict_value_expandvar(keyvalue)
+        self._sections[name] = dict_value_expandvar(keyvalue)
 
     def section(self, name):
         try:
-            return self.sections[name]
+            return self._sections[name]
         except KeyError:
             if self.parser is not None and (name == 'DEFAULT' or
                                             self.parser.has_section(name)):
                 return dict_value_expandvar(dict(self.parser.items(name)))
             else:
                 raise
+
+    def sections(self):
+        ''' The set of configured section names, including DEFAULT. '''
+        sections = set(['DEFAULT'])
+        if self.parser is not None:
+            sections |= set(self.parser.sections())
+        sections |= set(self._sections.keys())
+        return sections
 
 
 def dict_value_expandvar(d):

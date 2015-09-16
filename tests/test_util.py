@@ -48,6 +48,10 @@ def test_config_write_read():
     assert_equals(other['a'], '2', "value not contained to section")
     assert_equals(other['b'], 'wefa feaf', "spaces allowed")
     assert_equals(other['c'], 'wefa=feaf', "equals-sign allowed")
+    sections = set(['DEFAULT', 'MySection', 'OtherSection'])
+    assert_equals(sections, cfg.sections())
+    cfg.add_section('CustomSection', {})
+    assert_equals(sections | set(['CustomSection']), cfg.sections())
 
 
 def test_empty_config():
