@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>,
-#                Anatoli Danezi  <anatoli.danezi@surfsara.nl>
+# Copyright 2015 Netherlands eScience Center and SURFsara
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
