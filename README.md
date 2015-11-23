@@ -1,6 +1,7 @@
 # Run a simulation on SIM-CITY infrastructure
 
 [![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/60c3365bb4ad43aeba99954ac8a85433)](https://www.codacy.com/app/github_4/sim-city-client)
 
 SIM-CITY client uses a pilot job script to run multiple simulations in the same job. Open source under the Apache License Version 2.0.
 
