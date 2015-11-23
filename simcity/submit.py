@@ -139,7 +139,7 @@ class OsmiumSubmitter(Submitter):
 
     def _request(self, location="/", method="GET", data=None):
         conn = HTTPConnection(self.host)
-        url = 'http://%s%s' % (self.host, location)
+        url = 'http://{0}{1}'.format(self.host, location)
         conn.request(method, url, data)
         response = conn.getresponse()
         conn.close()
@@ -164,7 +164,7 @@ class OsmiumSubmitter(Submitter):
         return response.location.split('/')[-1]
 
     def status(self, job_id):
-        response = self._request('/job/%s' % (self.host, job_id))
+        response = self._request('/job/{0}'.format(job_id))
         return json.loads(response.data)
 
     def jobs(self):
