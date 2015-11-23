@@ -105,6 +105,7 @@ class Submitter(object):
         self.method = method
 
     def submit(self, command):
+        """ Submit given command to the configured host. """
         job_id = 'job_' + self.prefix + uuid4().hex
         job = simcity.queue_job(Job({'_id': job_id}), self.method,
                                 host=self.host, database=self.database)
@@ -138,6 +139,7 @@ class OsmiumSubmitter(Submitter):
         self.max_time = max_time
 
     def _request(self, location="/", method="GET", data=None):
+        """ Make a HTTPS request to the Osmium service. """
         conn = HTTPConnection(self.host)
         url = 'http://{0}{1}'.format(self.host, location)
         conn.request(method, url, data)
@@ -149,6 +151,7 @@ class OsmiumSubmitter(Submitter):
         return response
 
     def _do_submit(self, job, command):
+        """ Submit a command with given job metadata. """
         request = merge_dicts(OsmiumSubmitter.__BASE, {
             'executable':  command[0],
             'arguments':   command[1:],
@@ -163,24 +166,27 @@ class OsmiumSubmitter(Submitter):
         response = self._request(method="POST", data=request)
         return response.location.split('/')[-1]
 
-    def status(self, job_id):
-        response = self._request('/job/{0}'.format(job_id))
+    def status(self, osmium_job_id):
+        """ Get the status dict of a single job from Osmium. """
+        response = self._request('/job/{0}'.format(osmium_job_id))
         return json.loads(response.data)
 
     def jobs(self):
+        """ Get a list of jobs that are currently running. """
         response = self._request('/job')
         return json.loads(response.data)
 
 
 class SSHSubmitter(Submitter):
 
-    """ Submits a job over SSH. """
+    """ Submits a job over SSH, remotely running the Torque qsub utility. """
 
     def __init__(self, database, host, prefix, jobdir="~"):
         super(SSHSubmitter, self).__init__(
             database, host, prefix, jobdir, method="ssh")
 
     def _do_submit(self, job, command):
+        """ Submit a command with given job metadata. """
         command_str = ('cd "%s";'
                        'export SIMCITY_JOBID="%s";'
                        'qsub -v SIMCITY_JOBID %s') % (self.jobdir, job.id,

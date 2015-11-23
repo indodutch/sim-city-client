@@ -20,6 +20,7 @@ from __future__ import print_function
 import simcity
 import argparse
 
+
 if __name__ == '__main__':
     task_views = ['todo', 'done', 'locked']
     job_views = [

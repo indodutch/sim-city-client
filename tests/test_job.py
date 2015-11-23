@@ -24,7 +24,7 @@ from nose.tools import (assert_true, assert_equals, assert_raises,
 from test_mock import MockDB, MockRow
 
 
-class TestJob():
+class TestJob(object):
 
     def setup(self):
         simcity.management._reset_globals()

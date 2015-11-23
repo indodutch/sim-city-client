@@ -29,6 +29,7 @@ import traceback
 
 
 def is_cancelled():
+    """ Whether the job was cancelled """
     db = simcity.get_job_database()
     try:
         job_id = simcity.get_current_job_id()
@@ -38,6 +39,8 @@ def is_cancelled():
 
 
 def signal_handler(signal, frame):
+    """ Catch signals to do a proper cleanup.
+        The job then has time to write out any results or errors. """
     print('Caught signal %d; finishing job.' % signal, file=sys.stderr)
     try:
         simcity.finish_job(simcity.get_job())

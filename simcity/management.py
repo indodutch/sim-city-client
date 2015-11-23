@@ -14,6 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Initialize SIM-CITY variables and databases based on the SIM-CITY configuration
+file.
+"""
+
 import picas
 from .util import Config, get_truthy
 import couchdb
@@ -41,6 +46,7 @@ _webdav = {}
 
 
 def _reset_globals():
+    """ Set all globals to their default values. """
     global _config, _task_db, _job_db, _webdav, is_initialized
     global _webdav
     _config = None
@@ -262,6 +268,9 @@ def create(admin_user, admin_password):
 
 
 def _create_user(cfg, admin_user, admin_password):
+    """ Create a new user in the CouchDB database referenced by cfg.
+        The admin_user and admin_password are needs to have permission to
+        create a user."""
     verification = get_truthy(cfg.get('ssl_verification', False))
     users = picas.CouchDB(
         url=cfg['url'],
@@ -369,6 +378,7 @@ def create_views():
 
 
 def _init_databases():
+    """ Connect to the databases defined in the configuration file. """
     global _task_db, _job_db, is_initialized
 
     try:

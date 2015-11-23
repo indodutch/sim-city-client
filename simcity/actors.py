@@ -95,6 +95,7 @@ class ExecuteActor(RunActor):
                 return call(command, stdout=fout, stderr=ferr)
 
     def create_dirs(self, task):
+        """ Create the directories to read and store data. """
         dir_map = {
             'tmp':    'tmp_dir',
             'input':  'input_dir',
