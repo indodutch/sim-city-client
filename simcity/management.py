@@ -102,8 +102,13 @@ def set_current_job_id(job_id):
 
 def uses_webdav():
     _check_init(_config)
-    dav_cfg = _config.section('webdav')
-    return len(dav_cfg) > 0 and get_truthy(dav_cfg.get('enabled', True))
+    try:
+        dav_cfg = _config.section('webdav')
+    except KeyError:
+        return False
+    else:
+        return ('url' in dav_cfg and
+                get_truthy(dav_cfg.get('enabled', True)))
 
 
 def get_webdav(process=None):
