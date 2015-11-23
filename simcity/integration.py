@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Integrates the task and job API. """
+
 from .management import get_task_database, get_job_database
 from .task import add_task, get_task
 from .submit import submit_if_needed
@@ -21,6 +23,22 @@ import time
 
 
 def run_task(task_properties, host, max_jobs, polling_time=None):
+    """
+    Run a single task, starting a job if necessary.
+    Waits for the task to finish if polling_time is specified.
+
+    Parameters
+    ----------
+    task_properties : dict
+        properties that the given task will include.
+    host : str
+        host name to start a new job on, if not enough jobs are running
+    max_jobs : int
+        maximum number of jobs that may run, even with a larger number of tasks
+    polling_time : int
+        if not none, keep polling every polling_time seconds, until the job is
+        done
+    """
     task = add_task(task_properties)
     job = submit_if_needed(host, max_jobs)
 
