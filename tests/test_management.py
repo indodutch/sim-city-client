@@ -18,7 +18,7 @@ from __future__ import print_function
 
 import simcity
 from test_mock import MockDB
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_raises, assert_true, assert_false
 
 
 def test_init():
@@ -33,6 +33,24 @@ def test_init():
         'database': 'example',
     })
     assert_raises(IOError, simcity.init, cfg)
+
+
+def test_uses_webdav():
+    simcity.management._reset_globals()
+    simcity.management._config = simcity.Config(from_file=False)
+    assert_false(simcity.uses_webdav())
+    cfg = simcity.management._config
+    webdav_cfg = {}
+    cfg.add_section('webdav', webdav_cfg)
+    assert_false(simcity.uses_webdav())
+    webdav_cfg['url'] = 'something'
+    assert_true(simcity.uses_webdav())
+    webdav_cfg['user'] = 'something'
+    assert_true(simcity.uses_webdav())
+    webdav_cfg['enabled'] = False
+    assert_false(simcity.uses_webdav())
+    webdav_cfg['enabled'] = True
+    assert_true(simcity.uses_webdav())
 
 
 def test_views():

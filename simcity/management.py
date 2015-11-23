@@ -101,6 +101,7 @@ def set_current_job_id(job_id):
 
 
 def uses_webdav():
+    """ Whether simcity is configured for webdav. """
     _check_init(_config)
     try:
         dav_cfg = _config.section('webdav')

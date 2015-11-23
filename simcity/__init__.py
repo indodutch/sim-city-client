@@ -21,7 +21,7 @@ from .integration import overview_total, run_task
 from .management import (get_config, init, is_initialized,
                          get_task_database, get_job_database,
                          get_current_job_id, set_current_job_id,
-                         create, create_views)
+                         create, create_views, uses_webdav, get_webdav)
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter)
 from .task import (add_task, get_task, delete_task, scrub_tasks,
@@ -36,6 +36,7 @@ __all__ = [
     'get_config', 'init', 'is_initialized',
     'get_task_database', 'get_job_database',
     'create', 'create_views',
+    'uses_webdav', 'get_webdav',
     'get_current_job_id', 'set_current_job_id',
     'submit', 'submit_if_needed', 'Submitter', 'OsmiumSubmitter',
     'SSHSubmitter',

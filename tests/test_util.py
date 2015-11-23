@@ -17,7 +17,7 @@
 from __future__ import print_function
 
 from simcity.util import (Config, expandfilenames, issequence,
-                          expandfilename)
+                          expandfilename, get_truthy)
 import os
 import tempfile
 
@@ -92,3 +92,16 @@ def test_path():
 
 def test_nonexistant():
     assert_raises(ValueError, Config, 'nonexistant.ini')
+
+
+def test_truthy():
+    assert_true(get_truthy(True))
+    assert_true(get_truthy(1))
+    assert_true(get_truthy(2))
+    assert_true(get_truthy("1"))
+    assert_true(get_truthy("yes"))
+    assert_true(get_truthy("true"))
+    assert_true(get_truthy("on"))
+    assert_false(get_truthy(False))
+    assert_false(get_truthy(0))
+    assert_false(get_truthy("anything else"))
