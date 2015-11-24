@@ -5,5 +5,8 @@ python:
     - "3.2"
     - "3.3"
     - "3.4"
-install: "make install"
-script: "make fulltest"
+install:
+    - make install
+    - pip install codacy-coverage
+script: make fulltest
+after_script: python-codacy-coverage -r coverage.xml
