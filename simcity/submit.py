@@ -122,7 +122,7 @@ class Submitter(object):
 
     def _do_submit(self, job, command):
         """
-        Submit given command, using job metadata. 
+        Submit given command, using job metadata.
 
         Override in subclasses.
         """
