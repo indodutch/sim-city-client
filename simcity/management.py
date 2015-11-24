@@ -407,6 +407,7 @@ def _init_databases():
 
 
 def _reset_init():
+    """ Check again whether simcity is properly initialized. """
     global is_initialized
     is_initialized = (_task_db is not None and
                       _job_db is not None and
@@ -414,6 +415,10 @@ def _reset_init():
 
 
 def _load_database(name, admin_user=None, admin_password=""):
+    """ Load a database from configuration.
+
+    If it does not exist and the admin credentials are provided, the database
+    will be created. """
     cfg = _config.section(name)
 
     try:

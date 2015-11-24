@@ -152,7 +152,7 @@ def archive_job(job, database=None):
 
 def scrub_jobs(view, age=24*60*60, database=None):
     """
-    Intends to update job metadata of jobs that are defunct.
+    Intends to update job metadata of defunct jobs.
 
     The jobs in given view will be converted to archived_jobs if their starting
     time is before given age.

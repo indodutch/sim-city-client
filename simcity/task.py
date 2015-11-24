@@ -65,6 +65,28 @@ def delete_task(task, database=None):
 
 
 def scrub_tasks(view, age=24 * 60 * 60, database=None):
+    """
+    Intends to update task metadata of defunct tasks.
+
+    The tasks in given view will returned to jobs to be processed
+    if their starting time is before given age.
+
+    Parameters
+    ----------
+    view : one of (locked, error)
+        View to scrub tasks from
+    age : int
+        select tasks started at least this number of seconds ago. Set to at
+        most 0 to select all tasks.
+    database : couchdb database, optional
+        database to update the tasks from. Defaults to
+        simcity.get_task_database()
+
+    Returns
+    -------
+    A tuple with (the number of documents updated,
+                  total number of documents in given view)
+    """
     views = ['locked', 'error']
     if view not in views:
         raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
@@ -88,6 +110,7 @@ def scrub_tasks(view, age=24 * 60 * 60, database=None):
 
 
 def upload_attachment(task, directory, filename, mimetype=None):
+    """ Uploads an attachment using the configured file storage layer. """
     with open(os.path.join(directory, filename), 'rb') as f:
         try:
             dav = get_webdav()
@@ -108,6 +131,7 @@ def upload_attachment(task, directory, filename, mimetype=None):
 
 
 def download_attachment(task, directory, filename, task_db=None):
+    """ Uploads an attachment from the configured file storage layer. """
     if filename in task.uploads:
         dav = get_webdav()
         path = _webdav_url_to_path(task.uploads[filename], dav)
@@ -121,6 +145,7 @@ def download_attachment(task, directory, filename, task_db=None):
 
 
 def delete_attachment(task, filename):
+    """ Deletes an attachment from the configured file storage layer. """
     if filename in task.uploads:
         dav = get_webdav()
         path = _webdav_url_to_path(task.uploads[filename], dav)
@@ -131,6 +156,7 @@ def delete_attachment(task, filename):
 
 
 def _webdav_url_to_path(url, webdav=None):
+    """ Extracts the path from a webdav url. """
     if webdav is None:
         webdav = get_webdav()
 
@@ -147,6 +173,7 @@ def _webdav_url_to_path(url, webdav=None):
 
 
 def _webdav_id_to_path(task_id, filename=''):
+    """ Deduces the path from a task ID. """
     task_hash = '/' + task_id[5:7]
     task_dir = task_hash + '/' + task_id
     return (task_dir + '/' + filename, task_dir, task_hash)

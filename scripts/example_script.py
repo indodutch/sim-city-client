@@ -15,6 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Example script.
+
+Supply the path of this script to startJob to run a test.
+"""
+
 from __future__ import print_function
 import sys
 import json

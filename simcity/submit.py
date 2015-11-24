@@ -121,6 +121,11 @@ class Submitter(object):
             return job
 
     def _do_submit(self, job, command):
+        """
+        Submit given command, using job metadata. 
+
+        Override in subclasses.
+        """
         raise NotImplementedError
 
 
