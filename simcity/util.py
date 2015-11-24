@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Utility functions. """
+
 try:
     from ConfigParser import ConfigParser
 except ImportError:
@@ -27,6 +29,13 @@ from numbers import Number
 
 
 class Config(object):
+    """
+    Manages configuration, divided up in sections.
+
+    Configuration can be read from a python config or ini file. Those files are
+    divided into sections, where the first entries fall in the DEFAULT section.
+    Within each section, entries are stored as key-value pairs with unique keys.
+    """
     DEFAULT_FILENAMES = [
         "config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
 

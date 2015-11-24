@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Submit jobs to physical infrastructure. """
+
 from picas.util import merge_dicts
 from picas import Job
 import simcity

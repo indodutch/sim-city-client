@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Create and update tasks. """
+
 from picas import Task
 from .management import get_task_database, get_webdav
 import time

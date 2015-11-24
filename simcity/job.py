@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Manage job metadata. """
+
 from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
 from picas import Job
@@ -149,6 +151,27 @@ def archive_job(job, database=None):
 
 
 def scrub_jobs(view, age=24*60*60, database=None):
+    """
+    Intends to update job metadata of jobs that are defunct.
+
+    The jobs in given view will be converted to archived_jobs if their starting
+    time is before given age.
+
+    Parameters
+    ----------
+    view : one of (pending_jobs, active_jobs, finished_jobs)
+        View to scrub jobs from
+    age : int
+        select jobs started at least this number of seconds ago. Set to at most
+        0 to select all jobs.
+    database : couchdb database, optional
+        database to update the job from. Defaults to simcity.get_job_database()
+
+    Returns
+    -------
+    A tuple with (the number of documents updated,
+                  total number of documents in given view)
+    """
     views = ['pending_jobs', 'active_jobs', 'finished_jobs']
     if view not in views:
         raise ValueError('View "%s" not one of "%s"' % (view, str(views)))

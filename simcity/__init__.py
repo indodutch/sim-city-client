@@ -13,12 +13,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" SIM-CITY client helps running tasks on any infrastructure.
+"""
+SIM-CITY client helps running tasks on any infrastructure.
 
-    It uses a CouchDB backend to store task input and output and job metadata.
-    It starts jobs on remote infrastructure using SSH and starting a qsub job,
-    or uses Osmium to start the job. Output files can be stored in the CouchDB
-    database or on a WebDAV server. """
+SIM-CITY client has a CouchDB backend to store task input and output and
+job metadata. A task runner can be started manually on any computer with
+internet connection and with the desired executable installed in the right
+path. Otherwise SIM-CITY client will submits jobs to remote infrastructure
+using SSH and it will starts a qsub job there, or it uses Osmium to submit
+the job. Output files can be stored in the CouchDB database or on a WebDAV
+server.
+"""
 
 from .actors import ExecuteActor
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Actors execute tasks from the database and upload the results. """
+
 from __future__ import print_function
 
 import simcity
@@ -52,13 +54,23 @@ class ExecuteActor(RunActor):
         self.config = config.section('Execution')
 
     def prepare_env(self, *kargs, **kwargs):
+        """ Prepares the current job by registering it as started in the
+        database. """
         self.job = simcity.start_job(database=self.job_db)
 
     def cleanup_env(self, *kargs, **kwargs):
+        """ Cleans up the current job by registering it as finished. """
         self.job['tasks_processed'] = self.tasks_processed
         simcity.finish_job(self.job, database=self.job_db)
 
     def process_task(self, task):
+        """ Processes a single task from the database by executing it.
+
+        First, input, output and temporary directories are created. Then the
+        input is written to the file [in_dir]/input.json. The file is executed
+        and all output files generated in [out_dir] are uploaded. This includes
+        the stdout and stderr of the execution.
+        """
         print("-----------------------")
         print("Working on task: {0}".format(task.id))
 
@@ -90,6 +102,8 @@ class ExecuteActor(RunActor):
         print("-----------------------")
 
     def execute(self, command, stdoutFile, stderrFile):
+        """ Execute command and write the stdout and stderr to given
+        filenames. """
         with open(stdoutFile, 'w') as fout:
             with open(stderrFile, 'w') as ferr:
                 return call(command, stdout=fout, stderr=ferr)
