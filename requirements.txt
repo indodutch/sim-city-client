@@ -1,7 +1,7 @@
 -e git+https://github.com/djc/couchdb-python.git#egg=CouchDB-1.0.1
 Cython==0.23.4
 easywebdav==1.2.0
--e git+https://github.com/kivy/pyjnius.git@84cbe70ba3746c709a68a8f16cfe320fbae2fc11#egg=jnius-master
+-e git+https://github.com/kivy/pyjnius.git@84cbe70ba3746c709a68a8f16cfe320fbae2fc11#egg=jnius-1.1.dev0
 -e git+https://github.com/blootsvoets/picasclient.git#egg=picas-0.2.5
 pystache==0.5.4
 -e git+https://github.com/nlesc/pyxenon.git#egg=pyxenon-0.1.0
