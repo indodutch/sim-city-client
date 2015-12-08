@@ -3,3 +3,5 @@ config*.ini
 /build
 /.coverage
 .ipynb_checkpoints/
+/coverage.xml
+/src
