@@ -51,6 +51,6 @@ setup(name='simcity',
         'Programming Language :: Python :: 3.4',
         'Topic :: System :: Distributed Computing'
       ],
-      install_requires=['pystache', 'picas', 'CouchDB', 'easywebdav'],
+      install_requires=['pystache', 'picas', 'CouchDB', 'easywebdav', 'pyxenon'],
       tests_require=['nose', 'pyflakes', 'pep8', 'coverage']
      )

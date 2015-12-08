@@ -20,12 +20,17 @@ from picas.util import merge_dicts
 from picas import Job
 import simcity
 import json
+import xenon
 
 from numbers import Number
 try:
     from httplib import HTTPConnection
 except ImportError:
     from http.client import HTTPConnection
+try:
+    from urlparse import urlparse
+except ImportError:
+    from urllib.parse import urlparse
 
 import subprocess
 from uuid import uuid4
@@ -83,6 +88,13 @@ def submit(hostname, submitter=None):
                     jobdir=host_cfg['path'],
                     prefix=hostname + '-',
                     max_time=host_cfg.get('max_time'))
+            elif host_cfg['method'] == 'xenon':
+                submitter = XenonSubmitter(
+                    database=simcity.get_job_database(),
+                    host=host_cfg['host'],
+                    jobdir=host_cfg['path'],
+                    prefix=hostname + '-',
+                    max_time=host_cfg.get('max_time', 1440))
             else:
                 raise EnvironmentError('Connection method for %s unknown' %
                                        hostname)
@@ -210,3 +222,36 @@ class SSHSubmitter(Submitter):
             raise IOError("Cannot parse job ID from stdout: '%s'\n"
                           "==== stderr ====\n'%s'"
                           % (stdout, stderr))
+
+
+class XenonSubmitter(Submitter):
+    xenon_init = False
+
+    """ Submits job using Xenon. """
+    def __init__(self, database, host, prefix, jobdir, max_time=1440):
+        super(XenonSubmitter, self).__init__(database, host, prefix, jobdir,
+                                             "xenon")
+        XenonSubmitter.init()
+        self.max_time = max_time
+
+    @classmethod
+    def init(cls, log_level='INFO'):
+        if not cls.xenon_init:
+            cls.xenon_init = True
+            xenon.init(log_level=log_level)
+
+    def _do_submit(self, job, command):
+        with xenon.Xenon() as x:
+            try:
+                jobs = x.jobs()
+                desc = xenon.jobs.JobDescription()
+                desc.addEnvironment('SIMCITY_JOBID', job.id)
+                desc.setWorkingDirectory(self.prefix)
+                desc.setExecutable(command)
+                url = urlparse(self.host)
+                sched = jobs.newScheduler(url.scheme, url.hostname, None, None)
+                job = jobs.submitJob(sched, desc)
+                return job.getIdentifier()
+            except xenon.exceptions.XenonException as ex:
+                raise IOError(ex.classname, "Cannot submit job with Xenon: {0}"
+                              .format(ex.innermessage))

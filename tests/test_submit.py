@@ -143,3 +143,14 @@ def test_Osmium_submit_method():
     _set_host_config('nohost', method='osmium')
     _set_database(0, 0, 0, 0)
     assert_raises(IOError, simcity.submit, 'nohost')
+
+
+def test_Xenon_submit_method():
+    simcity.management._reset_globals()
+    _set_host_config('nohost', method='xenon')
+    cfg = simcity.get_config().section('nohost-host')
+    cfg['host'] = 'torque://' + cfg['host']
+    simcity.get_config().add_section('nohost-host', cfg)
+    _set_database(0, 0, 0, 0)
+    simcity.XenonSubmitter.init()
+    assert_raises(IOError, simcity.submit, 'nohost')

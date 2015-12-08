@@ -34,7 +34,7 @@ from .management import (get_config, init, is_initialized,
                          get_current_job_id, set_current_job_id,
                          create, create_views, uses_webdav, get_webdav)
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
-                     SSHSubmitter)
+                     SSHSubmitter, XenonSubmitter)
 from .task import (add_task, get_task, delete_task, scrub_tasks,
                    upload_attachment, download_attachment, delete_attachment)
 from .util import Config
@@ -50,7 +50,7 @@ __all__ = [
     'uses_webdav', 'get_webdav',
     'get_current_job_id', 'set_current_job_id',
     'submit', 'submit_if_needed', 'Submitter', 'OsmiumSubmitter',
-    'SSHSubmitter',
+    'SSHSubmitter', 'XenonSubmitter',
     'add_task', 'get_task', 'delete_task', 'scrub_tasks',
     'upload_attachment', 'download_attachment', 'delete_attachment',
     'Config',

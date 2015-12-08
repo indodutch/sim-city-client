@@ -49,3 +49,12 @@ host = user@hostname
 # Method is either ssh or osmium.
 method = ssh
 
+[mycluster-host]
+# Configuration of a single job host
+path = path/to/runscript
+script = runscript.sh
+host = torque://user@hostname
+# Method is either ssh or osmium.
+method = xenon
+# time in minutes: 1 day
+max_time = 1440

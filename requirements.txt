@@ -2,3 +2,4 @@ pystache==0.5.4
 -e git+https://github.com/blootsvoets/picasclient.git#egg=picas-0.2.5
 -e git+https://github.com/djc/couchdb-python.git#egg=CouchDB-1.0.1
 easywebdav==1.2.0
+-e git+https://github.com/nlesc/pyxenon.git#egg=pyxenon-0.1.0
