@@ -147,6 +147,7 @@ def test_Osmium_submit_method():
 
 def test_Xenon_submit_method():
     simcity.management._reset_globals()
+    # setup host with Xenon torque adaptor
     _set_host_config('nohost', method='xenon')
     cfg = simcity.get_config().section('nohost-host')
     cfg['host'] = 'torque://' + cfg['host']

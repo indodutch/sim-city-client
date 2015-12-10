@@ -28,7 +28,7 @@ password = mypassword
 # Uncomment the next line to disable webdav.
 # enabled = false
 
-# Uncomment the next line to turn off SSL verification, 
+# Uncomment the next line to turn off SSL verification,
 # ssl_verification = off
 
 # Uncomment the next line and enter a filename or directory

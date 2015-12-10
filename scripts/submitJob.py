@@ -49,7 +49,7 @@ if __name__ == '__main__':
             pass
 
         task, job = simcity.run_task(properties,
-                                     args.host, args.max)
+                                     args.host, int(args.max))
     except Exception as ex:
         print("Task could not be added to the database: %s" % str(ex),
               file=sys.stderr)

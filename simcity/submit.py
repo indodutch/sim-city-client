@@ -27,10 +27,6 @@ try:
     from httplib import HTTPConnection
 except ImportError:
     from http.client import HTTPConnection
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
 
 import subprocess
 from uuid import uuid4
@@ -119,7 +115,11 @@ class Submitter(object):
         self.method = method
 
     def submit(self, command):
-        """ Submit given command to the configured host. """
+        """
+        Submit given command to the configured host.
+
+        Raises IOError if the command could not be submitted.
+        """
         job_id = 'job_' + self.prefix + uuid4().hex
         job = simcity.queue_job(Job({'_id': job_id}), self.method,
                                 host=self.host, database=self.database)
@@ -236,20 +236,26 @@ class XenonSubmitter(Submitter):
 
     @classmethod
     def init(cls, log_level='INFO'):
+        """ Initialize Xenon. The method is a no-op after the first call. """
         if not cls.xenon_init:
             cls.xenon_init = True
             xenon.init(log_level=log_level)
 
     def _do_submit(self, job, command):
+        """ Submit a command with given job metadata. """
         with xenon.Xenon() as x:
             try:
                 jobs = x.jobs()
                 desc = xenon.jobs.JobDescription()
                 desc.addEnvironment('SIMCITY_JOBID', job.id)
-                desc.setWorkingDirectory(self.prefix)
-                desc.setExecutable(command)
-                url = urlparse(self.host)
-                sched = jobs.newScheduler(url.scheme, url.hostname, None, None)
+                desc.setWorkingDirectory(self.jobdir)
+                desc.setExecutable(command[0])
+                desc.setArguments(*command[1:])
+                urlsplit = self.host.split('://')
+                if len(urlsplit) != 2:
+                    raise ValueError("host must contain a scheme and a hostname, syntax `scheme://host`.")
+                scheme, hostname = urlsplitk
+                sched = jobs.newScheduler(scheme, hostname, None, None)
                 job = jobs.submitJob(sched, desc)
                 return job.getIdentifier()
             except xenon.exceptions.XenonException as ex:
