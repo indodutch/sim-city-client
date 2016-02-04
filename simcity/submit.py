@@ -22,7 +22,6 @@ import simcity
 import json
 import xenon
 
-from numbers import Number
 try:
     from httplib import HTTPConnection
 except ImportError:
@@ -38,17 +37,12 @@ def submit_if_needed(hostname, max_jobs, submitter=None):
 
     Host configuration is extracted from an entry in the global config file.
     """
-    if not isinstance(max_jobs, Number):
-        raise ValueError("Max jobs must be a number")
 
     num = simcity.overview_total()
 
     num_jobs = num['active_jobs'] + num['pending_jobs']
-    if ((num_jobs < num['todo'] and num_jobs < max_jobs) or
-            # active jobs should be scrubbed, some of them are not running
-            # anymore
-            (num['pending_jobs'] == 0 and num['todo'] > 0 and
-             num['locked'] == 0)):
+    num_tasks = num['todo'] + num['locked']
+    if num_jobs < min(num_tasks, max_jobs):
         return submit(hostname, submitter)
     else:
         return None
@@ -253,8 +247,9 @@ class XenonSubmitter(Submitter):
                 desc.setArguments(*command[1:])
                 urlsplit = self.host.split('://')
                 if len(urlsplit) != 2:
-                    raise ValueError("host must contain a scheme and a hostname, syntax `scheme://host`.")
-                scheme, hostname = urlsplitk
+                    raise ValueError("host must contain a scheme and a "
+                                     "hostname, syntax `scheme://host`.")
+                scheme, hostname = urlsplit
                 sched = jobs.newScheduler(scheme, hostname, None, None)
                 job = jobs.submitJob(sched, desc)
                 return job.getIdentifier()

@@ -61,14 +61,9 @@ def _set_host_config(hostname, method='local'):
         pass  # ignore mal-configured databases in this config
 
 
-def test_max_not_number():
-    simcity.management._reset_globals()
-    assert_raises(ValueError, simcity.submit_if_needed, 'something', '2')
-
-
 def test_submit_if_needed_already_active():
     simcity.management._reset_globals()
-    _set_database(1, 1, 1, 0)
+    _set_database(1, 1, 2, 0)
     assert_equal(simcity.submit_if_needed('nohost', 2), None)
 
 
@@ -101,15 +96,6 @@ def test_submit_if_needed_notactive():
     assert_equal(job['batch_id'], MockSubmitter.BATCH_ID)
     assert_equal(job['hostname'], 'nohost')
     assert_equal(job['method'], 'local')
-
-
-def test_submit_if_needed_notreallyactive():
-    simcity.management._reset_globals()
-    _set_host_config('nohost')
-    db = _set_database(0, 1, 5, 0)
-    submitter = MockSubmitter(db)
-    job = simcity.submit_if_needed('nohost', 2, submitter=submitter)
-    assert_not_equal(job, None)
 
 
 def test_submit_error():
