@@ -47,7 +47,7 @@ def _set_database(locked, todo, active, pending):
 
 
 def _set_host_config(hostname, method='local'):
-    cfg = simcity.Config(from_file=False)
+    cfg = simcity.Config()
     cfg.add_section(hostname + '-host', {
         'script': 'mynonexistingscript.sh',
         'host': 'does_not_exist',

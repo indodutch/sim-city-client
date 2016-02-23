@@ -5,3 +5,5 @@ config*.ini
 .ipynb_checkpoints/
 /coverage.xml
 /src
+/*env/
+/.idea

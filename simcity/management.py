@@ -20,7 +20,8 @@ file.
 """
 
 import picas
-from .util import Config, get_truthy
+from .util import get_truthy
+from .config import Config, FileConfig, CouchDBConfig
 import couchdb
 from couchdb.http import ResourceNotFound, Unauthorized
 import pystache
@@ -169,17 +170,36 @@ def init(config, job_id=None):
 
     if isinstance(config, Config):
         _config = config
-        _init_databases()
     else:
+        _config = Config()
         try:
-            _config = Config(config)
+            _config.configurators.append(FileConfig(config))
         except ValueError:
-            # default initialization may fail
             if not _is_initializing:
                 raise
-        else:
-            _init_databases()
 
+        try:
+            url = os.environ['SIMCITY_CONFIG_URL']
+            db = os.environ['SIMCITY_CONFIG_DB']
+            user = os.environ.get('SIMCITY_CONFIG_USER')
+            password = os.environ.get('SIMCITY_CONFIG_PASSWORD')
+            _config.configurators.append(CouchDBConfig.from_url(
+                url, db, user, password))
+        except KeyError:
+            try:
+                cfg = _config.section('config-db')
+                _config.configurators.append(
+                    CouchDBConfig.from_url(cfg['url'], cfg['db'],
+                                           cfg.get('user'),
+                                           cfg.get('password')))
+            except KeyError:
+                print("WARN: SIM-CITY configuration database not set. "
+                      "Skipping.")
+
+        if len(_config.configurators) == 0 and not _is_initializing:
+            raise ValueError("No suitable configuration found.")
+
+    _init_databases()
     _is_initializing = False
 
 

@@ -37,7 +37,7 @@ from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter, XenonSubmitter)
 from .task import (add_task, get_task, delete_task, scrub_tasks,
                    upload_attachment, download_attachment, delete_attachment)
-from .util import Config
+from .config import Config, CouchDBConfig, FileConfig
 
 __all__ = [
     'ExecuteActor',
@@ -53,7 +53,7 @@ __all__ = [
     'SSHSubmitter', 'XenonSubmitter',
     'add_task', 'get_task', 'delete_task', 'scrub_tasks',
     'upload_attachment', 'download_attachment', 'delete_attachment',
-    'Config',
+    'Config', 'CouchDBConfig', 'FileConfig',
 ]
 
 init(None)
