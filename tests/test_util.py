@@ -14,52 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import print_function
-
 from simcity.util import (expandfilenames, issequence,
                           expandfilename, get_truthy)
-from simcity.config import Config, FileConfig
 import os
-import tempfile
 
-from nose.tools import assert_true, assert_false, assert_equals, assert_raises
-
-
-def test_config_write_read():
-    fd, fname = tempfile.mkstemp()
-    with os.fdopen(fd, 'w') as f:
-        print('[MySection]', file=f)
-        print('a=4', file=f)
-        print('[OtherSection]', file=f)
-        print('a=2', file=f)
-        print('b=wefa feaf', file=f)
-        print('c=wefa=feaf', file=f)
-
-    cfg = Config([FileConfig(fname)])
-    os.remove(fname)
-
-    my = cfg.section('MySection')
-    other = cfg.section('OtherSection')
-    assert_raises(KeyError, cfg.section,
-                  'NonExistantSection')
-    assert_true(type(my) is dict, "section is not a dictionary")
-    assert_true('a' in my, "Value in section")
-    assert_equals(
-        my['a'], '4', "latest value does not overwrite earlier values")
-    assert_equals(other['a'], '2', "value not contained to section")
-    assert_equals(other['b'], 'wefa feaf', "spaces allowed")
-    assert_equals(other['c'], 'wefa=feaf', "equals-sign allowed")
-    sections = set(['DEFAULT', 'MySection', 'OtherSection'])
-    assert_equals(sections, cfg.sections())
-    cfg.add_section('CustomSection', {})
-    assert_equals(sections | set(['CustomSection']), cfg.sections())
-
-
-def test_empty_config():
-    cfg = Config()
-    assert_raises(KeyError, cfg.section, 'notexist')
-    cfg.add_section('my', {'a': 'b'})
-    assert_equals(cfg.section('my')['a'], 'b')
+from nose.tools import assert_true, assert_false, assert_equals
 
 
 def test_seq():
@@ -89,10 +48,6 @@ def test_path():
     assert_equals(expandfilename('config.ini'), 'config.ini')
     assert_equals(
         expandfilename(['~', 'home']), os.path.expanduser('~/home'))
-
-
-def test_nonexistant():
-    assert_raises(ValueError, FileConfig, 'nonexistant.ini')
 
 
 def test_truthy():

@@ -172,33 +172,36 @@ def init(config, job_id=None):
         _config = config
         _init_databases()
     elif config is None:
-        subconfigs = [FileConfig(None)]
+        subconfigs = []
+        try:
+            subconfigs.append(FileConfig(None))
+        except ValueError:
+            pass
+
         try:
             url = os.environ['SIMCITY_CONFIG_URL']
             db = os.environ['SIMCITY_CONFIG_DB']
             user = os.environ.get('SIMCITY_CONFIG_USER')
             password = os.environ.get('SIMCITY_CONFIG_PASSWORD')
-            subconfigs.append(CouchDBConfig(url, db, user, password))
+            subconfigs.append(CouchDBConfig.from_url(url, db, user, password))
         except KeyError:
             try:
                 cfg = subconfigs[0].section('config-db')
-                subconfigs.append(CouchDBConfig(cfg['url'], cfg['db'],
-                                                cfg.get('user'),
-                                                cfg.get('password')))
+                subconfigs.append(CouchDBConfig.from_url(cfg['url'], cfg['db'],
+                                                         cfg.get('user'),
+                                                         cfg.get('password')))
             except KeyError:
                 print("WARN: SIM-CITY configuration database not set. "
                       "Skipping.")
+
+        if len(subconfigs) == 0 and not _is_initializing:
+            raise ValueError("No suitable configuration found.")
+
         _config = Config(subconfigs)
         _init_databases()
     else:
-        try:
-            _config = Config([FileConfig(config)])
-        except ValueError:
-            # default initialization may fail
-            if not _is_initializing:
-                raise
-        else:
-            _init_databases()
+        _config = Config([FileConfig(config)])
+        _init_databases()
 
     _is_initializing = False
 

@@ -31,7 +31,7 @@ class Config(object):
     A list of additional configurators can be given as subconfigs. Later
     configurators in the list will overwrite those of earlier ones.
     """
-    def __init__(self, subconfigs=[]):
+    def __init__(self, subconfigs=frozenset()):
         self.subconfigs = subconfigs
         self._sections = {}
 
@@ -123,18 +123,21 @@ class CouchDBConfig(object):
     Within each section, entries are stored as key-value pairs with unique
     keys.
     """
-    def __init__(self, url, database, user=None, password=None):
+    def __init__(self, database, sections_view=None):
         """
         Initialize the database connection.
 
         Parameters
         ----------
-        url: URL to the CouchDB database
-        auth: tuple of username password, if needed
-        defaults: Config for default values
+        database: CouchDB object
+        sections_view: tuple of (view name, (optional) design document).
+            Defaults to ('_all_docs', 'settings')
         """
-        self.db = picas.CouchDB(url=url, db=database,
-                                username=user, password=password)
+        self.db = database
+        if sections_view is not None:
+            self.sections_view = sections_view
+        else:
+            self.sections_view = ('_all_docs', 'settings')
 
     def section(self, name):
         try:
@@ -145,8 +148,14 @@ class CouchDBConfig(object):
         return dict_value_expandvar(value.settings)
 
     def sections(self):
-        all_settings = self.db.view('_all_docs', 'settings')
+        all_settings = self.db.view(*self.sections_view)
         return frozenset([doc.id for doc in all_settings])
+
+    @classmethod
+    def from_url(cls, url, database, user=None, password=None, **kwargs):
+        return cls(database=picas.CouchDB(url=url, db=database,
+                                          username=user,
+                                          password=password), **kwargs)
 
 
 def dict_value_expandvar(d):
