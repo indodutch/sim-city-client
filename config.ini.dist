@@ -19,6 +19,16 @@ database = myjobdatabase
 # To turn off SSL verification, uncomment the next line
 # ssl_verification = off
 
+# CouchDB configuration database. Uncomment to use get additional
+# configuration. Alternatively, these settings can be set as environment
+# variables $SIMCITY_CONFIG_URL, $SIMCITY_CONFIG_DB, $SIMCITY_CONFIG_USER,
+# $SIMCITY_CONFIG_PASSWORD.
+#[config-db]
+#url = https://couch.example.com
+#database = configurator
+#username = priviligeduser
+#password = priviligedpassword
+
 [webdav]
 # WebDAV configuration for storing files. Remove this
 # section to have attachments stored in the task database.
@@ -41,20 +51,24 @@ tmp_dir = $TMPDIR
 output_dir = $HOME/out
 input_dir = $HOME/in
 
-[mycluster-host]
-# Configuration of a single job host
-path = path/to/submitscript
-script = submitscript.sh
-host = user@hostname
-# Method is either ssh or osmium.
-method = ssh
+# Uncomment to define host mycluster
+#[mycluster-host]
+## Configuration of a single job host
+#path = path/to/submitscript
+#script = submitscript.sh
+#host = user@hostname
+## Method is either ssh or xenon.
+#method = ssh
 
-[mycluster-host]
-# Configuration of a single job host
-path = path/to/runscript
-script = runscript.sh
-host = torque://user@hostname
-# Method is either ssh or osmium.
-method = xenon
-# time in minutes: 1 day
-max_time = 1440
+# Uncomment to define host mycluster2
+#[mycluster2-host]
+## Configuration of a single job host, using Xenon
+#path = path/to/runscript
+#script = runscript.sh
+## Schema defines what submission system the host uses.
+#host = torque://user@hostname
+## Method is either ssh or xenon.
+#method = xenon
+## time in minutes: 1 day
+#max_time = 1440
+

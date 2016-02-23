@@ -31,7 +31,7 @@ def test_actor():
         pass
 
     os.mkdir('tests/tmp')
-    cfg = simcity.util.Config(from_file=False)
+    cfg = simcity.Config()
     cfg.add_section('Execution', {
         'tmp_dir': 'tests/tmp/tmp_alala',
         'output_dir': 'tests/tmp/out_alala',

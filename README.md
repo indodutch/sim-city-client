@@ -25,8 +25,7 @@ Simply run
 
     make install
 
-Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. See the comments therein for more information. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings. There are two CouchDB database sections, one for the jobs and one for the tasks. If these are the same, you can remove the jobs database section. If you anticipate large output files, you can configure a webdav url that the files can
-be stored on.
+Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. See the comments therein for more information. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings. There are two CouchDB database sections, one for the jobs and one for the tasks. If these are the same, you can remove the jobs database section. If you anticipate large output files, you can configure a webdav url that the files can be stored on.
 
 ## Usage
 
