@@ -34,7 +34,7 @@ import os
 
 try:
     _current_job_id = os.environ['SIMCITY_JOBID']
-except:
+except KeyError:
     _current_job_id = None
 
 _config = None
@@ -423,9 +423,9 @@ def _load_database(name, admin_user=None, admin_password=""):
 
     try:
         if admin_user is None:
-            user, password, create = cfg['username'], cfg['password'], False
+            user, password, do_create = cfg['username'], cfg['password'], False
         else:
-            user, password, create = admin_user, admin_password, True
+            user, password, do_create = admin_user, admin_password, True
 
         return picas.CouchDB(
             url=cfg['url'],
@@ -433,7 +433,7 @@ def _load_database(name, admin_user=None, admin_password=""):
             username=user,
             password=password,
             ssl_verification=get_truthy(cfg.get('ssl_verification', False)),
-            create=create)
+            create=do_create)
     except IOError as ex:
         raise IOError("Cannot establish connection with %s CouchDB <%s>: %s" %
                       (name, cfg['url'], str(ex)))
