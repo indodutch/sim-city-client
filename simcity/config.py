@@ -123,21 +123,20 @@ class CouchDBConfig(object):
     Within each section, entries are stored as key-value pairs with unique
     keys.
     """
-    def __init__(self, database, sections_view=None):
+    def __init__(self, database, sections_view='_all_docs',
+                 sections_design_docs='Settings'):
         """
         Initialize the database connection.
 
         Parameters
         ----------
         database: CouchDB object
-        sections_view: tuple of (view name, (optional) design document).
-            Defaults to ('_all_docs', 'settings')
+        sections_view: view name that lists all sections
+        sections_design_docs: design document of sections_view
         """
         self.db = database
-        if sections_view is not None:
-            self.sections_view = sections_view
-        else:
-            self.sections_view = ('_all_docs', 'settings')
+        self.sections_view = sections_view
+        self.sections_design_docs = sections_design_docs
 
     def section(self, name):
         try:
@@ -145,10 +144,11 @@ class CouchDBConfig(object):
         except ValueError:
             raise KeyError()
 
-        return dict_value_expandvar(value.settings)
+        return dict_value_expandvar(value['settings'])
 
     def sections(self):
-        all_settings = self.db.view(*self.sections_view)
+        all_settings = self.db.view(self.sections_view,
+                                    design_doc=self.sections_design_docs)
         return frozenset([doc.id for doc in all_settings])
 
     @classmethod

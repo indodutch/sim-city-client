@@ -18,9 +18,11 @@ from __future__ import print_function
 
 import tempfile
 import os
-from simcity.config import Config, FileConfig
+from simcity.config import Config, FileConfig, CouchDBConfig
+from test_mock import MockDB, MockRow
 
-from nose.tools import assert_true, assert_equals, assert_raises
+from nose.tools import (assert_true, assert_equals, assert_raises,
+                        assert_dict_equal, assert_set_equal)
 
 
 def test_config_write_read():
@@ -62,3 +64,25 @@ def test_empty_config():
 
 def test_nonexistant():
     assert_raises(ValueError, FileConfig, 'nonexistant.ini')
+
+
+def test_couchconfig():
+    db = MockDB([MockRow('', '', id='task-db'), MockRow('', '', id='job-db')])
+    db.tasks = {
+        'task-db':
+            {'settings': {'url': 'http://task.example', 'name': 'tasks'}},
+        'job-db':
+            {'settings': {'url': 'http://job.example', 'name': 'jobs'}},
+    }
+
+    dbconfig = CouchDBConfig(db)
+    assert_dict_equal({'url': 'http://task.example', 'name': 'tasks'},
+                      dbconfig.section('task-db'))
+    assert_set_equal({'task-db', 'job-db'}, dbconfig.sections())
+    config = Config([dbconfig])
+    config.add_section('my-section', {'url': 'that'})
+    assert_set_equal({'task-db', 'job-db', 'my-section'}, config.sections())
+    assert_dict_equal({'url': 'that'}, config.section('my-section'))
+    config.add_section('task-db', {'name': 'new-tasks'})
+    assert_dict_equal({'url': 'http://task.example', 'name': 'new-tasks'},
+                      config.section('task-db'))
