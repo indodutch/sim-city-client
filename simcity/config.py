@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+""" Configurators for the SIM-CITY client. """
 try:
     from ConfigParser import ConfigParser, NoSectionError
 except ImportError:
@@ -142,6 +142,9 @@ class CouchDBConfig(object):
         self.sections_design_docs = sections_design_docs
 
     def section(self, name):
+        """ Get key-values of a config section.
+        @param name: str name of the config section
+        @return: dict of key-values """
         try:
             value = self.db.get(name)
         except ValueError:
@@ -150,12 +153,15 @@ class CouchDBConfig(object):
         return dict_value_expandvar(value['settings'])
 
     def sections(self):
+        """ The set of configured section names. """
         all_settings = self.db.view(self.sections_view,
                                     design_doc=self.sections_design_docs)
         return frozenset([doc.id for doc in all_settings])
 
     @classmethod
     def from_url(cls, url, database, user=None, password=None, **kwargs):
+        """ Create a CouchDBConfig from a CouchDB URL and database name.
+        Additional arguments are passed to __init__."""
         return cls(database=picas.CouchDB(url=url, db=database,
                                           username=user,
                                           password=password), **kwargs)
