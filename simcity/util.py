@@ -16,92 +16,11 @@
 
 """ Utility functions. """
 
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
-
 import json
 import os
 import glob
 import shutil
 from numbers import Number
-
-
-class Config(object):
-    """
-    Manages configuration, divided up in sections.
-
-    Configuration can be read from a python config or ini file. Those files are
-    divided into sections, where the first entries fall in the DEFAULT section.
-    Within each section, entries are stored as key-value pairs with unique
-    keys.
-    """
-    DEFAULT_FILENAMES = [
-        "config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
-
-    def __init__(self, filenames=None, from_file=True):
-        if from_file:
-            if filenames is None:
-                filenames = Config.DEFAULT_FILENAMES
-
-            exp_filenames = expandfilenames(filenames)
-
-            self.parser = ConfigParser()
-            self.filename = self.parser.read(exp_filenames)
-            if len(self.filename) == 0:
-                raise ValueError(
-                    "No valid configuration files could be found: tried " +
-                    str(exp_filenames))
-        else:
-            self.parser = None
-            self.filename = None
-
-        self._sections = {}
-
-    def add_section(self, name, keyvalue):
-        """
-        Add (overwrite) the configuration of a section.
-
-        Parameters
-        ----------
-        name : str
-            section name
-        keyvalue : dict
-            keys with values of the section
-        """
-        self._sections[name] = dict_value_expandvar(keyvalue)
-
-    def section(self, name):
-        """ Get the dict of key-values of config section. """
-        try:
-            return self._sections[name]
-        except KeyError:
-            if self.parser is not None and (name == 'DEFAULT' or
-                                            self.parser.has_section(name)):
-                return dict_value_expandvar(dict(self.parser.items(name)))
-            else:
-                raise
-
-    def sections(self):
-        ''' The set of configured section names, including DEFAULT. '''
-        sections = set(['DEFAULT'])
-        if self.parser is not None:
-            sections |= set(self.parser.sections())
-        sections |= set(self._sections.keys())
-        return sections
-
-
-def dict_value_expandvar(d):
-    """ Expand all environment variables in the values of given dict.
-        Uses os.path.expandvars internally. """
-
-    for key in d:
-        try:
-            d[key] = os.path.expandvars(d[key])
-        except TypeError:
-            pass  # d[key] is not a string
-    return d
 
 
 def get_truthy(value):
