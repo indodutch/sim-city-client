@@ -17,12 +17,11 @@
 from __future__ import print_function
 
 import tempfile
+
 import os
+from nose.tools import (assert_true, assert_equals, assert_raises)
 from simcity.config import Config, FileConfig, CouchDBConfig
 from test_mock import MockDB, MockRow
-
-from nose.tools import (assert_true, assert_equals, assert_raises,
-                        assert_dict_equal, assert_set_equal)
 
 
 def test_config_write_read():
@@ -50,9 +49,9 @@ def test_config_write_read():
     assert_equals(other['b'], 'wefa feaf', "spaces allowed")
     assert_equals(other['c'], 'wefa=feaf', "equals-sign allowed")
     sections = frozenset(['DEFAULT', 'MySection', 'OtherSection'])
-    assert_set_equal(sections, cfg.sections())
+    assert_equals(sections, cfg.sections())
     cfg.add_section('CustomSection', {})
-    assert_set_equal(sections | frozenset(['CustomSection']), cfg.sections())
+    assert_equals(sections | frozenset(['CustomSection']), cfg.sections())
 
 
 def test_empty_config():
@@ -76,14 +75,14 @@ def test_couchconfig():
     }
 
     dbconfig = CouchDBConfig(db)
-    assert_dict_equal({'url': 'http://task.example', 'name': 'tasks'},
-                      dbconfig.section('task-db'))
-    assert_set_equal(frozenset(['task-db', 'job-db']), dbconfig.sections())
+    assert_equals({'url': 'http://task.example', 'name': 'tasks'},
+                  dbconfig.section('task-db'))
+    assert_equals(frozenset(['task-db', 'job-db']), dbconfig.sections())
     config = Config([dbconfig])
     config.add_section('my-section', {'url': 'that'})
-    assert_set_equal(frozenset(['task-db', 'job-db', 'my-section']),
-                     config.sections())
-    assert_dict_equal({'url': 'that'}, config.section('my-section'))
+    assert_equals(frozenset(['task-db', 'job-db', 'my-section']),
+                  config.sections())
+    assert_equals({'url': 'that'}, config.section('my-section'))
     config.add_section('task-db', {'name': 'new-tasks'})
-    assert_dict_equal({'url': 'http://task.example', 'name': 'new-tasks'},
-                      config.section('task-db'))
+    assert_equals({'url': 'http://task.example', 'name': 'new-tasks'},
+                  config.section('task-db'))
