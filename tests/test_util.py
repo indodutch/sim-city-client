@@ -16,8 +16,9 @@
 
 from __future__ import print_function
 
-from simcity.util import (Config, expandfilenames, issequence,
+from simcity.util import (expandfilenames, issequence,
                           expandfilename, get_truthy)
+from simcity.config import Config, FileConfig
 import os
 import tempfile
 
@@ -34,7 +35,7 @@ def test_config_write_read():
         print('b=wefa feaf', file=f)
         print('c=wefa=feaf', file=f)
 
-    cfg = Config(fname)
+    cfg = Config([FileConfig(fname)])
     os.remove(fname)
 
     my = cfg.section('MySection')
@@ -55,7 +56,7 @@ def test_config_write_read():
 
 
 def test_empty_config():
-    cfg = Config(from_file=False)
+    cfg = Config()
     assert_raises(KeyError, cfg.section, 'notexist')
     cfg.add_section('my', {'a': 'b'})
     assert_equals(cfg.section('my')['a'], 'b')
@@ -91,7 +92,7 @@ def test_path():
 
 
 def test_nonexistant():
-    assert_raises(ValueError, Config, 'nonexistant.ini')
+    assert_raises(ValueError, FileConfig, 'nonexistant.ini')
 
 
 def test_truthy():

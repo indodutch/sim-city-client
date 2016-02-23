@@ -31,7 +31,7 @@ class Config(object):
     A list of additional configurators can be given as subconfigs. Later
     configurators in the list will overwrite those of earlier ones.
     """
-    def __init__(self, subconfigs=None):
+    def __init__(self, subconfigs=[]):
         self.subconfigs = subconfigs
         self._sections = {}
 
@@ -90,7 +90,7 @@ class FileConfig(object):
 
     def __init__(self, filenames=None):
         if filenames is None:
-            filenames = Config.DEFAULT_FILENAMES
+            filenames = FileConfig.DEFAULT_FILENAMES
 
         self.parser = ConfigParser()
         self.filename = self.parser.read(expandfilenames(filenames))

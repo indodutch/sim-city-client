@@ -24,7 +24,7 @@ from nose.tools import assert_raises, assert_true, assert_false
 def test_init():
     simcity.management._reset_globals()
     assert_raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
-    cfg = simcity.Config(from_file=False)
+    cfg = simcity.Config()
     assert_raises(KeyError, simcity.init, cfg)
     cfg.add_section('task-db', {
         'url': 'http://doesnotexistforsure_atleasti_think_so.nl/',
@@ -37,7 +37,7 @@ def test_init():
 
 def test_uses_webdav():
     simcity.management._reset_globals()
-    simcity.management._config = simcity.Config(from_file=False)
+    simcity.management._config = simcity.Config()
     assert_false(simcity.uses_webdav())
     cfg = simcity.management._config
     webdav_cfg = {}

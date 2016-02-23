@@ -39,7 +39,7 @@ def test_get_task():
 
 def test_delete_task():
     simcity.management._reset_globals()
-    simcity.management._config = simcity.Config(from_file=False)
+    simcity.management._config = simcity.Config()
     simcity.management.set_task_database(MockDB())
     dav = MockDAV()
     simcity.management._webdav[None] = dav
