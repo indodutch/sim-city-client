@@ -49,10 +49,10 @@ def test_config_write_read():
     assert_equals(other['a'], '2', "value not contained to section")
     assert_equals(other['b'], 'wefa feaf', "spaces allowed")
     assert_equals(other['c'], 'wefa=feaf', "equals-sign allowed")
-    sections = {'DEFAULT', 'MySection', 'OtherSection'}
-    assert_equals(sections, cfg.sections())
+    sections = frozenset(['DEFAULT', 'MySection', 'OtherSection'])
+    assert_set_equal(sections, cfg.sections())
     cfg.add_section('CustomSection', {})
-    assert_equals(sections | {'CustomSection'}, cfg.sections())
+    assert_set_equal(sections | frozenset(['CustomSection']), cfg.sections())
 
 
 def test_empty_config():
@@ -78,7 +78,7 @@ def test_couchconfig():
     dbconfig = CouchDBConfig(db)
     assert_dict_equal({'url': 'http://task.example', 'name': 'tasks'},
                       dbconfig.section('task-db'))
-    assert_set_equal({'task-db', 'job-db'}, dbconfig.sections())
+    assert_set_equal(frozenset(['task-db', 'job-db']), dbconfig.sections())
     config = Config([dbconfig])
     config.add_section('my-section', {'url': 'that'})
     assert_set_equal({'task-db', 'job-db', 'my-section'}, config.sections())

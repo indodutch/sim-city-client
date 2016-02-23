@@ -170,39 +170,36 @@ def init(config, job_id=None):
 
     if isinstance(config, Config):
         _config = config
-        _init_databases()
-    elif config is None:
-        subconfigs = []
+    else:
+        _config = Config()
         try:
-            subconfigs.append(FileConfig(None))
+            _config.configurators.append(FileConfig(config))
         except ValueError:
-            pass
+            if not _is_initializing:
+                raise
 
         try:
             url = os.environ['SIMCITY_CONFIG_URL']
             db = os.environ['SIMCITY_CONFIG_DB']
             user = os.environ.get('SIMCITY_CONFIG_USER')
             password = os.environ.get('SIMCITY_CONFIG_PASSWORD')
-            subconfigs.append(CouchDBConfig.from_url(url, db, user, password))
+            _config.configurators.append(CouchDBConfig.from_url(
+                url, db, user, password))
         except KeyError:
             try:
-                cfg = subconfigs[0].section('config-db')
-                subconfigs.append(CouchDBConfig.from_url(cfg['url'], cfg['db'],
-                                                         cfg.get('user'),
-                                                         cfg.get('password')))
+                cfg = _config.section('config-db')
+                _config.configurators.append(
+                    CouchDBConfig.from_url(cfg['url'], cfg['db'],
+                                           cfg.get('user'),
+                                           cfg.get('password')))
             except KeyError:
                 print("WARN: SIM-CITY configuration database not set. "
                       "Skipping.")
 
-        if len(subconfigs) == 0 and not _is_initializing:
+        if len(_config.configurators) == 0 and not _is_initializing:
             raise ValueError("No suitable configuration found.")
 
-        _config = Config(subconfigs)
-        _init_databases()
-    else:
-        _config = Config([FileConfig(config)])
-        _init_databases()
-
+    _init_databases()
     _is_initializing = False
 
 

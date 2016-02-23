@@ -28,11 +28,14 @@ class Config(object):
     """
     Manages configuration, divided up in sections.
 
-    A list of additional configurators can be given as subconfigs. Later
+    A list of additional configurators contains the actual configuration. Later
     configurators in the list will overwrite those of earlier ones.
+    Configurators must implement the section() and sections() methods.
     """
-    def __init__(self, subconfigs=frozenset()):
-        self.subconfigs = subconfigs
+    def __init__(self, configurators=None):
+        if configurators is None:
+            configurators = []
+        self.configurators = configurators
         self._sections = {}
 
     def add_section(self, name, keyvalue):
@@ -53,7 +56,7 @@ class Config(object):
         @param name: section name. Use 'DEFAULT' for default (unnamed) section.
         """
         values = {}
-        for cfg in self.subconfigs:
+        for cfg in self.configurators:
             try:
                 values.update(cfg.section(name))
             except KeyError:
@@ -70,7 +73,7 @@ class Config(object):
     def sections(self):
         """ The set of configured section names. """
         sections = set(self._sections.keys())
-        for cfg in self.subconfigs:
+        for cfg in self.configurators:
             sections |= cfg.sections()
 
         return sections
