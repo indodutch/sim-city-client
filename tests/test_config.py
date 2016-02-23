@@ -81,7 +81,8 @@ def test_couchconfig():
     assert_set_equal(frozenset(['task-db', 'job-db']), dbconfig.sections())
     config = Config([dbconfig])
     config.add_section('my-section', {'url': 'that'})
-    assert_set_equal({'task-db', 'job-db', 'my-section'}, config.sections())
+    assert_set_equal(frozenset(['task-db', 'job-db', 'my-section']),
+                     config.sections())
     assert_dict_equal({'url': 'that'}, config.section('my-section'))
     config.add_section('task-db', {'name': 'new-tasks'})
     assert_dict_equal({'url': 'http://task.example', 'name': 'new-tasks'},
