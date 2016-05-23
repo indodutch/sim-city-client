@@ -88,6 +88,7 @@ class TestJob(object):
         assert_equals(0, job['archive'])
         self.db.jobs[job.id]['_rev'] = 'myrev'
         self.db.jobs[job.id]['done'] = 0
+        print(self.db.jobs[job.id])
         self.db.viewList = [MockRow(job.id, job.value, job.id)]
         assert_equals(0, len(self.db.saved))
 

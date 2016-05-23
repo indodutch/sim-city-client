@@ -27,9 +27,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="create new tasks in the database")
     parser.add_argument('command', help="command to run")
+    parser.add_argument('arguments', nargs='*', help="arguments")
     parser.add_argument(
         '-n', '--number', type=int, help="number of tasks to create",
         default=1)
+    parser.add_argument('-p', '--parallelism',
+                        help="number of threads the task needs. Use '*' for "
+                             "as many as available.", default=1)
     parser.add_argument(
         '-c', '--config', help="configuration file", default=None)
     args = parser.parse_args()
@@ -39,7 +43,12 @@ if __name__ == '__main__':
     # Load the tasks to the database
     for i in range(args.number):
         try:
-            simcity.add_task({'command': args.command})
+            simcity.add_task({
+                'command': args.command,
+                'arguments': args.arguments,
+                'parallelism': args.parallelism,
+            })
             print("added task %d" % i)
-        except:
-            print("ERROR: task %d failed to be added" % i, file=sys.stderr)
+        except Exception as ex:
+            print("ERROR: task {0} failed to be added: {1}".format(i, ex),
+                  file=sys.stderr)

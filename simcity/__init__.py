@@ -25,7 +25,7 @@ the job. Output files can be stored in the CouchDB database or on a WebDAV
 server.
 """
 
-from .actors import ExecuteActor
+from .actors import JobActor, ExecuteWorker
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
                   cancel_endless_job, scrub_jobs)
 from .integration import overview_total, run_task
@@ -40,7 +40,7 @@ from .task import (add_task, get_task, delete_task, scrub_tasks,
 from .config import Config, CouchDBConfig, FileConfig
 
 __all__ = [
-    'ExecuteActor',
+    'JobActor', 'ExecuteWorker',
     'get_job', 'start_job', 'queue_job', 'finish_job', 'archive_job',
     'cancel_endless_job', 'scrub_jobs',
     'overview_total', 'run_task',

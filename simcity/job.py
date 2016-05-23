@@ -64,7 +64,7 @@ def queue_job(job, method, host=None, database=None):
             return job
 
 
-def start_job(database=None):
+def start_job(database=None, properties=None):
     """
     Mark a job from the job database as being started.
 
@@ -79,13 +79,17 @@ def start_job(database=None):
     except ValueError:  # job ID was not yet added to database
         job = Job({'_id': get_current_job_id()})
 
+    if properties is not None:
+        for k, v in properties.items():
+            job[k] = v
+
     try:
         return database.save(job.start())
     # Check for concurrent modification: the job may be added to the
     # database by the submission script.
     # Since this happens only once, we don't risk unlimited recursion
     except ResourceConflict:
-        return start_job(database)
+        return start_job(database, properties=properties)
 
 
 def finish_job(job, database=None):
@@ -192,4 +196,4 @@ def scrub_jobs(view, age=24*60*60, database=None):
     if len(updates) > 0:
         database.save_documents(updates)
 
-    return (len(updates), total)
+    return len(updates), total

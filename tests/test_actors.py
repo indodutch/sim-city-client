@@ -21,6 +21,8 @@ from nose.tools import assert_true, assert_raises
 from test_mock import MockDB, MockDAV
 import os
 import shutil
+import time
+import picas
 
 
 def test_actor():
@@ -36,6 +38,7 @@ def test_actor():
         'tmp_dir': 'tests/tmp/tmp_alala',
         'output_dir': 'tests/tmp/out_alala',
         'input_dir': 'tests/tmp/in_alala',
+        'parallelism': '1'
     })
     cfg.add_section('webdav', {
         'url': 'https://my.example.com'
@@ -47,8 +50,89 @@ def test_actor():
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)
     simcity.management.set_current_job_id('myjob')
-    actor = simcity.ExecuteActor()
+    iterator = picas.TaskViewIterator(db, 'todo')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     actor.run()
+    assert_true(db.jobs['myjob']['done'] > 0)
+    assert_true(db.saved['mytask']['done'] > 0)
+    assert_true(os.path.exists('tests/tmp/tmp_alala'))
+    assert_true(os.path.exists('tests/tmp/out_alala'))
+    assert_true(os.path.exists('tests/tmp/in_alala'))
+    shutil.rmtree('tests/tmp')
+
+
+def test_actor_maximize_parallelism():
+    simcity.management._reset_globals()
+    try:
+        shutil.rmtree('tests/tmp')
+    except OSError:
+        pass
+
+    os.mkdir('tests/tmp')
+    cfg = simcity.Config()
+    cfg.add_section('Execution', {
+        'tmp_dir': 'tests/tmp/tmp_alala',
+        'output_dir': 'tests/tmp/out_alala',
+        'input_dir': 'tests/tmp/in_alala',
+        'parallelism': '1'
+    })
+    cfg.add_section('webdav', {
+        'url': 'https://my.example.com'
+    })
+    simcity.management._webdav[None] = MockDAV()
+    db = MockDB()
+    db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo',
+                           'parallelism': '2'}}
+    assert_raises(KeyError, simcity.management.set_config, cfg)
+    simcity.management.set_task_database(db)
+    simcity.management.set_job_database(db)
+    simcity.management.set_current_job_id('myjob')
+    iterator = picas.TaskViewIterator(db, 'todo')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
+    actor.run()
+    assert_true(db.jobs['myjob']['done'] > 0)
+    assert_true(db.saved['mytask']['done'] > 0)
+    assert_true(os.path.exists('tests/tmp/tmp_alala'))
+    assert_true(os.path.exists('tests/tmp/out_alala'))
+    assert_true(os.path.exists('tests/tmp/in_alala'))
+    shutil.rmtree('tests/tmp')
+
+
+def test_actor_parallelism():
+    simcity.management._reset_globals()
+    try:
+        shutil.rmtree('tests/tmp')
+    except OSError:
+        pass
+
+    os.mkdir('tests/tmp')
+    cfg = simcity.Config()
+    cfg.add_section('Execution', {
+        'tmp_dir': 'tests/tmp/tmp_alala',
+        'output_dir': 'tests/tmp/out_alala',
+        'input_dir': 'tests/tmp/in_alala',
+        'parallelism': '2'
+    })
+    cfg.add_section('webdav', {
+        'url': 'https://my.example.com'
+    })
+    simcity.management._webdav[None] = MockDAV()
+    db = MockDB()
+    db.tasks = {'mytask': {'_id': 'mytask', 'command': 'sleep',
+                           'arguments': ['0.3']},
+                'mytask2': {'_id': 'mytask2', 'command': 'sleep',
+                            'arguments': ['0.3']}}
+    assert_raises(KeyError, simcity.management.set_config, cfg)
+    simcity.management.set_task_database(db)
+    simcity.management.set_job_database(db)
+    simcity.management.set_current_job_id('myjob')
+    iterator = picas.TaskViewIterator(db, 'todo')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
+    t0 = time.time()
+    actor.run()
+    elapsed = time.time() - t0
+    assert_true(elapsed < 0.6)
+    assert_true(elapsed > 0.3)
     assert_true(db.jobs['myjob']['done'] > 0)
     assert_true(db.saved['mytask']['done'] > 0)
     assert_true(os.path.exists('tests/tmp/tmp_alala'))

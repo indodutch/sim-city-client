@@ -15,6 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
+
+import multiprocessing
+
 from picas import Document
 
 
@@ -57,12 +60,17 @@ class MockDB(object):
     JOBS = [{'_id': 'myjob'}, {'_id': 'myotherjob'}]
 
     def __init__(self, view=[]):
-        self.tasks = dict((t['_id'], t.copy())
+        self.manager = multiprocessing.Manager()
+        self.tasks = dict((t['_id'], self.manager.dict(t.copy()))
                           for t in MockDB.TASKS)  # deep copy
-        self.jobs = dict((t['_id'], t.copy()) for t in MockDB.JOBS)
-        self.saved = {}
-        self.viewList = view
-        self.views = {}
+        self.jobs = dict((t['_id'], self.manager.dict(t.copy()))
+                         for t in MockDB.JOBS)
+        self.saved = self.manager.dict({})
+        self.viewList = self.manager.list(view)
+        self.views = self.manager.dict({})
+
+    def copy(self):
+        return self
 
     def get_single_from_view(self, view, **view_params):
         idx = random.choice(list(self.tasks.keys()))

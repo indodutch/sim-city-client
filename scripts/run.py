@@ -86,7 +86,7 @@ if __name__ == '__main__':
     if args.endless:
         iterator = EndlessViewIterator(iterator, stop_callback=is_cancelled)
 
-    actor = simcity.ExecuteActor(iterator=iterator)
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
 
     for sig_name in ['HUP', 'INT', 'QUIT', 'ABRT', 'TERM']:
         try:
