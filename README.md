@@ -1,6 +1,6 @@
 # Run a simulation on SIM-CITY infrastructure
 
-[![Build Status](https://travis-ci.org/NLeSC/sim-city-client.svg?branch=master)](https://travis-ci.org/NLeSC/sim-city-client)
+[![Build Status](https://travis-ci.org/indodutch/sim-city-client.svg?branch=master)](https://travis-ci.org/indodutch/sim-city-client)
 [![Codacy Grade](https://api.codacy.com/project/badge/grade/60c3365bb4ad43aeba99954ac8a85433)](https://www.codacy.com/app/github_4/sim-city-client)
 [![Codacy Coverage](https://api.codacy.com/project/badge/coverage/60c3365bb4ad43aeba99954ac8a85433)](https://www.codacy.com/app/github_4/sim-city-client)
 
