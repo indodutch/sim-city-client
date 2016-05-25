@@ -19,9 +19,10 @@ Initialize SIM-CITY variables and databases based on the SIM-CITY configuration
 file.
 """
 
-import picas
 from .util import get_truthy
 from .config import Config, FileConfig, CouchDBConfig
+from .database import CouchDB
+from .document import User
 import couchdb
 from couchdb.http import ResourceNotFound, Unauthorized
 import pystache
@@ -292,20 +293,20 @@ def _create_user(cfg, admin_user, admin_password):
         The admin_user and admin_password are needs to have permission to
         create a user."""
     verification = get_truthy(cfg.get('ssl_verification', False))
-    users = picas.CouchDB(
+    users = CouchDB(
         url=cfg['url'],
         db='_users',
         username=admin_user,
         password=admin_password,
         ssl_verification=verification)
-    users.save(picas.User(cfg['username'], cfg['password']))
+    users.save(User(cfg['username'], cfg['password']))
 
 
 def create_views():
-    '''
+    """
     Create views necessary to run simcity client with.
-    '''
-    taskMapTemplate = '''
+    """
+    task_map_template = '''
     function(doc) {
       if(doc.type === 'task' && {{condition}}) {
         emit(doc._id, {
@@ -315,14 +316,14 @@ def create_views():
       }
     }
         '''
-    erroneousMapCode = '''
+    erroneous_map_code = '''
     function(doc) {
       if (doc.type === 'task' && doc.lock == -1) {
         emit(doc._id, doc.error);
       }
     }
         '''
-    jobMapTemplate = '''
+    job_map_template = '''
     function(doc) {
       if (doc.type == 'job' && {{condition}}) {
         emit(doc._id, {
@@ -333,7 +334,7 @@ def create_views():
       }
     }
         '''
-    overviewMapTemplate = '''
+    overview_map_template = '''
     function(doc) {
       if(doc.type === 'task') {
       {{#tasks}}
@@ -354,7 +355,7 @@ def create_views():
       }
     }
     '''
-    overviewReduceCode = '''
+    overview_reduce_code = '''
     function (key, values, rereduce) {
        return sum(values);
     }
@@ -378,23 +379,24 @@ def create_views():
         'jobs':  [{'name': view, 'condition': condition}
                   for view, condition in jobs.items()]
     }
-    renderer = pystache.renderer.Renderer(escape=lambda u: u)
+    renderer = pystache.Renderer(escape=lambda u: u)
 
     for view in pystache_views['tasks']:
-        mapCode = renderer.render(taskMapTemplate, view)
-        _task_db.add_view(view['name'], mapCode)
+        map_code = renderer.render(task_map_template, view)
+        _task_db.add_view(view['name'], map_code)
 
     for view in pystache_views['jobs']:
-        mapCode = renderer.render(jobMapTemplate, view)
-        _job_db.add_view(view['name'], mapCode)
+        map_code = renderer.render(job_map_template, view)
+        _job_db.add_view(view['name'], map_code)
 
-    _task_db.add_view('error', erroneousMapCode)
+    _task_db.add_view('error', erroneous_map_code)
 
     # overview_total View -- lists all views and the number of tasks in each
     # view
-    overviewMapCode = renderer.render(overviewMapTemplate, pystache_views)
-    _task_db.add_view('overview_total', overviewMapCode, overviewReduceCode)
-    _job_db.add_view('overview_total', overviewMapCode, overviewReduceCode)
+    overview_map_code = renderer.render(overview_map_template, pystache_views)
+    _task_db.add_view('overview_total', overview_map_code,
+                      overview_reduce_code)
+    _job_db.add_view('overview_total', overview_map_code, overview_reduce_code)
 
 
 def _init_databases():
@@ -408,11 +410,11 @@ def _init_databases():
             raise
 
     try:
-        taskcfg = _config.section('task-db')
-        jobcfg = _config.section('job-db')
-        if (jobcfg['url'] == taskcfg['url'] and
-                jobcfg['database'] == taskcfg['database'] and
-                jobcfg['username'] == taskcfg['username']):
+        task_cfg = _config.section('task-db')
+        job_cfg = _config.section('job-db')
+        if (job_cfg['url'] == task_cfg['url'] and
+                job_cfg['database'] == task_cfg['database'] and
+                job_cfg['username'] == task_cfg['username']):
             _job_db = _task_db
         else:
             _job_db = _load_database('job-db')
@@ -447,7 +449,7 @@ def _load_database(name, admin_user=None, admin_password=""):
         else:
             user, password, do_create = admin_user, admin_password, True
 
-        return picas.CouchDB(
+        return CouchDB(
             url=cfg['url'],
             db=cfg['database'],
             username=user,

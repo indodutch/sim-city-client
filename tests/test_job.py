@@ -17,8 +17,8 @@
 from __future__ import print_function
 
 import simcity
-from picas import Job
-from picas.util import seconds
+from simcity import Job
+from simcity.util import seconds
 from nose.tools import (assert_true, assert_equals, assert_raises,
                         assert_not_equals)
 from test_mock import MockDB, MockRow

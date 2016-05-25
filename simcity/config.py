@@ -20,8 +20,8 @@ except ImportError:
     from configparser import ConfigParser, NoSectionError
 
 from .util import expandfilenames
+from .database import CouchDB
 import os
-import picas
 
 
 class Config(object):
@@ -162,9 +162,9 @@ class CouchDBConfig(object):
     def from_url(cls, url, database, user=None, password=None, **kwargs):
         """ Create a CouchDBConfig from a CouchDB URL and database name.
         Additional arguments are passed to __init__."""
-        return cls(database=picas.CouchDB(url=url, db=database,
-                                          username=user,
-                                          password=password), **kwargs)
+        return cls(database=CouchDB(url=url, db=database,
+                                    username=user,
+                                    password=password), **kwargs)
 
 
 def dict_value_expandvar(d):

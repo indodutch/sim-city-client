@@ -17,7 +17,7 @@
 from nose.tools import assert_equal, assert_true, assert_not_equal
 from test_mock import MockDB, MockDAV, MockRow
 import simcity
-from picas.util import seconds
+from simcity.util import seconds
 import tempfile
 import os
 
@@ -72,9 +72,9 @@ def _upload_attachment(use_dav):
 
     if use_dav:
         dav_path = '/' + task.id[5:7] + '/' + task.id + '/' + filename
-        return (task, dirname, filename, dav, dav_path)
+        return task, dirname, filename, dav, dav_path
     else:
-        return (task, dirname, filename)
+        return task, dirname, filename
 
 
 def test_upload_attachment_couchdb():
@@ -143,7 +143,7 @@ def _get_task():
     simcity.management._reset_globals()
     db = MockDB()
     simcity.management.set_task_database(db)
-    return (db, simcity.get_task(MockDB.TASKS[0]['_id']))
+    return db, simcity.get_task(MockDB.TASKS[0]['_id'])
 
 
 def test_scrub_task():
