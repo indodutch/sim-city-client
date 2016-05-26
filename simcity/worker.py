@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Workers to execute a single process in a job. """
+
 from .util import listfiles, write_json, expandfilename
 from .task import upload_attachment
 import os
 from subprocess import call
 from multiprocessing import Process
-
 
 class Worker(Process):
     """

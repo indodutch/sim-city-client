@@ -26,23 +26,28 @@ from copy import deepcopy
 
 
 def merge_dicts(dict1, dict2):
+    """ Deep merge two dictionaries. """
     merge = deepcopy(dict1)
     merge.update(dict2)
     return merge
 
 
 def seconds():
+    """ Return the current time in seconds since the epoch. """
     return int(time.time())
 
 
 class Timer(object):
+    """ Measures elapsed time. """
     def __init__(self):
         self.t = time.time()
 
     def elapsed(self):
+        """ Return elapsed time since creation or last reset."""
         return time.time() - self.t
 
     def reset(self):
+        """ Reset the timer. """
         new_t = time.time()
         diff = new_t - self.t
         self.t = new_t

@@ -13,12 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License."""
+
+""" CouchDB helper class """
+
 from __future__ import print_function
 from .document import Document
 import random
 import sys
-
-# Couchdb imports
 import couchdb
 from couchdb.design import ViewDefinition
 from couchdb.http import ResourceConflict
@@ -50,6 +51,7 @@ class CouchDB(object):
             self.db = server[db]
 
     def copy(self):
+        """ Copy the database in a Thread and Process-safe way."""
         resource = self.db.resource
         try:
             username, password = resource.credentials
@@ -216,14 +218,17 @@ class CouchDB(object):
 
     def set_users(self, admins=None, members=None, admin_roles=None,
                   member_roles=None):
+        """ Set the members and admins of the database. """
         security = self.db.resource.get_json("_security")[2]
 
-        def try_set(value, d, key, subkey):
+        def try_set(value, d, key, sub_key):
+            """ In a double dictionary, set value in d[key][sub_key] if value
+            is not None """
             if value is not None:
                 try:
-                    d[key][subkey] = value
+                    d[key][sub_key] = value
                 except KeyError:
-                    d[key] = {subkey: value}
+                    d[key] = {sub_key: value}
 
         try_set(admins, security, 'admins', 'names')
         try_set(members, security, 'members', 'names')

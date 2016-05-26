@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Iterators to iterate over a CouchDB database. """
+
 from .document import Task
 from couchdb.http import ResourceConflict
 import time
@@ -32,15 +34,20 @@ class ViewIterator(object):
         return self
 
     def reset(self):
+        """ If the iterator had a StopIteration exception, re-evaluate the stop
+        condition. """
         self._stop = False
 
     def stop(self):
+        """ After this call, StopIteration will be raised from next. """
         self._stop = True
 
     def is_stopped(self):
+        """ Whether the iterator has been stopped. """
         return self._stop
 
     def next(self):
+        """ Get the next object. """
         return self.__next__()
 
     def __next__(self):
@@ -154,6 +161,7 @@ class EndlessViewIterator(ViewIterator):
         self.stop_callback_args = stop_callback_args
 
     def is_cancelled(self):
+        """ Whether the iterator has been cancelled. """
         return (self.is_stopped() or
                 (self.stop_callback is not None and
                  self.stop_callback(**self.stop_callback_args)))

@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License."""
 
+"""
+CouchDB document types.
+"""
 import socket
 from .util import merge_dicts, seconds
 import mimetypes
@@ -21,11 +24,8 @@ import base64
 import traceback
 from uuid import uuid4
 
-''' @author Joris Borgdorff '''
-
 
 class Document(object):
-
     """ A CouchDB document """
 
     def __init__(self, data={}, base={}):
@@ -61,6 +61,7 @@ class Document(object):
 
     @property
     def id(self):
+        """ Document ID (_id)"""
         try:
             return self.doc['_id']
         except KeyError:
@@ -68,6 +69,7 @@ class Document(object):
 
     @property
     def rev(self):
+        """ Document revision (_rev) """
         try:
             return self.doc['_rev']
         except KeyError:
@@ -80,6 +82,7 @@ class Document(object):
 
     @property
     def value(self):
+        """ Document raw dict value """
         return self.doc
 
     def update(self, values):
@@ -88,7 +91,7 @@ class Document(object):
         self.doc.update(values)
 
     def put_attachment(self, name, data, mimetype=None):
-        '''
+        """
         Put an attachment in the document.
 
         The attachment data must be provided as str in Python 2 and bytes in
@@ -96,7 +99,7 @@ class Document(object):
 
         The mimetype, if not provided, is guessed from the filename and
         defaults to text/plain.
-        '''
+        """
         if '_attachments' not in self.doc:
             self.doc['_attachments'] = {}
 
@@ -110,7 +113,7 @@ class Document(object):
             'content_type': mimetype, 'data': b64data}
 
     def get_attachment(self, name, retrieve_from_database=None):
-        ''' Gets an attachment dict from the document.
+        """ Gets an attachment dict from the document.
         Attachment data may not have been copied over from the
         database, in that case it will have an md5 checksum.
         A CouchDB database may be set in retrieve_from_database to retrieve
@@ -120,7 +123,7 @@ class Document(object):
         Python 3.
 
         Raises KeyError if attachment does not exist.
-        '''
+        """
         # Copy all attributes except data, it may be very large
         attachment = {}
         for key in self.doc['_attachments'][name]:
@@ -144,16 +147,20 @@ class Document(object):
         return attachment
 
     def remove_attachment(self, name):
+        """ Remove attachment from document
+        @param name: document name
+        """
         del self.doc['_attachments'][name]
         return self
 
     def _update_hostname(self):
+        """ Update the hostname value to the current host. """
         self.doc['hostname'] = socket.gethostname()
         return self
 
 
 class User(Document):
-    ''' CouchDB user '''
+    """ CouchDB user """
     def __init__(self, username, password, roles=[], data={}):
         super(User, self).__init__(
             data=data,
@@ -167,6 +174,8 @@ class User(Document):
 
 
 class Task(Document):
+    """ Class to manage task modifications with. """
+
     __BASE = {
         'type': 'task',
         'lock': 0,
@@ -178,9 +187,6 @@ class Task(Document):
         'uploads': {},
         'error': [],
     }
-
-    """Class to manage task modifications with.
-    """
 
     def __init__(self, task={}):
         super(Task, self).__init__(task, Task.__BASE)
@@ -223,6 +229,7 @@ class Task(Document):
 
     @property
     def uploads(self):
+        """ Associated files that were uploaded. """
         return self.doc['uploads']
 
     @uploads.setter
@@ -242,6 +249,7 @@ class Task(Document):
         return self._update_hostname()
 
     def error(self, msg=None, exception=None):
+        """ Set an error for the task. """
         error = {'time': seconds()}
         if msg is not None:
             error['message'] = str(msg)
@@ -257,19 +265,23 @@ class Task(Document):
         return self
 
     def has_error(self):
+        """ Whether the task had an error. """
         return self.doc['lock'] == -1
 
     def get_errors(self):
+        """ Get the list of errors. """
         try:
             return self.doc['error']
-        except:
+        except KeyError:
             return []
 
     def is_done(self):
+        """ Whether the task successfully finished. """
         return self.doc['done'] != 0
 
 
 class Job(Document):
+    """ Class to manage a CouchDB job entry. """
     __BASE = {
         'type': 'job',
         'hostname': '',
@@ -286,6 +298,7 @@ class Job(Document):
             raise ValueError('Job ID must be set')
 
     def queue(self, method, host=None):
+        """ Save that the job was queued. """
         self.doc['method'] = method
         if host is not None:
             self.doc['hostname'] = host
@@ -293,16 +306,19 @@ class Job(Document):
         return self
 
     def start(self):
+        """ Save that the job has started. """
         self.doc['start'] = seconds()
         self.doc['done'] = 0
         self.doc['archive'] = 0
         return self._update_hostname()
 
     def finish(self):
+        """ Save that the job is done. """
         self.doc['done'] = seconds()
         return self
 
     def archive(self):
+        """ Move the job to an archived state. """
         if self.doc['done'] <= 0:
             self.doc['done'] = seconds()
         self.doc['archive'] = seconds()
@@ -311,4 +327,5 @@ class Job(Document):
         return self
 
     def is_done(self):
+        """ Whether the job is done. """
         return self.doc['done'] != 0
