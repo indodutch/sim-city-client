@@ -1,5 +1,5 @@
 CouchDB==1.0.1
 easywebdav==1.2.0
 pystache==0.5.4
--e git+https://github.com/nlesc/pyxenon.git@11abb66983d5a52601f957f1e302305d416dd688#egg=pyxenon-0.1.0
+pyxenon==0.2.1
 requests==2.8.1
