@@ -1,5 +1,5 @@
 CouchDB==1.0.1
 easywebdav==1.2.0
 pystache==0.5.4
-pyxenon==0.2.0
+pyxenon==0.2.1
 requests==2.8.1
