@@ -16,8 +16,8 @@
 
 """ Submit jobs to physical infrastructure. """
 
-from picas.util import merge_dicts
-from picas import Job
+from .util import merge_dicts
+from .document import Job
 import simcity
 import json
 import xenon
@@ -244,7 +244,7 @@ class XenonSubmitter(Submitter):
                 desc.addEnvironment('SIMCITY_JOBID', job.id)
                 desc.setWorkingDirectory(self.jobdir)
                 desc.setExecutable(command[0])
-                desc.setArguments(*command[1:])
+                desc.setArguments(command[1:])
                 urlsplit = self.host.split('://')
                 if len(urlsplit) != 2:
                     raise ValueError("host must contain a scheme and a "
@@ -254,5 +254,6 @@ class XenonSubmitter(Submitter):
                 job = jobs.submitJob(sched, desc)
                 return job.getIdentifier()
             except xenon.exceptions.XenonException as ex:
-                raise IOError(ex.classname, "Cannot submit job with Xenon: {0}"
-                              .format(ex.innermessage))
+                raise IOError(ex.javaClass(),
+                              "Cannot submit job with Xenon: {0}"
+                              .format(ex.message()))

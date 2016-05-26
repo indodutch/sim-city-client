@@ -16,7 +16,7 @@
 
 """ Create and update tasks. """
 
-from picas import Task
+from .document import Task
 from .management import get_task_database, get_webdav
 import time
 import os
@@ -24,7 +24,7 @@ import os
 
 def add_task(properties, database=None):
     """
-    Add a picas.Task object to the database with given properties.
+    Add a Task object to the database with given properties.
     """
     if database is None:
         database = get_task_database()
@@ -35,7 +35,7 @@ def add_task(properties, database=None):
 
 def get_task(task_id, database=None):
     """
-    Get the picas.Task object with given ID.
+    Get the Task object with given ID.
     """
     if database is None:
         database = get_task_database()

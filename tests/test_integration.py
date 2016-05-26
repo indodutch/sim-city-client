@@ -17,7 +17,6 @@
 from __future__ import print_function
 
 import simcity
-import picas
 from nose.tools import assert_equals, assert_true
 from test_mock import MockDB, MockRow
 
@@ -43,6 +42,6 @@ def test_run():
     simcity.management.set_job_database(job_db)
 
     task, job = simcity.run_task({'key': 'value'}, 'myhost', 1)
-    assert_true(isinstance(task, picas.Task))
+    assert_true(isinstance(task, simcity.Task))
     assert_true(job is None)
     assert_true(task_db.get(task.id) is not None)

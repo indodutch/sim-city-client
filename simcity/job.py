@@ -18,8 +18,8 @@
 
 from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
-from picas import Job
-from picas.util import seconds
+from .document import Job
+from .util import seconds
 import time
 
 

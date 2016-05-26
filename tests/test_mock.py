@@ -18,7 +18,7 @@ import random
 
 import multiprocessing
 
-from picas import Document
+from simcity import Document
 
 
 class MockRow(object):

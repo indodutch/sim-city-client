@@ -25,7 +25,8 @@ the job. Output files can be stored in the CouchDB database or on a WebDAV
 server.
 """
 
-from .actors import JobActor, ExecuteWorker
+from .actors import JobActor
+from .worker import ExecuteWorker
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
                   cancel_endless_job, scrub_jobs)
 from .integration import overview_total, run_task
@@ -38,22 +39,60 @@ from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
 from .task import (add_task, get_task, delete_task, scrub_tasks,
                    upload_attachment, download_attachment, delete_attachment)
 from .config import Config, CouchDBConfig, FileConfig
+from .document import Task, Job, Document, User
+from .database import CouchDB
+from .iterator import (TaskViewIterator, EndlessViewIterator,
+                       PrioritizedViewIterator)
 
 __all__ = [
-    'JobActor', 'ExecuteWorker',
-    'get_job', 'start_job', 'queue_job', 'finish_job', 'archive_job',
-    'cancel_endless_job', 'scrub_jobs',
-    'overview_total', 'run_task',
-    'get_config', 'init', 'is_initialized',
-    'get_task_database', 'get_job_database',
-    'create', 'create_views',
-    'uses_webdav', 'get_webdav',
-    'get_current_job_id', 'set_current_job_id',
-    'submit', 'submit_if_needed', 'Submitter', 'OsmiumSubmitter',
-    'SSHSubmitter', 'XenonSubmitter',
-    'add_task', 'get_task', 'delete_task', 'scrub_tasks',
-    'upload_attachment', 'download_attachment', 'delete_attachment',
-    'Config', 'CouchDBConfig', 'FileConfig',
+    'add_task',
+    'archive_job',
+    'cancel_endless_job',
+    'Config',
+    'CouchDB',
+    'CouchDBConfig',
+    'create',
+    'create_views',
+    'delete_attachment',
+    'delete_task',
+    'Document',
+    'download_attachment',
+    'EndlessViewIterator',
+    'ExecuteWorker',
+    'FileConfig',
+    'finish_job',
+    'get_config',
+    'get_current_job_id',
+    'get_job',
+    'get_job_database',
+    'get_task',
+    'get_task_database',
+    'get_webdav',
+    'init',
+    'is_initialized',
+    'Job',
+    'JobActor',
+    'OsmiumSubmitter',
+    'overview_total',
+    'PrioritizedViewIterator',
+    'queue_job',
+    'run_task',
+    'RunActor',
+    'scrub_jobs',
+    'scrub_tasks',
+    'set_current_job_id',
+    'SSHSubmitter',
+    'start_job',
+    'submit',
+    'submit_if_needed',
+    'Submitter',
+    'Task',
+    'TaskViewIterator',
+    'upload_attachment',
+    'User',
+    'uses_webdav',
+    'ViewIterator',
+    'XenonSubmitter',
 ]
 
 init(None)
