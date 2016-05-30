@@ -28,31 +28,38 @@ class MockRow(object):
         self.value = value
 
 
+class MockDAVConf(object):
+    def __init__(self):
+        self.hostname = 'https://my.example.com'
+        self.root = ''
+
+
 class MockDAV(object):
-    def __init__(self, files={}):
+    def __init__(self, files=None):
+        if files is None:
+            files = {}
         self.files = files
-        self.baseurl = 'https://my.example.com'
+        self.webdav = MockDAVConf()
         self.removed = []
 
-    def upload(self, file_obj, path):
-        self.files[path] = file_obj.read()
+    def upload_sync(self, remote_path, local_path):
+        with open(local_path, 'rb') as f:
+            self.files[remote_path] = f.read()
 
-    def exists(self, dirname):
-        return True
+    def clean(self, path):
+        try:
+            del self.files[path]
+            self.removed.append(path)
+        except KeyError:
+            print("Not removing missing directory")
 
-    def _get_url(self, path):
-        return self.baseurl + path
+    def mkdir(self, path):
+        pass
 
-    def rmdir(self, dirname):
-        self.removed.append(dirname)
-
-    def delete(self, path):
-        del self.files[path]
-
-    def download(self, path, file_path):
-        print("file path: {0}".format(file_path))
-        with open(file_path, 'wb') as f:
-            f.write(self.files[path])
+    def download_sync(self, remote_path, local_path):
+        print("file path: {0}".format(local_path))
+        with open(local_path, 'wb') as f:
+            f.write(self.files[remote_path])
 
 
 class MockDB(object):

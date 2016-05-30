@@ -26,7 +26,7 @@ from .document import User
 import couchdb
 from couchdb.http import ResourceNotFound, Unauthorized
 import pystache
-import easywebdav
+import webdav.client as webdav
 try:
     from urlparse import urlparse
 except ImportError:
@@ -131,16 +131,14 @@ def get_webdav(process=None):
         dav_cfg = _config.section('webdav')
 
         url = urlparse(dav_cfg['url'])
-        verify = get_truthy(dav_cfg.get('ssl_verification', True))
-        if verify and 'certificate' in dav_cfg:
-            verify = dav_cfg['certificate']
-        _webdav[process] = easywebdav.connect(
-            host=url.hostname,
-            protocol=url.scheme,
-            port=url.port,
-            path=url.path[1:],
-            auth=(dav_cfg['username'], dav_cfg['password']),
-            verify_ssl=verify)
+
+        options = {
+            'webdav_hostname': url.scheme + '://' + url.netloc,
+            'webdav_login': dav_cfg['username'],
+            'webdav_password': dav_cfg['password'],
+            'webdav_root': url.path
+        }
+        _webdav[process] = webdav.Client(options)
 
     return _webdav[process]
 
