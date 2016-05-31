@@ -21,7 +21,7 @@ import os
 
 
 def test_flake8():
-    """ Test known python directories and files. """
+    """ Syntax and style check with flake8. """
     for test in flake8(directories=['tests', 'scripts', 'simcity'],
                        files=['setup.py']):
         yield test

@@ -43,6 +43,7 @@ from .document import Task, Job, Document, User
 from .database import CouchDB
 from .iterator import (TaskViewIterator, EndlessViewIterator,
                        PrioritizedViewIterator)
+from .util import parse_parameters
 
 __all__ = [
     'add_task',
@@ -74,6 +75,7 @@ __all__ = [
     'JobActor',
     'OsmiumSubmitter',
     'overview_total',
+    'parse_parameters',
     'PrioritizedViewIterator',
     'queue_job',
     'run_task',

@@ -1,9 +1,12 @@
 language: python
 python:
-    - "2.7"
-    - "3.3"
-    - "3.4"
-    - "3.5"
-install: pip install . ".[testing]" codacy-coverage
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+install:
+  - pip install -U pip
+  - pip install . codacy-coverage
+  - pip install ".[testing]"
 script: nosetests --with-coverage --cover-package=simcity --cover-xml
 after_script: python-codacy-coverage -r coverage.xml
