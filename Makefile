@@ -1,21 +1,13 @@
-.PHONY: all requirements test-requirements test-license test clean pyflakes pyflakes-exists unittest coverage fulltest install reinstall
+.PHONY: all test-license test clean pyflakes pyflakes-exists unittest coverage fulltest install reinstall
 
 PYTHON_FIND=find simcity scripts simulations tests -name '*.py'
 LICENSE_NAME="Apache License, Version 2.0"
 
-all: install
-
-requirements:
-	@pip install -r requirements.txt
+test: test-requirements test-license pyflakes pep8 unittest
 
 test-requirements:
-	@pip install -r test_requirements.txt > /dev/null
-
-install: requirements
-	@pip install .
-	
-reinstall:
-	@pip install --upgrade --no-deps .
+	pip install -e .
+	pip install .[testing]
 
 test-license: LICENSE
 	@echo "======= Check License ======"
@@ -32,8 +24,6 @@ pep8:
 unittest:
 	@echo "======= Unit Tests ========="
 	@nosetests
-
-test: test-requirements test-license pyflakes pep8 unittest
 
 coverage:
 	@echo "======= Unit Tests ========="

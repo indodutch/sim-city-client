@@ -174,7 +174,6 @@ def save_task(task, task_db):
     saved = False
     while not saved:
         try:
-            print('saving {0}'.format(task.doc))
             task_db.save(task)
             saved = True
         except ResourceConflict:
