@@ -8,7 +8,7 @@ SIM-CITY client uses a pilot job script to run multiple simulations in the same 
 
 ## Dependencies
 
-The best way to manage this package is through the Python `virtualenv` package. On a cluster resource run the following commands:
+The best way to manage this package is through the Python `virtualenv` package, with `pip` version 7 or higher. On a cluster resource run the following commands:
 
     module load python/2.7
     pip install --user virtualenv
