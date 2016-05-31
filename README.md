@@ -23,7 +23,7 @@ Then before every run or installation, include the `simcity` virtualenv:
 
 Simply run
 
-    make install
+    pip install .
 
 Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. See the comments therein for more information. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings. There are two CouchDB database sections, one for the jobs and one for the tasks. If these are the same, you can remove the jobs database section. If you anticipate large output files, you can configure a webdav url that the files can be stored on.
 
@@ -59,10 +59,12 @@ The API consists of all methods exported in `__init__.py`. It assumes that a con
 
 ## Contributing
 
-We use git-flow for managing branches. To add a feature, first run
+To add a feature or bug-fix, create a new clone and/or branch. Install testing tools with
 
-    make test
+    pip install -r requirements.txt '.[testing]'
 
-and then commit, to make sure the change didn't break any code. Before a creating a pull-request, run
+And run
 
-    make fulltest
+    nosetests
+
+before every commit. When you're done, make a pull request on GitHub.
