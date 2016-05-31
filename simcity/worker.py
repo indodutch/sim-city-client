@@ -22,6 +22,7 @@ import os
 from subprocess import call
 from multiprocessing import Process
 
+
 class Worker(Process):
     """
     Worker class, override the process_task method.
