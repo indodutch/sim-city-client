@@ -29,7 +29,8 @@ except ImportError:
 
 setup(name='simcity',
       version='0.3.4',
-      description='Python SIM-CITY client using CouchDB as a task pool server.',
+      description='Python SIM-CITY client using CouchDB as a task pool '
+                  'server.',
       author='Joris Borgdorff',
       author_email='j.borgdorff@esciencecenter.nl',
       url='https://esciencecenter.nl/projects/sim-city/',
@@ -52,5 +53,7 @@ setup(name='simcity',
         'Topic :: System :: Distributed Computing'
       ],
       install_requires=['pystache', 'CouchDB', 'webdavclient', 'pyxenon'],
-      tests_require=['nose', 'pyflakes', 'pep8', 'coverage']
-     )
+      extras_require={
+          'testing': ['nose', 'flake8'],
+      },
+      )

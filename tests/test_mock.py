@@ -57,7 +57,6 @@ class MockDAV(object):
         pass
 
     def download_sync(self, remote_path, local_path):
-        print("file path: {0}".format(local_path))
         with open(local_path, 'wb') as f:
             f.write(self.files[remote_path])
 

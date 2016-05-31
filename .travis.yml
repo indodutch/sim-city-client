@@ -4,8 +4,6 @@ python:
     - "3.3"
     - "3.4"
     - "3.5"
-install:
-    - make install
-    - pip install codacy-coverage
-script: make fulltest
+install: pip install . ".[testing]" codacy-coverage
+script: nosetests --with-coverage --cover-package=simcity --cover-xml
 after_script: python-codacy-coverage -r coverage.xml
