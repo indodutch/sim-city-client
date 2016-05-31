@@ -54,6 +54,6 @@ setup(name='simcity',
       ],
       install_requires=['pystache', 'CouchDB', 'easywebdav', 'pyxenon'],
       extras_require={
-          'testing': ['nose', 'flake8'],
+          'testing': ['nose', 'flake8', 'coverage'],
       },
       )
