@@ -230,7 +230,10 @@ class Task(Document):
     @property
     def uploads(self):
         """ Associated files that were uploaded. """
-        return self.doc['uploads']
+        try:
+            return self.doc['uploads']
+        except KeyError:
+            return {}
 
     @uploads.setter
     def uploads(self, uploads):
