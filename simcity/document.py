@@ -92,6 +92,7 @@ class Document(object):
 
     @property
     def attachments(self):
+        """ Raw CouchDB attachments. """
         return self.doc.setdefault('_attachments', {})
 
     def put_attachment(self, name, data, mimetype=None):
