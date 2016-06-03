@@ -16,7 +16,6 @@
 
 """ Utility functions. """
 
-import json
 import os
 import glob
 import shutil
@@ -108,12 +107,6 @@ def expandfilenames(filenames):
     if not issequence(filenames):
         filenames = [filenames]
     return [expandfilename(fname) for fname in filenames]
-
-
-def write_json(fname, obj):
-    """ Write given object to the file referenced by fname. """
-    with open(fname, 'w') as outfile:
-        json.dump(obj, outfile)
 
 
 def listfiles(mypath):

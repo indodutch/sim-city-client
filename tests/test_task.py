@@ -84,9 +84,9 @@ def test_upload_attachment_couchdb():
     task, dirname, filename = _upload_attachment(use_dav=False)
 
     assert_true('_attachments' in task)
-    assert_true(filename in task['_attachments'])
+    assert_true(filename in task.attachments)
     assert_true(filename not in task.uploads)
-    assert_true('data' in task['_attachments'][filename])
+    assert_true('data' in task.attachments[filename])
     assert_equal(b'ab', task.get_attachment(filename)['data'])
 
 

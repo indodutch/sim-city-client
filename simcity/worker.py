@@ -16,8 +16,9 @@
 
 """ Workers to execute a single process in a job. """
 
-from .util import listfiles, write_json, expandfilename
-from .task import upload_attachment
+from .util import listfiles, expandfilename
+from .task import upload_attachment, download_attachment
+import json
 import os
 from subprocess import call
 from multiprocessing import Process
@@ -109,7 +110,12 @@ class ExecuteWorker(Worker):
         params_file = os.path.join(dirs['SIMCITY_IN'], 'input.json')
         dirs['SIMCITY_PARAMS'] = params_file
 
-        write_json(params_file, task.input)
+        with open(params_file, 'w') as f:
+            json.dump(task.input, f)
+
+        for attachment in task.list_files():
+            download_attachment(task, dirs['SIMCITY_IN'], attachment)
+
         command = expandfilename(task['command'])
 
         if 'arguments' in task and len(task['arguments']) > 0:

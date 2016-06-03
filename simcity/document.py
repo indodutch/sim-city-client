@@ -90,6 +90,10 @@ class Document(object):
         """
         self.doc.update(values)
 
+    @property
+    def attachments(self):
+        return self.doc.setdefault('_attachments', {})
+
     def put_attachment(self, name, data, mimetype=None):
         """
         Put an attachment in the document.
@@ -100,16 +104,13 @@ class Document(object):
         The mimetype, if not provided, is guessed from the filename and
         defaults to text/plain.
         """
-        if '_attachments' not in self.doc:
-            self.doc['_attachments'] = {}
-
         if mimetype is None:
             mimetype, encoding = mimetypes.guess_type(name)
             if mimetype is None:
                 mimetype = 'text/plain'
 
         b64data = base64.b64encode(data)
-        self.doc['_attachments'][name] = {
+        self.attachments[name] = {
             'content_type': mimetype, 'data': b64data}
 
     def get_attachment(self, name, retrieve_from_database=None):
@@ -126,13 +127,13 @@ class Document(object):
         """
         # Copy all attributes except data, it may be very large
         attachment = {}
-        for key in self.doc['_attachments'][name]:
+        for key in self.attachments[name]:
             if key != 'data':
-                attachment[key] = self.doc['_attachments'][name][key]
+                attachment[key] = self.attachments[name][key]
 
-        if 'data' in self.doc['_attachments'][name]:
+        if 'data' in self.attachments[name]:
             attachment['data'] = base64.b64decode(
-                self.doc['_attachments'][name]['data'])
+                self.attachments[name]['data'])
         elif retrieve_from_database is not None:
             db = retrieve_from_database.db
             f_attach = db.get_attachment(self.id, name)
@@ -142,21 +143,26 @@ class Document(object):
                 f_attach.close()
 
             b64data = base64.b64encode(attachment['data'])
-            self.doc['_attachments'][name]['data'] = b64data
+            self.attachments[name]['data'] = b64data
 
         return attachment
 
-    def remove_attachment(self, name):
-        """ Remove attachment from document
+    def delete_attachment(self, name):
+        """ Deletes attachment from document
         @param name: document name
+        @raise KeyError: if document name does not exist
         """
-        del self.doc['_attachments'][name]
+        del self.attachments[name]
         return self
 
     def _update_hostname(self):
         """ Update the hostname value to the current host. """
         self.doc['hostname'] = socket.gethostname()
         return self
+
+    def list_files(self):
+        """ All attachment names associated to a task. """
+        return list(self.attachments.keys())
 
 
 class User(Document):
@@ -230,14 +236,15 @@ class Task(Document):
     @property
     def uploads(self):
         """ Associated files that were uploaded. """
-        try:
-            return self.doc['uploads']
-        except KeyError:
-            return {}
+        return self.doc.setdefault('uploads', {})
 
     @uploads.setter
     def uploads(self, uploads):
         self.doc['uploads'] = uploads
+
+    def list_files(self):
+        """ All attachment names associated to a task. """
+        return list(self.uploads.keys()) + list(self.attachments.keys())
 
     def scrub(self):
         """
