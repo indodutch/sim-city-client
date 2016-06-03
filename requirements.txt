@@ -1,7 +1,9 @@
+argcomplete==1.2.0
 CouchDB==1.0.1
-easywebdav==1.2.0
 jsonschema==2.5.1
+lxml==3.6.0
+pycurl==7.43.0
 pystache==0.5.4
 pyxenon==0.2.1
-requests==2.8.1
+webdavclient==1.0.5
 -e .

@@ -46,7 +46,7 @@ def test_delete_task():
     assert_equal(0, len(simcity.management._webdav[None].removed))
     task = simcity.get_task(MockDB.TASKS[0]['_id'])
     dav.files['/myfile'] = 'ab'
-    task.uploads['myfile'] = dav.baseurl + '/myfile'
+    task.uploads['myfile'] = dav.webdav.hostname + dav.webdav.root + '/myfile'
     simcity.delete_task(task)
     assert_true(MockDB.TASKS[0]['_id'] not in
                 simcity.get_task_database().tasks)
@@ -71,7 +71,10 @@ def _upload_attachment(use_dav):
     os.remove(path)
 
     if use_dav:
-        dav_path = '/' + task.id[5:7] + '/' + task.id + '/' + filename
+        if len(task.id) >= 7:
+            dav_path = '/' + task.id[5:7] + '/' + task.id + '/' + filename
+        else:
+            dav_path = '/' + task.id[:2] + '/' + task.id + '/' + filename
         return task, dirname, filename, dav, dav_path
     else:
         return task, dirname, filename
@@ -92,7 +95,8 @@ def test_upload_attachment_webdav():
 
     assert_true('_attachments' not in task)
     assert_true(filename in task.uploads)
-    assert_equal(dav.baseurl + dav_path, task.uploads[filename])
+    assert_equal(dav.webdav.hostname + dav.webdav.root + dav_path,
+                 task.uploads[filename])
     assert_true(dav_path in dav.files)
     assert_equal(b'ab', dav.files[dav_path])
 
