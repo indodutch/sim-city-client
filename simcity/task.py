@@ -170,7 +170,7 @@ def _webdav_url_to_path(url, dav=None):
         dav = get_webdav()
 
     # Check that the same webdav system was used
-    if not url.startswith(dav.webdav.hostname):
+    if not url.startswith(dav.webdav.hostname + dav.webdav.root):
         raise EnvironmentError(
             'webdav for {0} not configured'.format(url))
     # Remove the webdav base url from the URL to get the relative path
