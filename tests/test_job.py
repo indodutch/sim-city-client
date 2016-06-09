@@ -89,7 +89,7 @@ class TestJob(object):
         self.db.jobs[job.id]['_rev'] = 'myrev'
         self.db.jobs[job.id]['done'] = 0
         print(self.db.jobs[job.id])
-        self.db.viewList = [MockRow(job.id, job.value, job.id)]
+        self.db.viewList = [MockRow(job.id, job, job.id)]
         assert_equals(0, len(self.db.saved))
 
         simcity.scrub_jobs('active_jobs', age=0)
@@ -104,7 +104,7 @@ class TestJob(object):
         job = simcity.get_job()
         job.start()
         assert_equals(0, len(self.db.saved))
-        self.db.viewList = [MockRow(job.id, job.value, job.id)]
+        self.db.viewList = [MockRow(job.id, job, job.id)]
         simcity.scrub_jobs('active_jobs', age=2)
         assert_equals(0, len(self.db.saved))
 
@@ -114,7 +114,7 @@ class TestJob(object):
         assert_equals(0, job['archive'])
         self.db.jobs[job.id]['_rev'] = 'myrev'
         self.db.jobs[job.id]['done'] = 0
-        self.db.viewList = [MockRow(job.id, job.value, job.id)]
+        self.db.viewList = [MockRow(job.id, job, job.id)]
         assert_equals(0, len(self.db.saved))
 
         simcity.scrub_jobs('active_jobs', age=2)

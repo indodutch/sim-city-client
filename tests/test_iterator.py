@@ -24,7 +24,7 @@ def test_iterator():
     for task in TaskViewIterator(db, 'view'):
         assert_true(task['lock'] > 0)
         assert_equals(task.rev, '0')
-        assert_equals(db.saved[task.id], task.value)
+        assert_equals(db.saved[task.id], task)
         break  # process one task only
 
     assert_equals(len(db.saved), 1)

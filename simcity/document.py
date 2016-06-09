@@ -18,82 +18,30 @@
 CouchDB document types.
 """
 import socket
-from .util import merge_dicts, seconds
+from .util import seconds
 import mimetypes
 import base64
 import traceback
 from uuid import uuid4
+import couchdb
 
 
-class Document(object):
+class Document(couchdb.Document):
     """ A CouchDB document """
 
     def __init__(self, data={}, base={}):
-        if isinstance(data, Document):
-            data = data.value
+        super(Document, self).__init__()
 
         # Data is not from the database
         if '_rev' not in data:
-            data = merge_dicts(base, data)
+            self.update(base)
 
-        self.doc = data
-
-    # Python Dict emulation:
-    # docs.python.org/2/reference/datamodel.html#emulating-container-types
-    def __len__(self):
-        return self.doc.__len__()
-
-    def __getitem__(self, idx):
-        return self.doc.__getitem__(idx)
-
-    def __setitem__(self, idx, value):
-        return self.doc.__setitem__(idx, value)
-
-    def __delitem__(self, idx):
-        return self.doc.__delitem__(idx)
-
-    def __contains__(self, idx):
-        return self.doc.__contains__(idx)
-
-    def __iter__(self):
-        return self.doc.__iter__()
-    # End python dict emulation
-
-    @property
-    def id(self):
-        """ Document ID (_id)"""
-        try:
-            return self.doc['_id']
-        except KeyError:
-            raise AttributeError("_id for document is not set")
-
-    @property
-    def rev(self):
-        """ Document revision (_rev) """
-        try:
-            return self.doc['_rev']
-        except KeyError:
-            raise AttributeError("_rev is not available: document is not "
-                                 "retrieved from database")
-
-    @id.setter
-    def id(self, new_id):
-        self.doc['_id'] = new_id
-
-    @property
-    def value(self):
-        """ Document raw dict value """
-        return self.doc
-
-    def update(self, values):
-        """Add the output of the RunActor to the task.
-        """
-        self.doc.update(values)
+        self.update(data)
 
     @property
     def attachments(self):
         """ Raw CouchDB attachments. """
-        return self.doc.setdefault('_attachments', {})
+        return self.setdefault('_attachments', {})
 
     def put_attachment(self, name, data, mimetype=None):
         """
@@ -158,7 +106,7 @@ class Document(object):
 
     def _update_hostname(self):
         """ Update the hostname value to the current host. """
-        self.doc['hostname'] = socket.gethostname()
+        self['hostname'] = socket.gethostname()
         return self
 
     def list_files(self):
@@ -197,51 +145,51 @@ class Task(Document):
 
     def __init__(self, task={}):
         super(Task, self).__init__(task, Task.__BASE)
-        if '_id' not in self.doc:
-            self.doc['_id'] = 'task_' + uuid4().hex
+        if self.id is None:
+            self['_id'] = 'task_' + uuid4().hex
 
     def lock(self):
         """Function which modifies the task such that it is locked.
         """
-        self.doc['lock'] = seconds()
+        self['lock'] = seconds()
         return self._update_hostname()
 
     def done(self):
         """Function which modifies the task such that it is closed for ever
         to the view that has supplied it.
         """
-        self.doc['done'] = seconds()
+        self['done'] = seconds()
         return self
 
     @property
     def input(self):
         """ Get input """
-        return self.doc['input']
+        return self['input']
 
     @input.setter
     def input(self, value):
         """ Set input """
-        self.doc['input'] = value
+        self['input'] = value
 
     @property
     def output(self):
         """Get the output from the RunActor."""
-        return self.doc['output']
+        return self['output']
 
     @output.setter
     def output(self, output):
         """Add the output of the RunActor to the task.
         """
-        self.doc['output'] = output
+        self['output'] = output
 
     @property
     def uploads(self):
         """ Associated files that were uploaded. """
-        return self.doc.setdefault('uploads', {})
+        return self.setdefault('uploads', {})
 
     @uploads.setter
     def uploads(self, uploads):
-        self.doc['uploads'] = uploads
+        self['uploads'] = uploads
 
     def list_files(self):
         """ All attachment names associated to a task. """
@@ -252,11 +200,11 @@ class Task(Document):
         Task scrubber: makes sure a task can be handed out again if it was
         locked more than t seconds ago.
         """
-        if 'scrub_count' not in self.doc:
-            self.doc['scrub_count'] = 0
-        self.doc['scrub_count'] += 1
-        self.doc['done'] = 0
-        self.doc['lock'] = 0
+        if 'scrub_count' not in self:
+            self['scrub_count'] = 0
+        self['scrub_count'] += 1
+        self['done'] = 0
+        self['lock'] = 0
         return self._update_hostname()
 
     def error(self, msg=None, exception=None):
@@ -268,27 +216,27 @@ class Task(Document):
         if exception is not None:
             error['exception'] = traceback.format_exc()
 
-        self.doc['lock'] = -1
-        self.doc['done'] = -1
-        if 'error' not in self.doc:
-            self.doc['error'] = []
-        self.doc['error'].append(error)
+        self['lock'] = -1
+        self['done'] = -1
+        if 'error' not in self:
+            self['error'] = []
+        self['error'].append(error)
         return self
 
     def has_error(self):
         """ Whether the task had an error. """
-        return self.doc['lock'] == -1
+        return self['lock'] == -1
 
     def get_errors(self):
         """ Get the list of errors. """
         try:
-            return self.doc['error']
+            return self['error']
         except KeyError:
             return []
 
     def is_done(self):
         """ Whether the task successfully finished. """
-        return self.doc['done'] != 0
+        return self['done'] != 0
 
 
 class Job(Document):
@@ -305,38 +253,38 @@ class Job(Document):
 
     def __init__(self, job):
         super(Job, self).__init__(job, Job.__BASE)
-        if '_id' not in self.doc:
+        if self.id is None:
             raise ValueError('Job ID must be set')
 
     def queue(self, method, host=None):
         """ Save that the job was queued. """
-        self.doc['method'] = method
+        self['method'] = method
         if host is not None:
-            self.doc['hostname'] = host
-        self.doc['queue'] = seconds()
+            self['hostname'] = host
+        self['queue'] = seconds()
         return self
 
     def start(self):
         """ Save that the job has started. """
-        self.doc['start'] = seconds()
-        self.doc['done'] = 0
-        self.doc['archive'] = 0
+        self['start'] = seconds()
+        self['done'] = 0
+        self['archive'] = 0
         return self._update_hostname()
 
     def finish(self):
         """ Save that the job is done. """
-        self.doc['done'] = seconds()
+        self['done'] = seconds()
         return self
 
     def archive(self):
         """ Move the job to an archived state. """
-        if self.doc['done'] <= 0:
-            self.doc['done'] = seconds()
-        self.doc['archive'] = seconds()
-        self.id = 'archived-' + self.id + '-' + str(seconds())
-        del self.doc['_rev']
+        if self['done'] <= 0:
+            self['done'] = seconds()
+        self['archive'] = seconds()
+        self['_id'] = 'archived-' + self.id + '-' + str(seconds())
+        del self['_rev']
         return self
 
     def is_done(self):
         """ Whether the job is done. """
-        return self.doc['done'] != 0
+        return self['done'] != 0

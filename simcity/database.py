@@ -129,7 +129,7 @@ class CouchDB(object):
         :throws couchdb.http.ResourceConflict: when document exists with
                 different revision or was deleted.
         """
-        _id, _rev = self.db.save(doc.value)
+        _id, _rev = self.db.save(doc)
         doc['_rev'] = _rev
         doc['_id'] = _id
         return doc
@@ -146,7 +146,7 @@ class CouchDB(object):
                 succesful will get new _rev values
         :return: a sequence of [succeeded1, succeeded2, ...] values.
         """
-        updated = self.db.update([doc.value for doc in docs])
+        updated = self.db.update(docs)
 
         result = [False] * len(docs)
         for i in range(len(docs)):
@@ -180,7 +180,7 @@ class CouchDB(object):
         :param doc: Document object
         :raise: ResouceConflict: if the document was updated in the database
         """
-        self.db.delete(doc.value)
+        self.db.delete(doc)
 
     def delete_documents(self, docs):
         """

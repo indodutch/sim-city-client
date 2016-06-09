@@ -16,7 +16,7 @@
 
 from simcity import Document, Task
 from simcity.util import seconds
-from nose.tools import assert_equals, assert_raises, assert_true
+from nose.tools import assert_equals, assert_true
 
 test_id = 'mydoc'
 test_other_id = 'myotherdoc'
@@ -25,16 +25,16 @@ test_other_id = 'myotherdoc'
 def test_create():
     doc = Document({'_id': test_id})
     assert_equals(doc.id, test_id)
-    assert_equals(doc.value, {'_id': test_id})
-    doc.id = test_other_id
+    assert_equals(doc, {'_id': test_id})
+    doc['_id'] = test_other_id
     assert_equals(doc.id, test_other_id)
-    assert_equals(doc.value, {'_id': test_other_id})
+    assert_equals(doc, {'_id': test_other_id})
 
 
 def test_no_id():
     doc = Document({'someattr': 1})
-    assert_raises(AttributeError, getattr, doc, 'id')
-    assert_raises(AttributeError, getattr, doc, 'rev')
+    assert_equals(None, doc.id)
+    assert_equals(None, doc.rev)
 
 
 def test_empty():
@@ -65,7 +65,6 @@ class TestTask:
 
     def test_id(self):
         assert_equals(self.task.id, test_id)
-        assert_equals(self.task.value['_id'], test_id)
         assert_equals(self.task['_id'], test_id)
 
     def test_no_id(self):
