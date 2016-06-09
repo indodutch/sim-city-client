@@ -90,7 +90,7 @@ class MockDB(object):
         elif idx in self.jobs:
             doc = self.jobs[idx]
         else:
-            raise KeyError
+            raise ValueError
         return Document(doc)
 
     def save(self, doc):

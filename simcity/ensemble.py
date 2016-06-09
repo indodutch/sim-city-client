@@ -46,7 +46,7 @@ def ensemble_view(task_db, name, version, url=None, ensemble=None):
         task_db.get(doc_id)
     except ValueError:
         if url is None:
-            url = task_db.db.resource.url
+            url = task_db.url
 
         if not url.endswith('/'):
             url += '/'

@@ -50,6 +50,10 @@ class CouchDB(object):
         else:
             self.db = server[db]
 
+        if not url.endswith('/'):
+            url += '/'
+        self.url = url + db
+
     def copy(self):
         """ Copy the database in a Thread and Process-safe way."""
         resource = self.db.resource
