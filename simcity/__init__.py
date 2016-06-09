@@ -26,6 +26,7 @@ server.
 """
 
 from .actors import JobActor
+from .ensemble import ensemble_view
 from .worker import ExecuteWorker
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
                   cancel_endless_job, scrub_jobs)
@@ -59,6 +60,7 @@ __all__ = [
     'Document',
     'download_attachment',
     'EndlessViewIterator',
+    'ensemble_view',
     'ExecuteWorker',
     'FileConfig',
     'finish_job',
