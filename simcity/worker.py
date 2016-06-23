@@ -113,7 +113,7 @@ class ExecuteWorker(Worker):
         with open(params_file, 'w') as f:
             json.dump(task.input, f)
 
-        for attachment in task.list_files():
+        for attachment in task.input.get('uploads', []):
             download_attachment(task, dirs['SIMCITY_IN'], attachment)
 
         command = expandfilename(task['command'])
