@@ -134,10 +134,13 @@ def get_webdav(process=None):
 
         options = {
             'webdav_hostname': url.scheme + '://' + url.netloc,
-            'webdav_login': dav_cfg['username'],
-            'webdav_password': dav_cfg['password'],
             'webdav_root': url.path
         }
+        if 'username' in dav_cfg:
+            options['webdav_login'] = dav_cfg['username']
+        if 'password' in dav_cfg:
+            options['webdav_password'] = dav_cfg['password']
+
         _webdav[process] = webdav.Client(options)
 
     return _webdav[process]
@@ -412,7 +415,7 @@ def _init_databases():
         job_cfg = _config.section('job-db')
         if (job_cfg['url'] == task_cfg['url'] and
                 job_cfg['database'] == task_cfg['database'] and
-                job_cfg['username'] == task_cfg['username']):
+                job_cfg.get('username') == task_cfg.get('username')):
             _job_db = _task_db
         else:
             _job_db = _load_database('job-db')
@@ -443,7 +446,9 @@ def _load_database(name, admin_user=None, admin_password=""):
 
     try:
         if admin_user is None:
-            user, password, do_create = cfg['username'], cfg['password'], False
+            user = cfg.get('username')
+            password = cfg.get('password', '')
+            do_create = False
         else:
             user, password, do_create = admin_user, admin_password, True
 
