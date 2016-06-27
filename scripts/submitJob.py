@@ -27,8 +27,9 @@ import json
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="start a job")
-    parser.add_argument('command', help="command to run")
     parser.add_argument('host', help="host to run pilot job on")
+    parser.add_argument('command', help="command to run")
+    parser.add_argument('args', nargs='*', help="command arguments")
     parser.add_argument(
         '-m', '--max',
         help="only run if there are less than MAX jobs running", default=2)
@@ -40,7 +41,10 @@ if __name__ == '__main__':
 
     simcity.init(config=args.config)
     try:
-        properties = {'command': args.command}
+        properties = {
+            'command': args.command,
+            'arguments': args.args,
+        }
 
         try:
             with open(args.input) as f:
