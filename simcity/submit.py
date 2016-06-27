@@ -250,8 +250,13 @@ class XenonSubmitter(Submitter):
                     raise ValueError("host must contain a scheme and a "
                                      "hostname, syntax `scheme://host`.")
                 scheme, hostname = urlsplit
-                sched = jobs.newScheduler(scheme, hostname, None, None)
-                job = jobs.submitJob(sched, desc)
+                scheduler = jobs.newScheduler(scheme, hostname, None, None)
+                job = jobs.submitJob(scheduler, desc)
+                if scheduler.isOnline():
+                    print("Waiting for submission to finish...")
+                    jobs.waitUntilDone(job, 0)
+                    print("Done.")
+
                 return job.getIdentifier()
             except xenon.exceptions.XenonException as ex:
                 raise IOError(ex.javaClass(),
