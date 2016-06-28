@@ -243,19 +243,33 @@ class XenonSubmitter(Submitter):
                 desc = xenon.jobs.JobDescription()
                 desc.addEnvironment('SIMCITY_JOBID', job.id)
                 desc.setWorkingDirectory(self.jobdir)
-                desc.setExecutable(command[0])
-                desc.setArguments(command[1:])
                 urlsplit = self.host.split('://')
                 if len(urlsplit) != 2:
                     raise ValueError("host must contain a scheme and a "
                                      "hostname, syntax `scheme://host`.")
                 scheme, hostname = urlsplit
                 scheduler = jobs.newScheduler(scheme, hostname, None, None)
-                job = jobs.submitJob(scheduler, desc)
                 if scheduler.isOnline():
+                    desc.setStdout(self.jobdir + "/stdout_" + job.id + ".txt")
+                    desc.setStderr(self.jobdir + "/stderr_" + job.id + ".txt")
+                    desc.setExecutable("/bin/sh")
+                    if len(command) == 1:
+                        command_str = "'{0}'".format(command[0])
+                    else:
+                        command_str = "'{0}' '{1}'".format(
+                            command[0], "' '".join(command[1:]))
+                    desc.setArguments([
+                        "-c", "nohup {0} >'{1}' 2>'{2}' &"
+                        .format(command_str, desc.getStdout(),
+                                desc.getStderr())])
+                    job = jobs.submitJob(scheduler, desc)
                     print("Waiting for submission to finish...")
                     jobs.waitUntilDone(job, 0)
                     print("Done.")
+                else:
+                    desc.setExecutable(command[0])
+                    desc.setArguments(command[1:])
+                    job = jobs.submitJob(scheduler, desc)
 
                 return job.getIdentifier()
             except xenon.exceptions.XenonException as ex:
