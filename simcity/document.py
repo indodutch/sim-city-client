@@ -29,11 +29,14 @@ import couchdb
 class Document(couchdb.Document):
     """ A CouchDB document """
 
-    def __init__(self, data={}, base={}):
+    def __init__(self, data=None, base=None):
         super(Document, self).__init__()
 
+        if data is None:
+            data = {}
+
         # Data is not from the database
-        if '_rev' not in data:
+        if '_rev' not in data and base is not None:
             self.update(base)
 
         self.update(data)
@@ -42,6 +45,10 @@ class Document(couchdb.Document):
     def attachments(self):
         """ Raw CouchDB attachments. """
         return self.setdefault('_attachments', {})
+
+    @property
+    def value(self):
+        return self
 
     def put_attachment(self, name, data, mimetype=None):
         """
