@@ -201,7 +201,12 @@ def init(config, job_id=None):
         if len(_config.configurators) == 0 and not _is_initializing:
             raise ValueError("No suitable configuration found.")
 
-    _init_databases()
+    try:
+        _init_databases()
+    except couchdb.http.ServerError:
+        if not _is_initializing:
+            raise
+
     _is_initializing = False
 
 

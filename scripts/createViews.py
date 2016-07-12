@@ -15,9 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
+"""
 Create views necessary to run simcity client with.
-'''
+"""
 import simcity
 import argparse
 
