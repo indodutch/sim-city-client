@@ -54,6 +54,7 @@ class Config(object):
     def section(self, name):
         """ Get the dict of key-values of config section.
         @param name: section name. Use 'DEFAULT' for default (unnamed) section.
+        @raise KeyError: if section does not exist
         """
         values = {}
         for cfg in self.configurators:

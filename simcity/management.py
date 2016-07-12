@@ -177,7 +177,11 @@ def init(config, job_id=None):
         try:
             _config.configurators.append(FileConfig(config))
         except ValueError:
-            if not _is_initializing:
+            if _is_initializing:
+                print("WARN: no default config file found for module simcity. "
+                      "Use simcity.init(config='config.file.ini') to "
+                      "initialize on further errors.")
+            else:
                 raise
 
         try:
@@ -203,8 +207,13 @@ def init(config, job_id=None):
 
     try:
         _init_databases()
-    except couchdb.http.ServerError:
-        if not _is_initializing:
+    except (couchdb.http.HTTPError, IOError, KeyError):
+        if _is_initializing:
+            print("WARN: default simcity config does not configure a valid "
+                  "database. Call simcity.init() explicitly to initialize the "
+                  "databases.")
+            return
+        else:
             raise
 
     _is_initializing = False
