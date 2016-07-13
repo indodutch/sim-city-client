@@ -54,14 +54,16 @@ def ensemble_view(task_db, name, version, url=None, ensemble=None):
         map_fun = '''
             function(doc) {{
               if (doc.type === "task" && doc.name === "{name}" &&
-                  doc.version === "{version}" && !doc.archive &&
+                  doc.version === "{version}" && !doc.archive
                   {ensemble_condition}) {{
                 emit(doc._id, {{
                   _id: doc._id,
                   _rev: doc._rev,
                   url: "{url}" + doc._id,
-                  ensemble: doc.ensemble,
-                  simulation: doc.simulation,
+                  input: {{
+                    ensemble: doc.input.ensemble,
+                    simulation: doc.input.simulation,
+                  }},
                   error: doc.error,
                   lock: doc.lock,
                   done: doc.done,
