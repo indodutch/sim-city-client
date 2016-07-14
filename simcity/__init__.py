@@ -98,5 +98,3 @@ __all__ = [
     'ViewIterator',
     'XenonSubmitter',
 ]
-
-init(None)
