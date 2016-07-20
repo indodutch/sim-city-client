@@ -24,7 +24,6 @@ from .config import Config, FileConfig, CouchDBConfig
 from .database import CouchDB
 from .document import User
 import couchdb
-from couchdb.http import ResourceNotFound, Unauthorized
 import pystache
 import webdav.client as webdav
 try:
@@ -40,8 +39,6 @@ except KeyError:
     _current_job_id = None
 
 _config = None
-is_initialized = False
-_is_initializing = True
 _task_db = None
 _job_db = None
 _webdav = {}
@@ -49,10 +46,9 @@ _webdav = {}
 
 def _reset_globals():
     """ Set all globals to their default values. """
-    global _config, _task_db, _job_db, _webdav, is_initialized
+    global _config, _task_db, _job_db, _webdav
     global _webdav
     _config = None
-    is_initialized = False
     _task_db = None
     _job_db = None
     _webdav = {}
@@ -75,14 +71,12 @@ def set_task_database(database):
     """ Set the global SIM-CITY task database. """
     global _task_db
     _task_db = database
-    _reset_init()
 
 
 def set_job_database(database):
     """ Set the global SIM-CITY job database. """
     global _job_db
     _job_db = database
-    _reset_init()
 
 
 def get_task_database():
@@ -164,8 +158,10 @@ def init(config, job_id=None):
 
     The config is the INI file containing all needed global configuration or
     a simcity.Config object.
+
+    @raise ValueError: no config.ini was found
     """
-    global _is_initializing, _config, _current_job_id
+    global _config, _current_job_id
 
     if job_id is not None:
         _current_job_id = job_id
@@ -174,15 +170,7 @@ def init(config, job_id=None):
         _config = config
     else:
         _config = Config()
-        try:
-            _config.configurators.append(FileConfig(config))
-        except ValueError:
-            if _is_initializing:
-                print("WARN: no default config file found for module simcity. "
-                      "Use simcity.init(config='config.file.ini') to "
-                      "initialize on further errors.")
-            else:
-                raise
+        _config.configurators.append(FileConfig(config))
 
         try:
             url = os.environ['SIMCITY_CONFIG_URL']
@@ -202,21 +190,10 @@ def init(config, job_id=None):
                 print("WARN: SIM-CITY configuration database not set. "
                       "Skipping.")
 
-        if len(_config.configurators) == 0 and not _is_initializing:
+        if len(_config.configurators) == 0:
             raise ValueError("No suitable configuration found.")
 
-    try:
-        _init_databases()
-    except (couchdb.http.HTTPError, IOError, KeyError):
-        if _is_initializing:
-            print("WARN: default simcity config does not configure a valid "
-                  "database. Call simcity.init() explicitly to initialize the "
-                  "databases.")
-            return
-        else:
-            raise
-
-    _is_initializing = False
+    _init_databases()
 
 
 def create(admin_user, admin_password):
@@ -416,13 +393,9 @@ def create_views():
 
 def _init_databases():
     """ Connect to the databases defined in the configuration file. """
-    global _task_db, _job_db, is_initialized
+    global _task_db, _job_db
 
-    try:
-        _task_db = _load_database('task-db')
-    except (KeyError, IOError, ResourceNotFound, Unauthorized):
-        if not _is_initializing:
-            raise
+    _task_db = _load_database('task-db')
 
     try:
         task_cfg = _config.section('task-db')
@@ -433,22 +406,9 @@ def _init_databases():
             _job_db = _task_db
         else:
             _job_db = _load_database('job-db')
-    except (IOError, ResourceNotFound, Unauthorized):
-        if not _is_initializing:
-            raise
     except KeyError:
         # job database not explicitly configured
         _job_db = _task_db
-
-    is_initialized = True
-
-
-def _reset_init():
-    """ Check again whether simcity is properly initialized. """
-    global is_initialized
-    is_initialized = (_task_db is not None and
-                      _job_db is not None and
-                      _config is not None)
 
 
 def _load_database(name, admin_user=None, admin_password=""):
