@@ -52,6 +52,8 @@ def signal_handler(signal, frame):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run time")
+    parser.add_argument('-c', '--config', default=None,
+                        help="configuration file")
     parser.add_argument('-D', '--days', type=int, default=1,
                         help="number of days to run the task")
     parser.add_argument('-H', '--hours', type=int, default=0,
@@ -72,6 +74,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     hours = args.hours + (24 * args.days)
     arg_t = args.seconds + 60 * (args.minutes + 60 * hours)
+
+    simcity.init(config=args.config)
 
     if args.job_id is not None:
         simcity.set_current_job_id(args.job_id)

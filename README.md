@@ -55,7 +55,7 @@ This will run an executable on your local machine. To submit the same on a clust
 
 ## API
 
-The API consists of all methods exported in `__init__.py`. It assumes that a configuration file is available to set the databases and execution options with. The `simcity.init(configfile)` need only be called if the config file cannot be found at the default location.
+The API consists of all methods exported in `__init__.py`. It assumes that a configuration file is available to set the databases and execution options with. The `simcity.init(configfile)` must be called before any other `simcity` function.
 
 ## Contributing
 
