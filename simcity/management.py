@@ -171,29 +171,32 @@ def init(config, job_id=None):
     else:
         _config = Config()
         _config.configurators.append(FileConfig(config))
-
         try:
-            url = os.environ['SIMCITY_CONFIG_URL']
-            db = os.environ['SIMCITY_CONFIG_DB']
-            user = os.environ.get('SIMCITY_CONFIG_USER')
-            password = os.environ.get('SIMCITY_CONFIG_PASSWORD')
-            _config.configurators.append(CouchDBConfig.from_url(
-                url, db, user, password))
+            _config.configurators.append(load_config_database(_config))
         except KeyError:
-            try:
-                cfg = _config.section('config-db')
-                _config.configurators.append(
-                    CouchDBConfig.from_url(cfg['url'], cfg['db'],
-                                           cfg.get('user'),
-                                           cfg.get('password')))
-            except KeyError:
-                print("WARN: SIM-CITY configuration database not set. "
-                      "Skipping.")
-
-        if len(_config.configurators) == 0:
-            raise ValueError("No suitable configuration found.")
+            print("WARN: SIM-CITY configuration database not set. "
+                  "Skipping.")
 
     _init_databases()
+
+
+def load_config_database(config):
+    """
+    Load configuration database
+
+    @raise KeyError: the database is not fully configured
+    """
+    try:
+        url = os.environ['SIMCITY_CONFIG_URL']
+        db = os.environ['SIMCITY_CONFIG_DB']
+        user = os.environ.get('SIMCITY_CONFIG_USER')
+        password = os.environ.get('SIMCITY_CONFIG_PASSWORD')
+        return CouchDBConfig.from_url(
+            url, db, user, password)
+    except KeyError:
+        cfg = config.section('config-db')
+        return CouchDBConfig.from_url(cfg['url'], cfg['db'],
+                                      cfg.get('user'), cfg.get('password'))
 
 
 def create(admin_user, admin_password):

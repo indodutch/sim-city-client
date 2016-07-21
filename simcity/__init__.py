@@ -33,7 +33,8 @@ from .job import (get_job, start_job, queue_job, finish_job, archive_job,
 from .integration import overview_total, run_task
 from .management import (get_config, init, get_task_database, get_job_database,
                          get_current_job_id, set_current_job_id,
-                         create, create_views, uses_webdav, get_webdav)
+                         create, create_views, uses_webdav, get_webdav,
+                         load_config_database)
 from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
                      SSHSubmitter, XenonSubmitter)
 from .task import (add_task, get_task, delete_task, scrub_tasks,
@@ -73,6 +74,7 @@ __all__ = [
     'init',
     'Job',
     'JobActor',
+    'load_config_database',
     'OsmiumSubmitter',
     'overview_total',
     'parse_parameters',
