@@ -123,35 +123,35 @@ class Document(couchdb.Document):
 
 class User(Document):
     """ CouchDB user """
-    def __init__(self, username, password, roles=[], data={}):
+    def __init__(self, username, password, roles=None, data=None):
         super(User, self).__init__(
-            data=data,
+            data=data if data is not None else {},
             base={
                 '_id': 'org.couchdb.user:{0}'.format(username),
                 'name': username,
                 'type': 'user',
                 'password': password,
-                'roles': roles,
+                'roles': roles if roles is not None else [],
             })
 
 
 class Task(Document):
     """ Class to manage task modifications with. """
 
-    __BASE = {
-        'type': 'task',
-        'lock': 0,
-        'done': 0,
-        'hostname': '',
-        'scrub_count': 0,
-        'input': {},
-        'output': {},
-        'uploads': {},
-        'error': [],
-    }
-
-    def __init__(self, task={}):
-        super(Task, self).__init__(task, Task.__BASE)
+    def __init__(self, task=None):
+        super(Task, self).__init__(
+            data=task,
+            base={
+                'type': 'task',
+                'lock': 0,
+                'done': 0,
+                'hostname': '',
+                'scrub_count': 0,
+                'input': {},
+                'output': {},
+                'uploads': {},
+                'error': [],
+            })
         if self.id is None:
             self['_id'] = 'task_' + uuid4().hex
 
@@ -207,9 +207,7 @@ class Task(Document):
         Task scrubber: makes sure a task can be handed out again if it was
         locked more than t seconds ago.
         """
-        if 'scrub_count' not in self:
-            self['scrub_count'] = 0
-        self['scrub_count'] += 1
+        self['scrub_count'] = 1 + self.setdefault('scrub_count', 0)
         self['done'] = 0
         self['lock'] = 0
         return self._update_hostname()
@@ -225,9 +223,7 @@ class Task(Document):
 
         self['lock'] = -1
         self['done'] = -1
-        if 'error' not in self:
-            self['error'] = []
-        self['error'].append(error)
+        self.setdefault('error', []).append(error)
         return self
 
     def has_error(self):
@@ -236,10 +232,7 @@ class Task(Document):
 
     def get_errors(self):
         """ Get the list of errors. """
-        try:
-            return self['error']
-        except KeyError:
-            return []
+        return self.setdefault('error', [])
 
     def is_done(self):
         """ Whether the task successfully finished. """
@@ -248,18 +241,18 @@ class Task(Document):
 
 class Job(Document):
     """ Class to manage a CouchDB job entry. """
-    __BASE = {
-        'type': 'job',
-        'hostname': '',
-        'start': 0,
-        'done': 0,
-        'queue': 0,
-        'method': '',
-        'archive': 0,
-    }
-
     def __init__(self, job):
-        super(Job, self).__init__(job, Job.__BASE)
+        super(Job, self).__init__(
+            data=job,
+            base={
+                'type': 'job',
+                'hostname': '',
+                'start': 0,
+                'done': 0,
+                'queue': 0,
+                'method': '',
+                'archive': 0,
+            })
         if self.id is None:
             raise ValueError('Job ID must be set')
 
