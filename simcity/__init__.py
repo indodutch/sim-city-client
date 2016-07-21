@@ -45,6 +45,7 @@ from .database import CouchDB
 from .iterator import (TaskViewIterator, EndlessViewIterator,
                        PrioritizedViewIterator)
 from .util import parse_parameters
+from .version import __version__, __version_info__
 
 __all__ = [
     'add_task',
@@ -97,4 +98,6 @@ __all__ = [
     'uses_webdav',
     'ViewIterator',
     'XenonSubmitter',
+    '__version__',
+    '__version_info__',
 ]
