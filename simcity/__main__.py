@@ -290,7 +290,7 @@ def run(args):
     if args.job_id is not None:
         simcity.set_current_job_id(args.job_id)
     elif args.local:
-        simcity.set_current_job_id('local-' + uuid4.hex())
+        simcity.set_current_job_id('local-' + uuid4().hex)
 
     db = simcity.get_task_database()
 
