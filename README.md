@@ -23,35 +23,47 @@ Then before every run or installation, include the `simcity` virtualenv:
 
 Simply run
 
-    pip install .
+    pip install -U .
 
 Copy the `config.ini.dist` file to `config.ini` or to `~/.simcity_client`. See the comments therein for more information. Set the correct values for the CouchDB database and if you intend to run jobs on this location also set the executable settings. There are two CouchDB database sections, one for the jobs and one for the tasks. If these are the same, you can remove the jobs database section. If you anticipate large output files, you can configure a webdav url that the files can be stored on.
 
 ## Usage
 
-**Run a script** on a cluster:
+All scripts are available with the `simcity` command. Run `simcity --help` and
+`simcity [SUBCOMMAND] --help` to see the options.
 
-    $ python scripts/submitJob.py 'path/to/job/on/cluster' cluster
+**Create the CouchDB database and views** by running
 
-The cluster can be configured in the config.ini file, as a section [$CLUSTER_NAME-host].
+    simcity init [CouchDB admin username]
 
-**Load tasks** to your database: 
+If the database already exists, only create the necessary views with
 
-	$ python scripts/createTasks.py COMMAND TOKEN_ID
+    simcity init --view
 
-The TOKEN_ID must be unique. Refresh the database to see the tasks.
+**Create a new task or simulation** by first creating the input parameters in
+`input.json`:
 
-**Create basic views** (todo, locked, done, error, overview):
+```json
+{
+    "x": 1,
+    "y": 2,
+    "simulation": "2d-game",
+    "ensemble": "first-exploration"
+}
+```
+and creating the task
 
-	$ python scripts/createViews.py
+    simcity create -i input.json 'path/to/2d-game.sh' arg1 arg2
 
-Refresh the database to see the views. Unfold top right tab 'View:All documents' to inspect each view.
+**Run the simulation locally** with
 
-**Run the client** to process tokens in the database:
-   
-	$ python scripts/run.py
+    simcity run --local 
 
-This will run an executable on your local machine. To submit the same on a cluster, you need to add the 'python run.py' command for example in a shell script and submit this with qsub. See for example `scripts/lisaSubmitExpress.sh`.
+**Run the simulation on the cluster** by installing SIM-CITY client there with the same configuration as locally. Then locally add the cluster configuration in `config.ini`, as a section `[CLUSTER_NAME-host]` (see `config.ini.dist` for some examples. This requires a script on that cluster that will start `simcity run -Pe` in the correct virtualenv. See for example `scripts/lisaRun.sh` for a script to submit with `method = xenon`.
+
+Then run the following to submit a job to the cluster:
+
+    simcity submit CLUSTER_NAME
 
 ## API
 
