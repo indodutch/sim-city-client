@@ -26,7 +26,6 @@ try:
 except ImportError:
     from distutils.core import setup
 
-
 setup(name='simcity',
       version='0.3.4',
       description='Python SIM-CITY client using CouchDB as a task pool '
@@ -56,5 +55,10 @@ setup(name='simcity',
                         'jsonschema'],
       extras_require={
           'testing': ['nose', 'flake8', 'coverage'],
+      },
+      entry_points={
+          'console_scripts': [
+              'simcity = simcity.__main__:main'
+          ]
       },
       )
