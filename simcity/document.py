@@ -48,6 +48,7 @@ class Document(couchdb.Document):
 
     @property
     def value(self):
+        """ DEPRECATED. Returns itself."""
         return self
 
     def put_attachment(self, name, data, mimetype=None):

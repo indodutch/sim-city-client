@@ -421,7 +421,7 @@ def _load_database(name, admin_user=None, admin_password=""):
     will be created. """
     cfg = _config.section(name)
 
-    if ('no_database' in cfg and cfg['no_database']):
+    if get_truthy(cfg.get('no_database', False)):
         return None
     try:
         if admin_user is None:

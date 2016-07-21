@@ -219,9 +219,9 @@ class SSHSubmitter(Submitter):
 
 
 class XenonSubmitter(Submitter):
+    """ Submits job using Xenon. """
     xenon_init = False
 
-    """ Submits job using Xenon. """
     def __init__(self, database, host, prefix, jobdir, max_time=1440):
         super(XenonSubmitter, self).__init__(database, host, prefix, jobdir,
                                              "xenon")
