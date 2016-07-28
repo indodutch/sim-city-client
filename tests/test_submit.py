@@ -34,12 +34,12 @@ class MockSubmitter(simcity.Submitter):
             return MockSubmitter.BATCH_ID
 
 
-def _set_database(locked, todo, active, pending):
+def _set_database(in_progress, pending, running, pending_jobs):
     db = MockDB(view=[
-        MockRow('active_jobs', active),
-        MockRow('pending_jobs', pending),
-        MockRow('todo', todo),
-        MockRow('locked', locked),
+        MockRow('running_jobs', running),
+        MockRow('pending_jobs', pending_jobs),
+        MockRow('pending', pending),
+        MockRow('in_progress', in_progress),
     ])
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)

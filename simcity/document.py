@@ -157,7 +157,7 @@ class Task(Document):
             self['_id'] = 'task_' + uuid4().hex
 
     def lock(self):
-        """Function which modifies the task such that it is locked.
+        """Function which modifies the task such that it is in progress.
         """
         self['lock'] = seconds()
         return self._update_hostname()
@@ -206,7 +206,7 @@ class Task(Document):
     def scrub(self):
         """
         Task scrubber: makes sure a task can be handed out again if it was
-        locked more than t seconds ago.
+        in progress more than t seconds ago.
         """
         self['scrub_count'] = 1 + self.setdefault('scrub_count', 0)
         self['done'] = 0

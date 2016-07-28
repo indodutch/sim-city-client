@@ -41,8 +41,8 @@ def submit_if_needed(hostname, max_jobs, submitter=None):
 
     num = simcity.overview_total()
 
-    num_jobs = num['active_jobs'] + num['pending_jobs']
-    num_tasks = num['todo'] + num['locked']
+    num_jobs = num['running_jobs'] + num['pending_jobs']
+    num_tasks = num['pending'] + num['in_progress']
     if num_jobs < min(num_tasks, max_jobs):
         return submit(hostname, submitter)
     else:
@@ -245,7 +245,6 @@ class XenonSubmitter(Submitter):
         else:
             self.xenon_properties = None
             self.scheduler_properties = None
-
 
     @classmethod
     def init(cls, log_level='INFO'):

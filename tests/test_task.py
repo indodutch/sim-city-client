@@ -160,7 +160,7 @@ def test_scrub_task():
     db.viewList = [MockRow(task.id, task, task.id)]
     assert_equal(0, len(db.saved))
 
-    simcity.scrub_tasks('locked', age=0)
+    simcity.scrub_tasks('in_progress', age=0)
     assert_equal(1, len(db.saved))
     task_id, task = db.saved.popitem()
     assert_equal(0, task['lock'])
@@ -171,7 +171,7 @@ def test_scrub_old_task_none():
     task.lock()
     assert_equal(0, len(db.saved))
     db.viewList = [MockRow(task.id, task, task.id)]
-    simcity.scrub_tasks('locked', age=2)
+    simcity.scrub_tasks('in_progress', age=2)
     assert_equal(0, len(db.saved))
 
 
@@ -184,7 +184,7 @@ def test_scrub_old_task():
     db.viewList = [MockRow(task.id, task, task.id)]
     assert_equal(0, len(db.saved))
 
-    simcity.scrub_tasks('locked', age=2)
+    simcity.scrub_tasks('in_progress', age=2)
     assert_equal(1, len(db.saved))
     old_task_id = task.id
     task_id, task = db.saved.popitem()

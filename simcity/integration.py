@@ -56,8 +56,8 @@ def overview_total():
 
     Returns a dict with the numbers of each type of job and task.
     """
-    views = ['todo', 'locked', 'error', 'done',
-             'finished_jobs', 'active_jobs', 'pending_jobs']
+    views = ['pending', 'in_progress', 'error', 'done',
+             'finished_jobs', 'running_jobs', 'pending_jobs']
     num = dict((view, 0) for view in views)
 
     for view in get_task_database().view('overview_total', group=True):

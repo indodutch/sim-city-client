@@ -163,7 +163,7 @@ def scrub_jobs(view, age=24*60*60, database=None):
 
     Parameters
     ----------
-    view : one of (pending_jobs, active_jobs, finished_jobs)
+    view : one of (pending_jobs, running_jobs, finished_jobs)
         View to scrub jobs from
     age : int
         select jobs started at least this number of seconds ago. Set to at most
@@ -176,7 +176,7 @@ def scrub_jobs(view, age=24*60*60, database=None):
     A tuple with (the number of documents updated,
                   total number of documents in given view)
     """
-    views = ['pending_jobs', 'active_jobs', 'finished_jobs']
+    views = ['pending_jobs', 'running_jobs', 'finished_jobs']
     if view not in views:
         raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
 
