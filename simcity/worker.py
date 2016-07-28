@@ -128,6 +128,7 @@ class ExecuteWorker(Worker):
                 else:
                     command.append(arg)
 
+        dirs.update(os.environ)
         task['execute_properties'] = {'env': dirs}
 
         out_file = os.path.join(dirs['SIMCITY_OUT'], 'stdout.txt')
