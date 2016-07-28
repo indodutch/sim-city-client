@@ -150,6 +150,9 @@ def main():
         '-m', '--max', type=int, default=2,
         help="only run if there are less than MAX jobs running "
              "(default: %(default)s)")
+    submit_parser.add_argument(
+        '-f', '--force', action='store_true',
+        help="also start if there are more that MAX jobs running")
     submit_parser.set_defaults(func=submit)
 
     args = parser.parse_args()
@@ -356,7 +359,10 @@ def submit(args):
     """ Submit job to the infrastructure """
     simcity.init(config=args.config)
 
-    job = simcity.submit_if_needed(args.host, args.max)
+    if args.force:
+        job = simcity.submit(args.host)
+    else:
+        job = simcity.submit_if_needed(args.host, args.max)
     if job is None:
         print("No tasks to process or already %d jobs running (increase "
               "maximum number of jobs with -m)" % args.max)
