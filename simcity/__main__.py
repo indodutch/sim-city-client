@@ -49,7 +49,11 @@ def main():
                         version='%(prog)s {0}\\nPython version {1}'
                         .format(simcity.__version__, sys.version))
 
-    subparsers = parser.add_subparsers(help='sub-commands')
+    subparsers = parser.add_subparsers()
+
+    cancel_parser = subparsers.add_parser('cancel', help="Cancel running job")
+    cancel_parser.add_argument('job_id', help="JOB ID to cancel")
+    cancel_parser.set_defaults(func=cancel)
 
     create_parser = subparsers.add_parser(
         'create', help="create new tasks in the database")
@@ -64,6 +68,7 @@ def main():
              "available. (default: %(default)s)", )
     create_parser.add_argument(
         '-i', '--input', help="input json file")
+    create_parser.set_defaults(func=create)
 
     delete_parser = subparsers.add_parser(
         'delete', help="Remove all documents in a view")
@@ -72,6 +77,7 @@ def main():
         .format(task_views | job_views))
     delete_parser.add_argument(
         '-d', '--design', help="design document in CouchDB", default='Monitor')
+    delete_parser.set_defaults(func=delete)
 
     init_parser = subparsers.add_parser(
         'init', help="Initialize the SIM-CITY databases and views as "
@@ -83,6 +89,7 @@ def main():
         help="ONLY set the database views")
     init_parser.add_argument(
         '-u', '--user', help="admin user")
+    init_parser.set_defaults(func=init)
 
     run_parser = subparsers.add_parser('run', help="Execute tasks")
     run_parser.add_argument('-D', '--days', type=int, default=1,
@@ -113,9 +120,7 @@ def main():
     run_parser.add_argument('-P', '--prioritize', action="store_true",
                             help="prioritize tasks")
     run_parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
-
-    cancel_parser = subparsers.add_parser('cancel', help="Cancel running job")
-    cancel_parser.add_argument('job_id', help="JOB ID to cancel")
+    run_parser.set_defaults(func=run)
 
     scrub_parser = subparsers.add_parser(
         'scrub', help="Make old locked tasks available for processing again")
@@ -136,15 +141,16 @@ def main():
     scrub_parser.add_argument('view', default='locked',
                               help="view to scrub (default: %(default)s)",
                               choices=scrub_task_views | scrub_job_views)
+    scrub_parser.set_defaults(func=scrub)
 
     submit_parser = subparsers.add_parser('submit', help="start a job")
     submit_parser.add_argument('host', help="host to run pilot job on")
-    submit_parser.add_argument('command', help="command to run")
     submit_parser.add_argument('args', nargs='*', help="command arguments")
     submit_parser.add_argument(
         '-m', '--max', type=int, default=2,
         help="only run if there are less than MAX jobs running "
              "(default: %(default)s)")
+    submit_parser.set_defaults(func=submit)
 
     args = parser.parse_args()
     args.func(args)
