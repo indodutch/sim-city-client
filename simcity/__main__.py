@@ -322,7 +322,7 @@ def run(args):
     print("Connected to the database sucessfully. Now starting work...")
     try:
         actor.run(maxtime=_time_args_to_seconds(args),
-                  avg_time_factor=args.factor)
+                  avg_time_factor=args.margin)
     except Exception as ex:
         print("Error occurred: %s: %s" % (str(type(ex)), str(ex)),
               file=sys.stderr)
