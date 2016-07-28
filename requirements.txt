@@ -1,8 +1,15 @@
-argcomplete==1.3.0
+argcomplete==1.4.1
 CouchDB==1.0.1
+coverage==4.2
+flake8==3.0.2
+JPype1==0.6.1
 jsonschema==2.5.1
-lxml==3.6.0
+lxml==3.6.1
+mccabe==0.5.1
+nose==1.3.7
+pycodestyle==2.0.0
 pycurl==7.43.0
+pyflakes==1.2.3
 pystache==0.5.4
 pyxenon==0.2.1
 webdavclient==1.0.5
