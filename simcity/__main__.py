@@ -124,7 +124,7 @@ def main():
 
     scrub_parser = subparsers.add_parser(
         'scrub', help="Make old locked tasks available for processing again")
-    scrub_task_views = task_views - frozenset(['done'])
+    scrub_task_views = task_views - frozenset(['done']) + frozenset(['error'])
     scrub_job_views = job_views - frozenset(['archived_jobs'])
     scrub_parser.add_argument('-D', '--days', type=int, default=0,
                               help="number of days ago the task was locked "
