@@ -246,7 +246,6 @@ class XenonSubmitter(Submitter):
             self.xenon_properties = None
             self.scheduler_properties = None
 
-
     @classmethod
     def init(cls, log_level='INFO'):
         """ Initialize Xenon. The method is a no-op after the first call. """

@@ -16,15 +16,15 @@
 
 """ Run flake8 tests on all Python files """
 
-from flake8.main import check_file
+from flake8.api import legacy as flake8
 import os
 
 
 def test_flake8():
     """ Syntax and style check with flake8. """
-    for test in flake8(directories=['tests', 'scripts', 'simcity'],
-                       files=['setup.py']):
-        yield test
+    for test in apply_flake8(directories=['tests', 'scripts', 'simcity'],
+                             files=['setup.py']):
+q        yield test
 
 
 def assert_zero(func, *args):
@@ -32,15 +32,22 @@ def assert_zero(func, *args):
     assert func(*args) == 0
 
 
-def flake8(directories=(), files=()):
+def apply_flake8(directories=(), files=()):
     """ Yield tests where flake8 runs recursively over given files and
     directories. """
     for directory in directories:
         for path, dirs, file_names in os.walk(directory):
-            for file_name in file_names:
-                if file_name.endswith('.py'):
-                    yield assert_zero, check_file, os.path.join(path,
-                                                                file_name)
+            yield assert_zero, check_file_flake8, [
+                os.path.join(os.path.abspath(path), file_name)
+                for file_name in file_names
+                if file_name.endswith('.py')
+            ]
 
-    for file_name in files:
-        yield assert_zero, check_file, file_name
+    yield assert_zero, check_file_flake8, [os.path.abspath(f) for f in files]
+
+
+def check_file_flake8(paths):
+    if len(paths) > 0:
+        return flake8.get_style_guide().check_files(paths).total_errors
+    else:
+        return 0
