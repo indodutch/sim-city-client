@@ -261,6 +261,7 @@ class XenonSubmitter(Submitter):
                 jobs = x.jobs()
                 desc = xenon.jobs.JobDescription()
                 desc.addEnvironment('SIMCITY_JOBID', job.id)
+                desc.setMaxTime(self.max_time)
                 desc.setWorkingDirectory(self.jobdir)
                 urlsplit = self.host.split('://')
                 if len(urlsplit) != 2:
