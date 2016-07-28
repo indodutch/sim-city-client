@@ -15,9 +15,9 @@
 # limitations under the License.
 """ Configurators for the SIM-CITY client. """
 try:
-    from ConfigParser import ConfigParser, NoSectionError
+    from ConfigParser import RawConfigParser, NoSectionError
 except ImportError:
-    from configparser import ConfigParser, NoSectionError
+    from configparser import RawConfigParser, NoSectionError
 
 from .util import expandfilenames
 from .database import CouchDB
@@ -96,7 +96,7 @@ class FileConfig(object):
         if filenames is None:
             filenames = FileConfig.DEFAULT_FILENAMES
 
-        self.parser = ConfigParser()
+        self.parser = RawConfigParser()
         self.filename = self.parser.read(expandfilenames(filenames))
         if len(self.filename) == 0:
             raise ValueError(
