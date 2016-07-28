@@ -24,7 +24,7 @@ def test_flake8():
     """ Syntax and style check with flake8. """
     for test in apply_flake8(directories=['tests', 'scripts', 'simcity'],
                              files=['setup.py']):
-q        yield test
+        yield test
 
 
 def assert_zero(func, *args):
