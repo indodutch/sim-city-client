@@ -21,6 +21,7 @@ from .document import Job
 import simcity
 import json
 import xenon
+from xenon.conversions import dict_to_HashMap
 
 try:
     from httplib import HTTPConnection
@@ -84,7 +85,8 @@ def submit(hostname, submitter=None):
                     host=host_cfg['host'],
                     jobdir=host_cfg['path'],
                     prefix=hostname + '-',
-                    max_time=host_cfg.get('max_time', 1440))
+                    max_time=host_cfg.get('max_time', 1440),
+                    properties=host_cfg)
             else:
                 raise EnvironmentError('Connection method for %s unknown' %
                                        hostname)
@@ -222,11 +224,28 @@ class XenonSubmitter(Submitter):
     """ Submits job using Xenon. """
     xenon_init = False
 
-    def __init__(self, database, host, prefix, jobdir, max_time=1440):
+    def __init__(self, database, host, prefix, jobdir, max_time=1440,
+                 properties=None):
         super(XenonSubmitter, self).__init__(database, host, prefix, jobdir,
                                              "xenon")
         XenonSubmitter.init()
         self.max_time = max_time
+        if properties is not None:
+            self.xenon_properties = dict_to_HashMap({
+                key[len('xenon-property-'):]: value
+                for key, value in properties.items()
+                if key.startswith('xenon-property-')
+            })
+
+            self.scheduler_properties = dict_to_HashMap({
+                key[len('scheduler-property-'):]: value
+                for key, value in properties.items()
+                if key.startswith('scheduler-property-')
+            })
+        else:
+            self.xenon_properties = None
+            self.scheduler_properties = None
+
 
     @classmethod
     def init(cls, log_level='INFO'):
@@ -237,7 +256,7 @@ class XenonSubmitter(Submitter):
 
     def _do_submit(self, job, command):
         """ Submit a command with given job metadata. """
-        with xenon.Xenon() as x:
+        with xenon.Xenon(self.xenon_properties) as x:
             try:
                 jobs = x.jobs()
                 desc = xenon.jobs.JobDescription()
@@ -248,10 +267,12 @@ class XenonSubmitter(Submitter):
                     raise ValueError("host must contain a scheme and a "
                                      "hostname, syntax `scheme://host`.")
                 scheme, hostname = urlsplit
-                scheduler = jobs.newScheduler(scheme, hostname, None, None)
+                scheduler = jobs.newScheduler(scheme, hostname, None,
+                                              self.scheduler_properties)
+                desc.setStdout("stdout_" + job.id + ".txt")
+                desc.setStderr("stderr_" + job.id + ".txt")
+
                 if scheduler.isOnline():
-                    desc.setStdout(self.jobdir + "/stdout_" + job.id + ".txt")
-                    desc.setStderr(self.jobdir + "/stderr_" + job.id + ".txt")
                     desc.setExecutable("/bin/sh")
                     if len(command) == 1:
                         command_str = "'{0}'".format(command[0])
