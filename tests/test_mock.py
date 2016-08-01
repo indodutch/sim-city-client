@@ -146,6 +146,6 @@ def setup_mock_directories():
         'input_dir': os.path.join(temp_dir, 'in_alala'),
     }
     for sim_dir in config.values():
-        shutil.rmtree(sim_dir)
+        shutil.rmtree(sim_dir, ignore_errors=True)
         os.makedirs(sim_dir)
     return config
