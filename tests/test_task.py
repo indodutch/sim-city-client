@@ -15,6 +15,7 @@
 # limitations under the License.
 
 from nose.tools import assert_equal, assert_true, assert_not_equal
+import unittest
 from test_mock import MockDB, MockDAV, MockRow
 import simcity
 from simcity.util import seconds
@@ -103,6 +104,7 @@ def test_upload_attachment_webdav():
     assert_equal(b'ab', dav.files[dav_path])
 
 
+@unittest.skip("Uses the requests library, have not found a good way to test")
 def test_download_attachment_webdav():
     task, dirname, filename, dav, dav_path = _upload_attachment(use_dav=True)
 

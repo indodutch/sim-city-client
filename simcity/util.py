@@ -23,6 +23,7 @@ from numbers import Number
 import time
 from copy import deepcopy
 import jsonschema
+import requests
 
 
 def parse_parameters(parameters, schema):
@@ -133,3 +134,13 @@ def copyglob(srcglob, dstdir, prefix=""):
     for src in glob.glob(expandfilename(srcglob)):
         _, fname = os.path.split(src)
         shutil.copyfile(src, os.path.join(dstdir, prefix + fname))
+
+
+def download_file(url, file_path, auth=None):
+    # NOTE the stream=True parameter
+    r = requests.get(url, stream=True, auth=auth)
+    with open(file_path, 'wb') as f:
+        # read in 1 MB chunk, should be fast enough
+        for chunk in r.iter_content(chunk_size=1024*1024):
+            if chunk:  # filter out keep-alive new chunks
+                f.write(chunk)

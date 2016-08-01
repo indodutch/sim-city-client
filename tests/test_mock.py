@@ -139,7 +139,7 @@ class MockDB(object):
 
 
 def setup_mock_directories():
-    temp_dir = tempfile.gettempdir()
+    temp_dir = tempfile.mkdtemp()
     config = {
         'tmp_dir': os.path.join(temp_dir, 'tmp_alala'),
         'output_dir': os.path.join(temp_dir, 'out_alala'),

@@ -17,7 +17,8 @@
 """ Create and update tasks. """
 
 from .document import Task
-from .management import get_task_database, get_webdav
+from .management import get_task_database, get_webdav, get_config
+from .util import download_file
 import time
 import os
 import webdav
@@ -160,10 +161,19 @@ def upload_attachment(task, directory, filename, content_type=None):
 def download_attachment(task, directory, filename, task_db=None):
     """ Uploads an attachment from the configured file storage layer. """
     if filename in task.files:
-        dav = get_webdav()
-        path = _webdav_url_to_path(task.files[filename]['url'], dav)
-        dav.download_sync(remote_path=path,
-                          local_path=os.path.join(directory, filename))
+        url = task.files[filename]['url']
+        try:
+            dav_config = get_config().section('webdav')
+            if 'username' in dav_config:
+                auth = (dav_config['username'], dav_config['password'])
+            else:
+                auth = None
+        except KeyError:
+            raise EnvironmentError('webdav for {0} not configured'.format(url))
+        if not url.startswith(dav_config['url']):
+            raise EnvironmentError('webdav for {0} not configured'.format(url))
+
+        download_file(url, os.path.join(directory, filename), auth)
     else:
         if task_db is None:
             task_db = get_task_database()
