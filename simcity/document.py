@@ -150,7 +150,7 @@ class Task(Document):
                 'scrub_count': 0,
                 'input': {},
                 'output': {},
-                'uploads': {},
+                'files': {},
                 'error': [],
             })
         if self.id is None:
@@ -193,17 +193,17 @@ class Task(Document):
         self['output'] = output
 
     @property
-    def uploads(self):
+    def files(self):
         """ Associated files that were uploaded. """
-        return self.setdefault('uploads', {})
+        return self.setdefault('files', {})
 
-    @uploads.setter
-    def uploads(self, uploads):
-        self['uploads'] = uploads
+    @files.setter
+    def files(self, files):
+        self['files'] = files
 
     def list_files(self):
         """ All attachment names associated to a task. """
-        return list(self.uploads.keys()) + list(self.attachments.keys())
+        return list(self.files.keys()) + list(self.attachments.keys())
 
     def scrub(self):
         """

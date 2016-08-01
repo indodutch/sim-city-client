@@ -53,10 +53,10 @@ def delete_task(task, database=None):
 
     database.delete(task)
 
-    if len(task.uploads) > 0:
-        # Not a for loop, since task.uploads is modified in delete_attachment.
-        while len(task.uploads) > 0:
-            filename = next(iter(task.uploads.keys()))
+    if len(task.files) > 0:
+        # Not a for loop, since task.files is modified in delete_attachment.
+        while len(task.files) > 0:
+            filename = next(iter(task.files.keys()))
             delete_attachment(task, filename)
 
         dav = get_webdav()
@@ -118,18 +118,19 @@ def upload_attachment(task, directory, filename, mimetype=None):
             task.put_attachment(filename, f.read(), mimetype)
     else:
         path, task_dir, id_hash = _webdav_id_to_path(task.id, filename)
-        if len(task.uploads) == 0:
+        if len(task.files) == 0:
             # an exists() call may be expensive, only use it once if
             # possible
             dav.mkdir(id_hash)
             dav.mkdir(task_dir)
-
         try:
-            dav.upload_sync(remote_path=path,
-                            local_path=os.path.abspath(
-                                os.path.join(directory, filename)))
+            file_path = os.path.abspath(os.path.join(directory, filename))
+            dav.upload_sync(remote_path=path, local_path=file_path)
 
-            task.uploads[filename] = _webdav_path_to_url(dav, path)
+            task.files[filename] = {
+                'url': _webdav_path_to_url(dav, path),
+                'length': os.stat(file_path).st_size,
+            }
         except IOError as ex:
             print(
                 'WARNING: attachment {0} could not be uploaded to webdav: {1}'
@@ -140,9 +141,9 @@ def upload_attachment(task, directory, filename, mimetype=None):
 
 def download_attachment(task, directory, filename, task_db=None):
     """ Uploads an attachment from the configured file storage layer. """
-    if filename in task.uploads:
+    if filename in task.files:
         dav = get_webdav()
-        path = _webdav_url_to_path(task.uploads[filename], dav)
+        path = _webdav_url_to_path(task.files[filename]['url'], dav)
         dav.download_sync(remote_path=path,
                           local_path=os.path.join(directory, filename))
     else:
@@ -155,11 +156,11 @@ def download_attachment(task, directory, filename, task_db=None):
 
 def delete_attachment(task, filename):
     """ Deletes an attachment from the configured file storage layer. """
-    if filename in task.uploads:
+    if filename in task.files:
         dav = get_webdav()
-        path = _webdav_url_to_path(task.uploads[filename], dav)
+        path = _webdav_url_to_path(task.files[filename]['url'], dav)
         dav.clean(path)
-        del task.uploads[filename]
+        del task.files[filename]
     else:
         task.delete_attachment(filename)
 
