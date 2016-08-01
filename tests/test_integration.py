@@ -24,7 +24,7 @@ from test_mock import MockDB, MockRow
 def test_overview():
     simcity.management._reset_globals()
     db = MockDB(view=[MockRow('done', 1),
-                      MockRow('todo', 3),
+                      MockRow('pending', 3),
                       MockRow('finished_jobs', 2)])
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)
@@ -38,7 +38,7 @@ def test_run():
     simcity.management._reset_globals()
     task_db = MockDB()
     simcity.management.set_task_database(task_db)
-    job_db = MockDB(view=[MockRow('active_jobs', 1)])
+    job_db = MockDB(view=[MockRow('running_jobs', 1)])
     simcity.management.set_job_database(job_db)
 
     task, job = simcity.run_task({'key': 'value'}, 'myhost', 1)

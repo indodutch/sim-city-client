@@ -357,16 +357,17 @@ def create_views():
     '''
 
     tasks = {
-        'todo':     'doc.lock === 0',
-        'todo_priority': 'doc.lock === 0 && doc.priority === "high"',
-        'locked':   'doc.lock > 0 && doc.done === 0',
+        'pending':     'doc.lock === 0',
+        'pending_priority': 'doc.lock === 0 && doc.priority === "high"',
+        'in_progress':   'doc.lock > 0 && doc.done === 0',
         'done':     'doc.lock > 0 && doc.done > 0'
     }
     jobs = {
         'pending_jobs':  'doc.start === 0 && doc.archive === 0',
-        'active_jobs':  'doc.start > 0 && doc.done == 0 && doc.archive === 0',
+        'running_jobs':  'doc.start > 0 && doc.done == 0 && doc.archive === 0',
         'finished_jobs': 'doc.done > 0',
-        'archived_jobs': 'doc.archive > 0'
+        'archived_jobs': 'doc.archive > 0',
+        'active_jobs': '!doc.archive'
     }
     pystache_views = {
         'tasks': [{'name': view, 'condition': condition}

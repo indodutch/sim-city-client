@@ -73,7 +73,7 @@ def scrub_tasks(view, age=24 * 60 * 60, database=None):
 
     Parameters
     ----------
-    view : one of (locked, error)
+    view : one of (in_progress, error)
         View to scrub tasks from
     age : int
         select tasks started at least this number of seconds ago. Set to at
@@ -87,7 +87,7 @@ def scrub_tasks(view, age=24 * 60 * 60, database=None):
     A tuple with (the number of documents updated,
                   total number of documents in given view)
     """
-    views = ['locked', 'error']
+    views = ['in_progress', 'error']
     if view not in views:
         raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
 

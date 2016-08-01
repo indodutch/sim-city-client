@@ -32,9 +32,9 @@ import signal
 import traceback
 from uuid import uuid4
 
-task_views = frozenset(['todo', 'done', 'locked', 'error'])
-job_views = frozenset(['pending_jobs', 'active_jobs', 'finished_jobs',
-                       'archived_jobs'])
+task_views = frozenset(['pending', 'done', 'in_progress', 'error'])
+job_views = frozenset(['pending_jobs', 'running_jobs', 'finished_jobs',
+                       'archived_jobs', 'active_jobs'])
 
 
 def main():
@@ -122,23 +122,24 @@ def main():
     run_parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
     run_parser.set_defaults(func=run)
 
-    scrub_parser = subparsers.add_parser(
-        'scrub', help="Make old locked tasks available for processing again")
+    scrub_parser = subparsers.add_parser('scrub',
+                                         help="Make old in progress tasks"
+                                         "available for processing again")
     scrub_task_views = task_views - frozenset(['done'])
     scrub_job_views = job_views - frozenset(['archived_jobs'])
     scrub_parser.add_argument('-D', '--days', type=int, default=0,
-                              help="number of days ago the task was locked "
-                                   "(default: %(default)s)")
+                              help="number of days ago the task was in "
+                                   "progress (default: %(default)s)")
     scrub_parser.add_argument('-H', '--hours', type=int, default=0,
-                              help="number of hours ago the task was locked "
-                                   "(default: %(default)s)")
+                              help="number of hours ago the task was in "
+                                   "progress (default: %(default)s)")
     scrub_parser.add_argument('-M', '--minutes', type=int, default=0,
-                              help="number of minutes ago the task was locked "
-                                   "(default: %(default)s)")
+                              help="number of minutes ago the task was in "
+                                   "progress (default: %(default)s)")
     scrub_parser.add_argument('-S', '--seconds', type=int, default=0,
-                              help="number of seconds ago the task was locked "
-                                   "(default: %(default)s)")
-    scrub_parser.add_argument('view', default='locked',
+                              help="number of seconds ago the task was in "
+                                   "progress (default: %(default)s)")
+    scrub_parser.add_argument('view', default='in_progress',
                               help="view to scrub (default: %(default)s)",
                               choices=scrub_task_views | scrub_job_views)
     scrub_parser.set_defaults(func=scrub)
@@ -306,9 +307,10 @@ def run(args):
     db = simcity.get_task_database()
 
     if args.prioritize:
-        iterator = PrioritizedViewIterator(job_id, db, 'todo_priority', 'todo')
+        iterator = PrioritizedViewIterator(job_id, db, 'pending_priority',
+                                           'pending')
     else:
-        iterator = TaskViewIterator(job_id, db, 'todo')
+        iterator = TaskViewIterator(job_id, db, 'pending')
 
     if args.endless:
         iterator = EndlessViewIterator(job_id, iterator,
@@ -325,7 +327,7 @@ def run(args):
             signal.signal(sig, _signal_handler)
 
     # Start work!
-    print("Connected to the database sucessfully. Now starting work...")
+    print("Connected to the database successfully. Now starting work...")
     try:
         actor.run(maxtime=_time_args_to_seconds(args),
                   avg_time_factor=args.margin)
