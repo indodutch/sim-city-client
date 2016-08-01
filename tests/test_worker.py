@@ -18,8 +18,7 @@ from simcity import Task
 from simcity.worker import Worker, ExecuteWorker
 from multiprocessing import Queue, Semaphore
 from nose.tools import assert_true, assert_equals, assert_not_equals
-import shutil
-import os
+from test_mock import setup_mock_directories
 
 
 class MockWorker(Worker):
@@ -125,19 +124,12 @@ def test_execute_worker():
         'arguments': ['-n', 'hello'],
         'parallelism': 1,
     })
-    config = {
-        'tmp_dir': 'tests/tmp/tmp_alala',
-        'output_dir': 'tests/tmp/out_alala',
-        'input_dir': 'tests/tmp/in_alala',
-    }
+
+    config = setup_mock_directories()
     worker = ExecuteWorker(1, config, task_q, result_q, semaphore)
     task_q.put(task)
     task_q.put(None)
-    os.mkdir('tests/tmp')
-    try:
-        worker.run()
-        result = result_q.get()
-        data = result.get_attachment('stdout.txt')['data']
-        assert_equals('hello', data.decode('utf-8'))
-    finally:
-        shutil.rmtree('tests/tmp')
+    worker.run()
+    result = result_q.get()
+    data = result.get_attachment('stdout.txt')['data']
+    assert_equals('hello', data.decode('utf-8'))

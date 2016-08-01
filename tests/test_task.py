@@ -153,7 +153,7 @@ def _get_task():
 def test_scrub_task():
     db, task = _get_task()
     assert_equal(0, task['lock'])
-    task.lock()
+    task.lock('myid')
     assert_not_equal(0, task['lock'])
     db.tasks[task.id]['_rev'] = 'myrev'
     db.tasks[task.id]['lock'] = task['lock']
@@ -168,7 +168,7 @@ def test_scrub_task():
 
 def test_scrub_old_task_none():
     db, task = _get_task()
-    task.lock()
+    task.lock('myid')
     assert_equal(0, len(db.saved))
     db.viewList = [MockRow(task.id, task, task.id)]
     simcity.scrub_tasks('locked', age=2)

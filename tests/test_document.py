@@ -78,11 +78,12 @@ class TestTask:
 
     def test_lock(self):
         assert_equals(self.task['lock'], 0)
-        self.task.lock()
+        self.task.lock('myid')
         assert_true(self.task['lock'] >= seconds() - 1)
+        assert_equals('myid', self.task['job'])
 
     def test_scrub(self):
-        self.task.lock()
+        self.task.lock('myid')
         self.task.done()
         self.task.scrub()
         assert_equals(self.task['lock'], 0)

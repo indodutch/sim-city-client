@@ -156,10 +156,11 @@ class Task(Document):
         if self.id is None:
             self['_id'] = 'task_' + uuid4().hex
 
-    def lock(self):
+    def lock(self, job_id):
         """Function which modifies the task such that it is locked.
         """
         self['lock'] = seconds()
+        self['job'] = job_id
         return self._update_hostname()
 
     def done(self):
@@ -282,8 +283,6 @@ class Job(Document):
         if self['done'] <= 0:
             self['done'] = seconds()
         self['archive'] = seconds()
-        self['_id'] = 'archived-' + self.id + '-' + str(seconds())
-        del self['_rev']
         return self
 
     def is_done(self):

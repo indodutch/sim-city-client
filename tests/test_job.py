@@ -19,8 +19,7 @@ from __future__ import print_function
 import simcity
 from simcity import Job
 from simcity.util import seconds
-from nose.tools import (assert_true, assert_equals, assert_raises,
-                        assert_not_equals)
+from nose.tools import assert_true, assert_equals, assert_raises
 from test_mock import MockDB, MockRow
 
 
@@ -74,7 +73,7 @@ class TestJob(object):
         job = simcity.get_job()
         self.db.save(job)
         job = simcity.archive_job(simcity.get_job())
-        assert_not_equals(job.id, self.test_id)
+        assert_equals(job.id, self.test_id)
 
     def test_cancel_job(self):
         job = simcity.get_job()
@@ -94,10 +93,7 @@ class TestJob(object):
 
         simcity.scrub_jobs('active_jobs', age=0)
         assert_equals(1, len(self.db.saved))
-        old_job_id = job.id
         job_id, job = self.db.saved.popitem()
-        assert_true(job_id.startswith('archived'))
-        assert_not_equals(-1, job_id.find(old_job_id))
         assert_true(job['archive'] > 0)
 
     def test_scrub_old_job_none(self):
@@ -119,8 +115,5 @@ class TestJob(object):
 
         simcity.scrub_jobs('active_jobs', age=2)
         assert_equals(1, len(self.db.saved))
-        old_job_id = job.id
         job_id, job = self.db.saved.popitem()
-        assert_true(job_id.startswith('archived'))
-        assert_not_equals(-1, job_id.find(old_job_id))
         assert_true(job['archive'] > 0)

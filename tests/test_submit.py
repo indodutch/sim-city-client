@@ -105,7 +105,7 @@ def test_submit_error():
     submitter = MockSubmitter(db, do_raise=True)
     assert_raises(IOError, simcity.submit, 'nohost', submitter=submitter)
     for saved in db.saved.keys():
-        if saved.startswith('archived-job_myjob'):
+        if saved.startswith('job_myjob') and db.saved[saved]['archive'] > 0:
             break
     else:
         assert_false("job not archived")

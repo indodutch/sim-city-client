@@ -146,12 +146,10 @@ def archive_job(job, database=None):
         database = get_job_database()
 
     try:
-        database.delete(job)
+        return database.save(job.archive())
     except ResourceConflict:
         job = get_job(job_id=job.id, database=database)
         return archive_job(job, database=database)
-    else:
-        return database.save(job.archive())
 
 
 def scrub_jobs(view, age=24*60*60, database=None):

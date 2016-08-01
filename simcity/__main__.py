@@ -301,15 +301,18 @@ def run(args):
     elif args.local:
         simcity.set_current_job_id('local-' + uuid4().hex)
 
+    job_id = simcity.get_current_job_id()
+
     db = simcity.get_task_database()
 
     if args.prioritize:
-        iterator = PrioritizedViewIterator(db, 'todo_priority', 'todo')
+        iterator = PrioritizedViewIterator(job_id, db, 'todo_priority', 'todo')
     else:
-        iterator = TaskViewIterator(db, 'todo')
+        iterator = TaskViewIterator(job_id, db, 'todo')
 
     if args.endless:
-        iterator = EndlessViewIterator(iterator, stop_callback=_is_cancelled)
+        iterator = EndlessViewIterator(job_id, iterator,
+                                       stop_callback=_is_cancelled)
 
     actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
 

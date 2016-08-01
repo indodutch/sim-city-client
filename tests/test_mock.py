@@ -15,7 +15,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import random
-
+import tempfile
+import shutil
+import os
 import multiprocessing
 
 from simcity import Document
@@ -134,3 +136,16 @@ class MockDB(object):
             'reduce': reduce_fun,
             'design': design_doc
         }
+
+
+def setup_mock_directories():
+    temp_dir = tempfile.gettempdir()
+    config = {
+        'tmp_dir': os.path.join(temp_dir, 'tmp_alala'),
+        'output_dir': os.path.join(temp_dir, 'out_alala'),
+        'input_dir': os.path.join(temp_dir, 'in_alala'),
+    }
+    for sim_dir in config.values():
+        shutil.rmtree(sim_dir)
+        os.makedirs(sim_dir)
+    return config

@@ -17,28 +17,19 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_true, assert_raises
-from test_mock import MockDB, MockDAV
+from nose.tools import assert_true, assert_raises, assert_equals
+from test_mock import MockDB, MockDAV, setup_mock_directories
 import os
-import shutil
 import time
 
 
 def test_actor():
     simcity.management._reset_globals()
-    try:
-        shutil.rmtree('tests/tmp')
-    except OSError:
-        pass
 
-    os.mkdir('tests/tmp')
     cfg = simcity.Config()
-    cfg.add_section('Execution', {
-        'tmp_dir': 'tests/tmp/tmp_alala',
-        'output_dir': 'tests/tmp/out_alala',
-        'input_dir': 'tests/tmp/in_alala',
-        'parallelism': '1'
-    })
+    exec_config = {'parallelism': 1}
+    exec_config.update(setup_mock_directories())
+    cfg.add_section('Execution', exec_config)
     cfg.add_section('webdav', {
         'url': 'https://my.example.com'
     })
@@ -49,32 +40,23 @@ def test_actor():
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)
     simcity.management.set_current_job_id('myjob')
-    iterator = simcity.TaskViewIterator(db, 'todo')
+    iterator = simcity.TaskViewIterator('myid', db, 'todo')
     actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     actor.run()
     assert_true(db.jobs['myjob']['done'] > 0)
     assert_true(db.saved['mytask']['done'] > 0)
-    assert_true(os.path.exists('tests/tmp/tmp_alala'))
-    assert_true(os.path.exists('tests/tmp/out_alala'))
-    assert_true(os.path.exists('tests/tmp/in_alala'))
-    shutil.rmtree('tests/tmp')
+    assert_true(os.path.exists(exec_config['tmp_dir']))
+    assert_true(os.path.exists(exec_config['output_dir']))
+    assert_true(os.path.exists(exec_config['input_dir']))
 
 
 def test_actor_maximize_parallelism():
     simcity.management._reset_globals()
-    try:
-        shutil.rmtree('tests/tmp')
-    except OSError:
-        pass
 
-    os.mkdir('tests/tmp')
     cfg = simcity.Config()
-    cfg.add_section('Execution', {
-        'tmp_dir': 'tests/tmp/tmp_alala',
-        'output_dir': 'tests/tmp/out_alala',
-        'input_dir': 'tests/tmp/in_alala',
-        'parallelism': '1'
-    })
+    exec_config = {'parallelism': 1}
+    exec_config.update(setup_mock_directories())
+    cfg.add_section('Execution', exec_config)
     cfg.add_section('webdav', {
         'url': 'https://my.example.com'
     })
@@ -86,32 +68,25 @@ def test_actor_maximize_parallelism():
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)
     simcity.management.set_current_job_id('myjob')
-    iterator = simcity.TaskViewIterator(db, 'todo')
+    iterator = simcity.TaskViewIterator('myjob', db, 'todo')
     actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     actor.run()
+    assert_true(db.jobs['myjob']['start'] > 0)
+    assert_equals('myjob', db.saved['mytask']['job'])
     assert_true(db.jobs['myjob']['done'] > 0)
     assert_true(db.saved['mytask']['done'] > 0)
-    assert_true(os.path.exists('tests/tmp/tmp_alala'))
-    assert_true(os.path.exists('tests/tmp/out_alala'))
-    assert_true(os.path.exists('tests/tmp/in_alala'))
-    shutil.rmtree('tests/tmp')
+    assert_true(os.path.exists(exec_config['tmp_dir']))
+    assert_true(os.path.exists(exec_config['output_dir']))
+    assert_true(os.path.exists(exec_config['input_dir']))
 
 
 def test_actor_parallelism():
     simcity.management._reset_globals()
-    try:
-        shutil.rmtree('tests/tmp')
-    except OSError:
-        pass
 
-    os.mkdir('tests/tmp')
     cfg = simcity.Config()
-    cfg.add_section('Execution', {
-        'tmp_dir': 'tests/tmp/tmp_alala',
-        'output_dir': 'tests/tmp/out_alala',
-        'input_dir': 'tests/tmp/in_alala',
-        'parallelism': '2'
-    })
+    exec_config = {'parallelism': 2}
+    exec_config.update(setup_mock_directories())
+    cfg.add_section('Execution', exec_config)
     cfg.add_section('webdav', {
         'url': 'https://my.example.com'
     })
@@ -125,16 +100,17 @@ def test_actor_parallelism():
     simcity.management.set_task_database(db)
     simcity.management.set_job_database(db)
     simcity.management.set_current_job_id('myjob')
-    iterator = simcity.TaskViewIterator(db, 'todo')
+    iterator = simcity.TaskViewIterator('myid', db, 'todo')
     actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     t0 = time.time()
     actor.run()
+    print(db.jobs)
+    print(db.saved)
     elapsed = time.time() - t0
     assert_true(elapsed < 0.6)
     assert_true(elapsed > 0.3)
     assert_true(db.jobs['myjob']['done'] > 0)
     assert_true(db.saved['mytask']['done'] > 0)
-    assert_true(os.path.exists('tests/tmp/tmp_alala'))
-    assert_true(os.path.exists('tests/tmp/out_alala'))
-    assert_true(os.path.exists('tests/tmp/in_alala'))
-    shutil.rmtree('tests/tmp')
+    assert_true(os.path.exists(exec_config['tmp_dir']))
+    assert_true(os.path.exists(exec_config['output_dir']))
+    assert_true(os.path.exists(exec_config['input_dir']))

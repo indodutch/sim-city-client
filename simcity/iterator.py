@@ -26,8 +26,9 @@ class ViewIterator(object):
     Dummy class to show what to implement for an iterator.
     """
 
-    def __init__(self):
+    def __init__(self, job_id):
         self._stop = False
+        self.job_id = job_id
 
     def __iter__(self):
         """Python needs this."""
@@ -73,13 +74,13 @@ class ViewIterator(object):
         raise NotImplementedError("claim_task function not implemented.")
 
 
-def _claim_task(database, view, allowed_failures=10, **view_params):
+def _claim_task(job_id, database, view, allowed_failures=10, **view_params):
     for _ in range(allowed_failures):
         try:
             doc = database.get_single_from_view(view, window_size=100,
                                                 **view_params)
             task = Task(doc)
-            return database.save(task.lock())
+            return database.save(task.lock(job_id))
         except ResourceConflict:
             pass
     raise EnvironmentError("Unable to claim task.")
@@ -89,20 +90,21 @@ class TaskViewIterator(ViewIterator):
 
     """Iterator object to fetch tasks while available.
     """
-    def __init__(self, database, view, **view_params):
+    def __init__(self, job_id, database, view, **view_params):
         """
         @param database: CouchDB database to get tasks from.
         @param view: CouchDB view from which to fetch the task.
         @param view_params: parameters which need to be passed on to the view
         (optional).
         """
-        super(TaskViewIterator, self).__init__()
+        super(TaskViewIterator, self).__init__(job_id)
         self.database = database
         self.view = view
         self.view_params = view_params
 
     def claim_task(self):
-        return _claim_task(self.database, self.view, **self.view_params)
+        return _claim_task(self.job_id, self.database, self.view,
+                           **self.view_params)
 
 
 class PrioritizedViewIterator(ViewIterator):
@@ -111,7 +113,7 @@ class PrioritizedViewIterator(ViewIterator):
     priority view and then from a low priority view.
     """
 
-    def __init__(self, database, high_priority_view, low_priority_view,
+    def __init__(self, job_id, database, high_priority_view, low_priority_view,
                  **view_params):
         """
         @param database: CouchDB database to get tasks from.
@@ -122,7 +124,7 @@ class PrioritizedViewIterator(ViewIterator):
         @param view_params: parameters which need to be passed on to the view
         (optional).
         """
-        super(PrioritizedViewIterator, self).__init__()
+        super(PrioritizedViewIterator, self).__init__(job_id)
         self.database = database
         self.high_priority_view = high_priority_view
         self.low_priority_view = low_priority_view
@@ -135,8 +137,8 @@ class PrioritizedViewIterator(ViewIterator):
         except IndexError:
             # don't catch the second IndexError:
             # if both views are empty, fail.
-            return _claim_task(self.database, self.low_priority_view,
-                               **self.view_params)
+            return _claim_task(self.job_id, self.database,
+                               self.low_priority_view, **self.view_params)
 
 
 class EndlessViewIterator(ViewIterator):
@@ -144,7 +146,7 @@ class EndlessViewIterator(ViewIterator):
     Iterator that will endlessly fetch tasks from a ViewIterator, sleeping
     when none are available.
     """
-    def __init__(self, view_iterator, sleep_sec=10, stop_callback=None,
+    def __init__(self, job_id, view_iterator, sleep_sec=10, stop_callback=None,
                  **stop_callback_args):
         """
         @param view_iterator: ViewIterator to get actual tasks from.
@@ -154,7 +156,7 @@ class EndlessViewIterator(ViewIterator):
                               iterator should stop feeding tasks
         @param stop_callback_args: arguments to the stop_callback function.
         """
-        super(EndlessViewIterator, self).__init__()
+        super(EndlessViewIterator, self).__init__(job_id)
         self.iterator = view_iterator
         self.sleep_sec = sleep_sec
         self.stop_callback = stop_callback

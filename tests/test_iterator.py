@@ -21,7 +21,8 @@ from nose.tools import assert_equals, assert_true
 
 def test_iterator():
     db = MockDB()
-    for task in TaskViewIterator(db, 'view'):
+    for task in TaskViewIterator('myjob', db, 'view'):
+        assert_equals('myjob', task['job'])
         assert_true(task['lock'] > 0)
         assert_equals(task.rev, '0')
         assert_equals(db.saved[task.id], task)
