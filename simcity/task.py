@@ -21,6 +21,8 @@ from .management import get_task_database, get_webdav
 import time
 import os
 import webdav
+import ijson
+import mimetypes
 
 
 def add_task(properties, database=None):
@@ -109,13 +111,29 @@ def scrub_tasks(view, age=24 * 60 * 60, database=None):
     return len(updates), total
 
 
-def upload_attachment(task, directory, filename, mimetype=None):
+def upload_attachment(task, directory, filename, content_type=None):
     """ Uploads an attachment using the configured file storage layer. """
+    file_path = os.path.abspath(os.path.join(directory, filename))
+
+    # determine whether a json type is geojson
+    if content_type and filename.endswith('json'):
+        try:
+            with open(file_path, 'w') as f:
+                t = next(ijson.items(f, 'type'))
+                if t in ['Feature', 'FeatureCollection']:
+                    content_type = 'application/vnd.geo+json'
+        except (ijson.common.JSONError, StopIteration):
+            pass  # invalid json or not geojson
+    if content_type is None:
+        content_type, encoding = mimetypes.guess_type(filename)
+    if content_type is None:
+        content_type = 'text/plain'
+
     try:
         dav = get_webdav()
     except EnvironmentError:
-        with open(os.path.join(directory, filename), 'rb') as f:
-            task.put_attachment(filename, f.read(), mimetype)
+        with open(file_path, 'rb') as f:
+            task.put_attachment(filename, f.read(), content_type)
     else:
         path, task_dir, id_hash = _webdav_id_to_path(task.id, filename)
         if len(task.files) == 0:
@@ -124,19 +142,19 @@ def upload_attachment(task, directory, filename, mimetype=None):
             dav.mkdir(id_hash)
             dav.mkdir(task_dir)
         try:
-            file_path = os.path.abspath(os.path.join(directory, filename))
             dav.upload_sync(remote_path=path, local_path=file_path)
 
             task.files[filename] = {
                 'url': _webdav_path_to_url(dav, path),
                 'length': os.stat(file_path).st_size,
+                'content_type': content_type,
             }
         except IOError as ex:
             print(
                 'WARNING: attachment {0} could not be uploaded to webdav: {1}'
                 .format(filename, ex))
             with open(os.path.join(directory, filename), 'rb') as f:
-                task.put_attachment(filename, f.read(), mimetype)
+                task.put_attachment(filename, f.read(), content_type)
 
 
 def download_attachment(task, directory, filename, task_db=None):

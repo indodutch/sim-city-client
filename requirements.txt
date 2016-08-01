@@ -2,6 +2,7 @@ argcomplete==1.4.1
 CouchDB==1.0.1
 coverage==4.2
 flake8==3.0.2
+ijson==2.3
 JPype1==0.6.1
 jsonschema==2.5.1
 lxml==3.6.1

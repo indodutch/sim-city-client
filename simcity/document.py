@@ -51,24 +51,24 @@ class Document(couchdb.Document):
         """ DEPRECATED. Returns itself."""
         return self
 
-    def put_attachment(self, name, data, mimetype=None):
+    def put_attachment(self, name, data, content_type=None):
         """
         Put an attachment in the document.
 
         The attachment data must be provided as str in Python 2 and bytes in
         Python 3.
 
-        The mimetype, if not provided, is guessed from the filename and
+        The content_type, if not provided, is guessed from the filename and
         defaults to text/plain.
         """
-        if mimetype is None:
-            mimetype, encoding = mimetypes.guess_type(name)
-            if mimetype is None:
-                mimetype = 'text/plain'
+        if content_type is None:
+            content_type, encoding = mimetypes.guess_type(name)
+            if content_type is None:
+                content_type = 'text/plain'
 
         b64data = base64.b64encode(data)
         self.attachments[name] = {
-            'content_type': mimetype, 'data': b64data}
+            'content_type': content_type, 'data': b64data}
 
     def get_attachment(self, name, retrieve_from_database=None):
         """ Gets an attachment dict from the document.

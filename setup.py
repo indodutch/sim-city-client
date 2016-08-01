@@ -52,7 +52,7 @@ setup(name='simcity',
         'Topic :: System :: Distributed Computing'
       ],
       install_requires=['pystache', 'CouchDB', 'webdavclient', 'pyxenon',
-                        'jsonschema'],
+                        'jsonschema', 'ijson'],
       extras_require={
           'testing': ['nose', 'flake8', 'coverage'],
       },
