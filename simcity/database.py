@@ -126,7 +126,7 @@ class CouchDB(object):
 
         Updates the document to have the new _rev value.
         :param doc: Document object
-        :throws couchdb.http.ResourceConflict: when document exists with
+        :raise couchdb.http.ResourceConflict: when document exists with
                 different revision or was deleted.
         """
         _id, _rev = self.db.save(doc)

@@ -15,10 +15,12 @@
 # limitations under the License.
 
 """ Integrates the task and job API. """
-
 from .management import get_task_database, get_job_database
+from .job import get_job, archive_job
 from .task import add_task, get_task
-from .submit import submit_if_needed
+from .submit import submit, status, Adaptor
+from .util import seconds
+import couchdb
 import time
 
 
@@ -47,7 +49,7 @@ def run_task(task_properties, host, max_jobs, polling_time=None):
             time.sleep(polling_time)
             task = get_task(task.id)
 
-    return (task, job)
+    return task, job
 
 
 def overview_total():
@@ -68,3 +70,93 @@ def overview_total():
             num[view.key] = view.value
 
     return num
+
+
+def submit_if_needed(host_id, max_jobs, adaptor=None):
+    """
+    Submit a new job if not enough jobs are already running or queued.
+
+    Host configuration is extracted from an entry in the global config file.
+    """
+
+    num = overview_total()
+
+    num_jobs = num['running_jobs'] + num['pending_jobs']
+    num_tasks = num['pending'] + num['in_progress']
+    if num_jobs < min(num_tasks, max_jobs):
+        return submit(host_id, adaptor)
+    else:
+        return None
+
+
+def submit_while_needed(host_id, max_jobs, adaptor=None, dry_run=False):
+    num = overview_total()
+    num_jobs = num['running_jobs'] + num['pending_jobs']
+    num_tasks = num['pending'] + num['in_progress']
+
+    new_jobs = max(0, min(num_tasks, max_jobs) - num_jobs)
+
+    if dry_run:
+        return [None]*new_jobs
+    else:
+        return [submit(host_id, adaptor) for _ in range(new_jobs)]
+
+
+def check_job_status(dry_run=False, database=None):
+    """
+    Check the current job status of jobs that the database considers active.
+    If dry_run is false, modify incongruent job statuses.
+    @param dry_run: do not modify job
+    @param database: job database
+    @return: list of jobs that are archived
+    """
+    if database is None:
+        database = get_job_database()
+
+    active = database.view('active_jobs').rows
+    jobs = [get_job(row.id) for row in active]
+    jobs = [job for job in jobs if job.type == 'job']
+    job_status = status(jobs)
+
+    new_jobs = []
+    five_days = 5*24*60*60
+    for stat, job in zip(job_status, jobs):
+        if ((stat is None and seconds() - job['queue'] > five_days) or
+                stat == Adaptor.DONE):
+            if dry_run:
+                new_jobs.append(job)
+            else:
+                new_jobs.append(archive_job(job))
+
+    return new_jobs
+
+
+def check_task_status(dry_run=False, database=None):
+    """
+    Check the current task status of in_progress tasks  against the job status
+    of the job that it is supposed to be executing it.
+    If dry_run is false, modify incongruent task statuses.
+    @param dry_run: do not modify task
+    @param database: task database
+    @return: list of tasks that are marked as in error because their job is not
+        running
+    """
+    if database is None:
+        database = get_task_database()
+
+    has_failed_saves = True
+    new_tasks = []
+    while has_failed_saves:
+        has_failed_saves = False
+
+        for row in database.view('in_progress').rows:
+            task = get_task(row.id)
+            job = get_job(task['job'])
+            if job.is_done():
+                if dry_run:
+                    new_tasks.append(task)
+                else:
+                    try:
+                        new_tasks.append(database.save(task))
+                    except couchdb.http.ResourceConflict:
+                        has_failed_saves = True

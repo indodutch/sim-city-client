@@ -65,6 +65,12 @@ Then run the following to submit a job to the cluster:
 
     simcity submit CLUSTER_NAME
 
+To check the status of the jobs and tasks, clean up the database, and start jobs as necessary, run
+
+    simcity check CLUSTER_NAME
+
+Use the `-n` flag to only list the actions that `check` would perform.
+
 ## API
 
 The API consists of all methods exported in `__init__.py`. It assumes that a configuration file is available to set the databases and execution options with. The `simcity.init(configfile)` must be called before any other `simcity` function.

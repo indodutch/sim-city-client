@@ -51,6 +51,14 @@ class Document(couchdb.Document):
         """ DEPRECATED. Returns itself."""
         return self
 
+    @property
+    def type(self):
+        """
+        Document type (required in CouchDB)
+        @return: document type or None if unknown
+        """
+        return self.get('type')
+
     def put_attachment(self, name, data, content_type=None):
         """
         Put an attachment in the document.

@@ -30,13 +30,15 @@ from .ensemble import ensemble_view
 from .worker import ExecuteWorker
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
                   cancel_endless_job, scrub_jobs)
-from .integration import overview_total, run_task
+from .integration import (overview_total, run_task, submit_if_needed,
+                          submit_while_needed, check_job_status,
+                          check_task_status)
 from .management import (get_config, init, get_task_database, get_job_database,
                          get_current_job_id, set_current_job_id,
                          create, create_views, uses_webdav, get_webdav,
                          load_config_database)
-from .submit import (submit, submit_if_needed, Submitter, OsmiumSubmitter,
-                     SSHSubmitter, XenonSubmitter)
+from .submit import (submit, Adaptor, OsmiumAdaptor,
+                     SSHAdaptor, XenonAdaptor, kill, status)
 from .task import (add_task, get_task, delete_task, scrub_tasks,
                    upload_attachment, download_attachment, delete_attachment)
 from .config import Config, CouchDBConfig, FileConfig
@@ -48,9 +50,12 @@ from .util import parse_parameters
 from .version import __version__, __version_info__
 
 __all__ = [
+    'Adaptor',
     'add_task',
     'archive_job',
     'cancel_endless_job',
+    'check_job_status',
+    'check_task_status',
     'Config',
     'CouchDB',
     'CouchDBConfig',
@@ -75,8 +80,9 @@ __all__ = [
     'init',
     'Job',
     'JobActor',
+    'kill',
     'load_config_database',
-    'OsmiumSubmitter',
+    'OsmiumAdaptor',
     'overview_total',
     'parse_parameters',
     'PrioritizedViewIterator',
@@ -86,18 +92,19 @@ __all__ = [
     'scrub_jobs',
     'scrub_tasks',
     'set_current_job_id',
-    'SSHSubmitter',
+    'SSHAdaptor',
     'start_job',
+    'status',
     'submit',
     'submit_if_needed',
-    'Submitter',
+    'submit_while_needed',
     'Task',
     'TaskViewIterator',
     'upload_attachment',
     'User',
     'uses_webdav',
     'ViewIterator',
-    'XenonSubmitter',
+    'XenonAdaptor',
     '__version__',
     '__version_info__',
 ]

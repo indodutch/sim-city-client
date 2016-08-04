@@ -19,7 +19,7 @@ from nose.tools import (assert_false, assert_equal, assert_not_equal,
 from test_mock import MockDB, MockRow
 
 
-class MockSubmitter(simcity.Submitter):
+class MockSubmitter(simcity.Adaptor):
     BATCH_ID = 'my_batch_id'
 
     def __init__(self, database, do_raise=False, method='local'):
@@ -91,7 +91,7 @@ def test_submit_if_needed_notactive():
     _set_host_config('nohost')
     db = _set_database(0, 1, 0, 0)
     submitter = MockSubmitter(db)
-    job = simcity.submit_if_needed('nohost', 2, submitter=submitter)
+    job = simcity.submit_if_needed('nohost', 2, adaptor=submitter)
     assert_not_equal(job, None)
     assert_equal(job['batch_id'], MockSubmitter.BATCH_ID)
     assert_equal(job['hostname'], 'nohost')
@@ -103,7 +103,7 @@ def test_submit_error():
     _set_host_config('nohost')
     db = _set_database(0, 1, 5, 0)
     submitter = MockSubmitter(db, do_raise=True)
-    assert_raises(IOError, simcity.submit, 'nohost', submitter=submitter)
+    assert_raises(IOError, simcity.submit, 'nohost', adaptor=submitter)
     for saved in db.saved.keys():
         if saved.startswith('job_myjob') and db.saved[saved]['archive'] > 0:
             break
@@ -139,5 +139,5 @@ def test_Xenon_submit_method():
     cfg['host'] = 'torque://' + cfg['host']
     simcity.get_config().add_section('nohost-host', cfg)
     _set_database(0, 0, 0, 0)
-    simcity.XenonSubmitter.init()
+    simcity.XenonAdaptor.init()
     assert_raises(IOError, simcity.submit, 'nohost')

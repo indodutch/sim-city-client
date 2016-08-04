@@ -22,7 +22,7 @@ from __future__ import print_function
 import simcity
 from simcity import (PrioritizedViewIterator, TaskViewIterator,
                      EndlessViewIterator, Config, FileConfig,
-                     load_config_database)
+                     load_config_database, submit_while_needed)
 import argparse
 import getpass
 import couchdb
@@ -54,6 +54,18 @@ def main():
     cancel_parser = subparsers.add_parser('cancel', help="Cancel running job")
     cancel_parser.add_argument('job_id', help="JOB ID to cancel")
     cancel_parser.set_defaults(func=cancel)
+
+    check_parser = subparsers.add_parser(
+        'check', help="check the status of all running and pending jobs")
+    check_parser.add_argument(
+        '-n', '--dry-run', action='store_true',
+        help="Only show what status would be modified, do not modify.")
+    check_parser.add_argument(
+        '-m', '--max', type=int, default=2,
+        help='maximum jobs to run to process tasks')
+    check_parser.add_argument(
+        'host', nargs='?', help='host to submit additional jobs to, if needed')
+    check_parser.set_defaults(func=check)
 
     create_parser = subparsers.add_parser(
         'create', help="create new tasks in the database")
@@ -144,9 +156,12 @@ def main():
                               choices=scrub_task_views | scrub_job_views)
     scrub_parser.set_defaults(func=scrub)
 
+    summary_parser = subparsers.add_parser(
+        'summary', help="summary of the infrastructure")
+    summary_parser.set_defaults(func=summary)
+
     submit_parser = subparsers.add_parser('submit', help="start a job")
     submit_parser.add_argument('host', help="host to run pilot job on")
-    submit_parser.add_argument('args', nargs='*', help="command arguments")
     submit_parser.add_argument(
         '-m', '--max', type=int, default=2,
         help="only run if there are less than MAX jobs running "
@@ -157,6 +172,9 @@ def main():
     submit_parser.set_defaults(func=submit)
 
     args = parser.parse_args()
+    if args.func != init:
+        simcity.init(config=args.config)
+
     args.func(args)
 
 
@@ -170,8 +188,6 @@ def create(args):
     """
     Create tasks with a single command
     """
-    simcity.init(config=args.config)
-
     # Load the tasks to the database
     for i in range(args.number):
         try:
@@ -196,8 +212,6 @@ def create(args):
 
 def delete(args):
     """ Delete all documents from given view. """
-    simcity.init(config=args.config)
-
     if args.view in job_views:
         db = simcity.get_job_database()
     else:
@@ -295,8 +309,6 @@ def _time_args_to_seconds(args):
 
 def run(args):
     """ Run job to process tasks. """
-    simcity.init(config=args.config)
-
     if args.job_id is not None:
         simcity.set_current_job_id(args.job_id)
     elif args.local:
@@ -344,7 +356,6 @@ def scrub(args):
     Scrub tasks or jobs in a given view to return to their previous status.
     """
     global task_views
-    simcity.init(config=args.config)
 
     age = _time_args_to_seconds(args)
 
@@ -362,8 +373,6 @@ def scrub(args):
 
 def submit(args):
     """ Submit job to the infrastructure """
-    simcity.init(config=args.config)
-
     if args.force:
         job = simcity.submit(args.host)
     else:
@@ -373,3 +382,58 @@ def submit(args):
               "maximum number of jobs with -m)" % args.max)
     else:
         print("Job %s (ID: %s) started" % (job['batch_id'], job.id))
+
+
+def summary(args):
+    """ Print summary of tasks. """
+    print('Summary')
+    print(20*'=')
+    for k, v in simcity.overview_total().items():
+        print('{:<15} {}'.format(k, v))
+    print(20*'=')
+
+
+def check(args):
+    """
+    Checks the consistency of the database
+
+    1. active_jobs that are no longer in the queue can be archived
+    2. tasks registered with jobs that are no longer running can be cancelled
+    3. if there are tasks pending with not enough running_jobs or pending_jobs
+       a new job can be started.
+
+    run `simcity check` in cron.
+    """
+    if args.dry_run:
+        print("Dry run: will not modify any state")
+
+    print('BEFORE: ', end='')
+    summary(args)
+
+    # check job status
+    jobs = simcity.check_job_status(dry_run=args.dry_run)
+    for job in jobs:
+        if job['archive'] > 0:
+            print("Archiving stopped job {}".format(job.id))
+
+    tasks = simcity.check_task_status(dry_run=args.dry_run)
+    for task in tasks:
+        print("Marking task {} that ran in job {} as error"
+              .format(task.id, task['job']))
+
+    if args.host is None:
+        print("No host provided, not starting additional jobs")
+    else:
+        jobs = submit_while_needed(args.host, args.max, dry_run=args.dry_run)
+        if len(jobs) == 0:
+            print("Enough jobs running. Will not start any new jobs")
+        else:
+            if args.dry_run:
+                print("Would start {} jobs".format(len(jobs)))
+            else:
+                for job in jobs:
+                    print("Job {0} (ID: {1}) started"
+                          .format(job['batch_id'], job.id))
+
+    print('AFTER: ', end='')
+    summary(args)
