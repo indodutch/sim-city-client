@@ -59,7 +59,7 @@ and creating the task
 
     simcity run --local 
 
-**Run the simulation on the cluster** by installing SIM-CITY client there with the same configuration as locally. Then locally add the cluster configuration in `config.ini`, as a section `[CLUSTER_NAME-host]` (see `config.ini.dist` for some examples. This requires a script on that cluster that will start `simcity run -Pe` in the correct virtualenv. See for example `scripts/lisaRun.sh` for a script to submit with `method = xenon`.
+**Run the simulation on the cluster** by installing SIM-CITY client there with the same configuration as locally. Then locally add the cluster configuration in `config.ini`, as a section `[CLUSTER_NAME-host]` (see `config.ini.dist` for some examples.) This requires a script on that cluster that will start `simcity run` in the correct virtualenv. For example see `scripts/lisaRun.sh` for a script to submit with configuration `method = xenon`.
 
 Then run the following to submit a job to the cluster:
 
