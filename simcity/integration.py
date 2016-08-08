@@ -78,7 +78,6 @@ def submit_if_needed(host_id, max_jobs, adaptor=None):
 
     Host configuration is extracted from an entry in the global config file.
     """
-
     num = overview_total()
 
     num_jobs = num['running_jobs'] + num['pending_jobs']
@@ -90,6 +89,11 @@ def submit_if_needed(host_id, max_jobs, adaptor=None):
 
 
 def submit_while_needed(host_id, max_jobs, adaptor=None, dry_run=False):
+    """
+    Submits new job while not enough jobs are already running or queued.
+
+    Host configuration is extracted from an entry in the global config file.
+    """
     num = overview_total()
     num_jobs = num['running_jobs'] + num['pending_jobs']
     num_tasks = num['pending'] + num['in_progress']
@@ -160,3 +164,5 @@ def check_task_status(dry_run=False, database=None):
                         new_tasks.append(database.save(task))
                     except couchdb.http.ResourceConflict:
                         has_failed_saves = True
+
+    return new_tasks
