@@ -139,6 +139,7 @@ def copyglob(srcglob, dstdir, prefix=""):
 
 
 def data_content_type(filename, data):
+    """ Get the content type of bytes data with a filename. """
     if filename.endswith('json'):
         with io.BytesIO(data) as f:
             if is_geojson(f):
@@ -147,6 +148,7 @@ def data_content_type(filename, data):
 
 
 def file_content_type(filename, path):
+    """ Get the content type of a path with a filename. """
     if filename.endswith('json'):
         with open(path, 'rb') as f:
             if is_geojson(f):
@@ -155,6 +157,7 @@ def file_content_type(filename, path):
 
 
 def is_geojson(f):
+    """ Whether given file pointer contains GeoJSON data. """
     try:
         json_type = next(ijson.items(f, 'type'))
         return json_type in ['Feature', 'FeatureCollection']
@@ -163,6 +166,7 @@ def is_geojson(f):
 
 
 def filename_content_type(filename):
+    """ Guess content type based on filename. """
     content_type, encoding = mimetypes.guess_type(filename)
     if content_type is None:
         content_type = 'text/plain'
