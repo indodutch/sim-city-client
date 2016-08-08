@@ -319,7 +319,7 @@ class OsmiumAdaptor(Adaptor):
                     single_status = Adaptor.DONE
                 else:
                     single_status = Adaptor.PENDING
-            except IOError as ex:
+            except IOError:
                 pass
 
             job_status.append(single_status)
