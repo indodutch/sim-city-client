@@ -18,8 +18,7 @@
 CouchDB document types.
 """
 import socket
-from .util import seconds
-import mimetypes
+from .util import seconds, data_content_type
 import base64
 import traceback
 from uuid import uuid4
@@ -70,9 +69,7 @@ class Document(couchdb.Document):
         defaults to text/plain.
         """
         if content_type is None:
-            content_type, encoding = mimetypes.guess_type(name)
-            if content_type is None:
-                content_type = 'text/plain'
+            content_type = data_content_type(name, data)
 
         b64data = base64.b64encode(data)
         self.attachments[name] = {

@@ -15,7 +15,6 @@
 # limitations under the License.
 
 from nose.tools import assert_equal, assert_true, assert_not_equal
-import unittest
 from test_mock import MockDB, MockDAV, MockRow
 import simcity
 from simcity.util import seconds
@@ -48,12 +47,12 @@ def test_delete_task():
     task = simcity.get_task(MockDB.TASKS[0]['_id'])
     dav.files['/myfile'] = {'url': 'ab'}
     task.files['myfile'] = {
-        'url': dav.webdav.hostname + dav.webdav.root + '/myfile'
+        'url': dav.base_url + '/myfile'
     }
     simcity.delete_task(task)
     assert_true(MockDB.TASKS[0]['_id'] not in
                 simcity.get_task_database().tasks)
-    assert_equal(1, len(simcity.management._webdav[None].removed))
+    assert_equal(2, len(simcity.management._webdav[None].removed))
 
 
 def _upload_attachment(use_dav):
@@ -75,9 +74,9 @@ def _upload_attachment(use_dav):
 
     if use_dav:
         if len(task.id) >= 7:
-            dav_path = '/' + task.id[5:7] + '/' + task.id + '/' + filename
+            dav_path = task.id[5:7] + '/' + task.id + '/' + filename
         else:
-            dav_path = '/' + task.id[:2] + '/' + task.id + '/' + filename
+            dav_path = task.id[:2] + '/' + task.id + '/' + filename
         return task, dirname, filename, dav, dav_path
     else:
         return task, dirname, filename
@@ -98,13 +97,12 @@ def test_upload_attachment_webdav():
 
     assert_true('_attachments' not in task)
     assert_true(filename in task.files)
-    assert_equal(dav.webdav.hostname + dav.webdav.root + dav_path,
+    assert_equal(dav.base_url + '/' + dav_path,
                  task.files[filename]['url'])
-    assert_true(dav_path in dav.files)
+    assert_true(dav_path in dav.files, msg=str(dav.files))
     assert_equal(b'ab', dav.files[dav_path])
 
 
-@unittest.skip("Uses the requests library, have not found a good way to test")
 def test_download_attachment_webdav():
     task, dirname, filename, dav, dav_path = _upload_attachment(use_dav=True)
 
@@ -132,10 +130,11 @@ def test_download_attachment_couchdb():
 def test_delete_attachment_webdav():
     task, dirname, filename, dav, dav_path = _upload_attachment(use_dav=True)
 
-    assert_true(dav_path in dav.files)
+    assert_true(dav_path in dav.files, msg=str(dav.files))
     assert_true(filename in task.files)
     simcity.delete_attachment(task, filename)
-    assert_true(dav_path not in dav.files)
+    assert_true(dav_path not in dav.files, msg=str(dav.files))
+    assert_true(dav_path in dav.removed, msg=str(dav.removed))
     assert_true(filename not in task.files)
 
 

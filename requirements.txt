@@ -13,5 +13,5 @@ pycurl==7.43.0
 pyflakes==1.2.3
 pystache==0.5.4
 pyxenon==0.2.1
-webdavclient==1.0.5
+requests==2.10.0
 -e .

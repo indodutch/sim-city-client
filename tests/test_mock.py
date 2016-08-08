@@ -41,26 +41,37 @@ class MockDAV(object):
         if files is None:
             files = {}
         self.files = files
-        self.webdav = MockDAVConf()
+        self.base_url = 'https://my.example.com'
         self.removed = []
 
-    def upload_sync(self, remote_path, local_path):
-        with open(local_path, 'rb') as f:
-            self.files[remote_path] = f.read()
+    def put(self, path, fp, content_type=None):
+        self.files[path] = fp.read()
 
-    def clean(self, path):
+    def delete(self, path, ignore_not_existing=False):
         try:
             del self.files[path]
-            self.removed.append(path)
         except KeyError:
-            print("Not removing missing directory")
+            if ignore_not_existing:
+                print("Not removing missing file or directory")
+            else:
+                raise IOError()
 
-    def mkdir(self, path):
-        pass
+        self.removed.append(path)
 
-    def download_sync(self, remote_path, local_path):
-        with open(local_path, 'wb') as f:
-            f.write(self.files[remote_path])
+    def mkdir(self, path, ignore_existing=False):
+        self.files[path] = 'DIR'
+
+    def download(self, path, file_path):
+        with open(file_path, 'wb') as f:
+            f.write(self.files[path])
+
+    def path_to_url(self, path):
+        return self.base_url + '/' + path.lstrip('/')
+
+    def url_to_path(self, url):
+        if not url.startswith(self.base_url):
+            raise ValueError()
+        return url[len(self.base_url):].lstrip('/')
 
 
 class MockDB(object):

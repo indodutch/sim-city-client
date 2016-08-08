@@ -23,7 +23,9 @@ from numbers import Number
 import time
 from copy import deepcopy
 import jsonschema
-import requests
+import ijson
+import mimetypes
+import io
 
 
 def parse_parameters(parameters, schema):
@@ -136,11 +138,32 @@ def copyglob(srcglob, dstdir, prefix=""):
         shutil.copyfile(src, os.path.join(dstdir, prefix + fname))
 
 
-def download_file(url, file_path, auth=None):
-    # NOTE the stream=True parameter
-    r = requests.get(url, stream=True, auth=auth)
-    with open(file_path, 'wb') as f:
-        # read in 1 MB chunk, should be fast enough
-        for chunk in r.iter_content(chunk_size=1024*1024):
-            if chunk:  # filter out keep-alive new chunks
-                f.write(chunk)
+def data_content_type(filename, data):
+    if filename.endswith('json'):
+        with io.BytesIO(data) as f:
+            if is_geojson(f):
+                return 'application/vnd.geo+json'
+    return filename_content_type(filename)
+
+
+def file_content_type(filename, path):
+    if filename.endswith('json'):
+        with open(path, 'rb') as f:
+            if is_geojson(f):
+                return 'application/vnd.geo+json'
+    return filename_content_type(filename)
+
+
+def is_geojson(f):
+    try:
+        json_type = next(ijson.items(f, 'type'))
+        return json_type in ['Feature', 'FeatureCollection']
+    except (ijson.common.JSONError, StopIteration):
+        return False
+
+
+def filename_content_type(filename):
+    content_type, encoding = mimetypes.guess_type(filename)
+    if content_type is None:
+        content_type = 'text/plain'
+    return content_type

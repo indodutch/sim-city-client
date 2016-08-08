@@ -23,13 +23,9 @@ from .util import get_truthy
 from .config import Config, FileConfig, CouchDBConfig
 from .database import CouchDB
 from .document import User
+from .dav import RestRequests
 import couchdb
 import pystache
-import webdav.client as webdav
-try:
-    from urlparse import urlparse
-except ImportError:
-    from urllib.parse import urlparse
 
 import os
 
@@ -122,20 +118,15 @@ def get_webdav(process=None):
     if process not in _webdav:
         if not uses_webdav():
             raise EnvironmentError("Webdav is not configured")
+
         dav_cfg = _config.section('webdav')
 
-        url = urlparse(dav_cfg['url'])
-
-        options = {
-            'webdav_hostname': url.scheme + '://' + url.netloc,
-            'webdav_root': url.path
-        }
         if 'username' in dav_cfg:
-            options['webdav_login'] = dav_cfg['username']
-        if 'password' in dav_cfg:
-            options['webdav_password'] = dav_cfg['password']
+            auth = (dav_cfg['username'], dav_cfg['password'])
+        else:
+            auth = None
 
-        _webdav[process] = webdav.Client(options)
+        _webdav[process] = RestRequests(dav_cfg['url'], auth=auth)
 
     return _webdav[process]
 

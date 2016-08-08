@@ -15,15 +15,12 @@
 # limitations under the License.
 
 """ Create and update tasks. """
-
 from .document import Task
-from .management import get_task_database, get_webdav, get_config
-from .util import download_file
+from .management import get_task_database, get_webdav
+from .util import data_content_type, file_content_type
 import time
 import os
-import webdav
-import ijson
-import mimetypes
+import io
 
 
 def add_task(properties, database=None):
@@ -64,7 +61,7 @@ def delete_task(task, database=None):
 
         dav = get_webdav()
         task_dir = _webdav_id_to_path(task.id)[1]
-        dav.clean(task_dir)
+        dav.delete(task_dir, ignore_not_existing=True)
 
 
 def scrub_tasks(view, age=24 * 60 * 60, database=None):
@@ -117,63 +114,81 @@ def upload_attachment(task, directory, filename, content_type=None):
     file_path = os.path.abspath(os.path.join(directory, filename))
 
     # determine whether a json type is geojson
-    if content_type and filename.endswith('json'):
-        try:
-            with open(file_path, 'w') as f:
-                t = next(ijson.items(f, 'type'))
-                if t in ['Feature', 'FeatureCollection']:
-                    content_type = 'application/vnd.geo+json'
-        except (ijson.common.JSONError, StopIteration):
-            pass  # invalid json or not geojson
     if content_type is None:
-        content_type, encoding = mimetypes.guess_type(filename)
-    if content_type is None:
-        content_type = 'text/plain'
+        content_type = file_content_type(filename, file_path)
 
+    with open(file_path, 'rb') as f:
+        _put_attachment(task, filename, f, os.stat(file_path).st_size,
+                        content_type)
+
+
+def _put_attachment(task, filename, f, length, content_type=None):
     try:
         dav = get_webdav()
     except EnvironmentError:
-        with open(file_path, 'rb') as f:
-            task.put_attachment(filename, f.read(), content_type)
+        task.put_attachment(filename, f.read(), content_type)
     else:
         path, task_dir, id_hash = _webdav_id_to_path(task.id, filename)
-        if len(task.files) == 0:
-            # an exists() call may be expensive, only use it once if
-            # possible
-            dav.mkdir(id_hash)
-            dav.mkdir(task_dir)
         try:
-            dav.upload_sync(remote_path=path, local_path=file_path)
+            if len(task.files) == 0:
+                dav.mkdir(id_hash, ignore_existing=True)
+                dav.mkdir(task_dir, ignore_existing=True)
+
+            dav.put(path, f, content_type=content_type)
 
             task.files[filename] = {
-                'url': _webdav_path_to_url(dav, path),
-                'length': os.stat(file_path).st_size,
-                'content_type': content_type,
+                'url': dav.path_to_url(path),
+                'length': length,
             }
+            if content_type is not None:
+                task.files[filename]['content_type'] = content_type
+
         except IOError as ex:
             print(
                 'WARNING: attachment {0} could not be uploaded to webdav: {1}'
                 .format(filename, ex))
-            with open(os.path.join(directory, filename), 'rb') as f:
-                task.put_attachment(filename, f.read(), content_type)
+            task.put_attachment(filename, f.read(), content_type)
+
+
+def write_attachment(task, filename, data, content_type=None):
+    """
+    Writes data as an attachment using the configured file storage layer.
+    @param data: bytes data
+    @param task: task that the data belongs to
+    @param filename: filename that the data should take
+    @param content_type: content type of the data. If None, it is guessed from
+        the file name.
+    """
+    # determine whether a json type is geojson
+    if content_type is None:
+        content_type = data_content_type(filename, data)
+
+    _put_attachment(task, filename, io.BytesIO(data), len(data),
+                    content_type)
+
+
+def read_attachment(task, filename, task_db=None):
+    """
+    Reads an attachment from the configured file storage layer as bytes data.
+    """
+    if filename in task.files:
+        url = task.files[filename]['url']
+        dav = get_webdav()
+        return dav.get(dav.url_to_path(url))
+    else:
+        if task_db is None:
+            task_db = get_task_database()
+        attach = task.get_attachment(filename, retrieve_from_database=task_db)
+        return attach['data']
 
 
 def download_attachment(task, directory, filename, task_db=None):
     """ Uploads an attachment from the configured file storage layer. """
     if filename in task.files:
+        dav = get_webdav()
         url = task.files[filename]['url']
-        try:
-            dav_config = get_config().section('webdav')
-            if 'username' in dav_config:
-                auth = (dav_config['username'], dav_config['password'])
-            else:
-                auth = None
-        except KeyError:
-            raise EnvironmentError('webdav for {0} not configured'.format(url))
-        if not url.startswith(dav_config['url']):
-            raise EnvironmentError('webdav for {0} not configured'.format(url))
-
-        download_file(url, os.path.join(directory, filename), auth)
+        file_path = os.path.join(directory, filename)
+        dav.download(dav.url_to_path(url), file_path)
     else:
         if task_db is None:
             task_db = get_task_database()
@@ -186,44 +201,20 @@ def delete_attachment(task, filename):
     """ Deletes an attachment from the configured file storage layer. """
     if filename in task.files:
         dav = get_webdav()
-        path = _webdav_url_to_path(task.files[filename]['url'], dav)
-        dav.clean(path)
+        dav.delete(dav.url_to_path(task.files[filename]['url']),
+                   ignore_not_existing=True)
         del task.files[filename]
     else:
         task.delete_attachment(filename)
-
-
-def _webdav_url_to_path(url, dav=None):
-    """ Extracts the path from a webdav url. """
-    if dav is None:
-        dav = get_webdav()
-
-    # Check that the same webdav system was used
-    if not url.startswith(dav.webdav.hostname + dav.webdav.root):
-        raise EnvironmentError(
-            'webdav for {0} not configured'.format(url))
-    # Remove the webdav base url from the URL to get the relative path
-    path = url[len(dav.webdav.hostname) + len(dav.webdav.root):]
-    # Use absolute path
-    if not path.startswith('/'):
-        path = '/' + path
-    return path
 
 
 def _webdav_id_to_path(task_id, filename=''):
     """ Deduces the path from a task ID. """
     if len(task_id) >= 7:
         # use hash (hopefully) by default
-        task_hash = '/' + task_id[5:7]
+        task_hash = task_id[5:7]
     else:
         # use the start of the string, less effective, but hey.
-        task_hash = '/' + task_id[:2]
+        task_hash = task_id[:2]
     task_dir = task_hash + '/' + task_id
     return task_dir + '/' + filename, task_dir, task_hash
-
-
-def _webdav_path_to_url(dav, path):
-    """ Convert a path on a webdav to a full URL. """
-    urn = webdav.urn.Urn(path)
-    return '{0}{1}{2}'.format(dav.webdav.hostname, dav.webdav.root,
-                              urn.quote())

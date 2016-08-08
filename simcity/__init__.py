@@ -26,6 +26,7 @@ server.
 """
 
 from .actors import JobActor
+from .dav import RestRequests
 from .ensemble import ensemble_view
 from .worker import ExecuteWorker
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
@@ -87,6 +88,7 @@ __all__ = [
     'parse_parameters',
     'PrioritizedViewIterator',
     'queue_job',
+    'RestRequests',
     'run_task',
     'RunActor',
     'scrub_jobs',
