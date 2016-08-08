@@ -27,7 +27,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(name='simcity',
-      version='0.3.4',
+      version='0.4',
       description='Python SIM-CITY client using CouchDB as a task pool '
                   'server.',
       author='Joris Borgdorff',
@@ -44,11 +44,11 @@ setup(name='simcity',
         'Operating System :: POSIX :: Linux',
         'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'
       ],
       install_requires=['pystache', 'CouchDB', 'pyxenon', 'jsonschema',
