@@ -37,10 +37,9 @@ job_views = frozenset(['pending_jobs', 'running_jobs', 'finished_jobs',
                        'archived_jobs', 'active_jobs'])
 
 
-def make_parser():
+def fill_argument_parser(parser):
+    """ Fill an argparse.ArgumentParser with arguments and subparsers. """
     global task_views, job_views
-    parser = argparse.ArgumentParser(prog='simcity',
-                                     description='SIM-CITY scripts')
 
     parser.add_argument(
         '-c', '--config', help="configuration file")
@@ -67,7 +66,7 @@ def make_parser():
     check_parser.set_defaults(func=check)
 
     create_parser = subparsers.add_parser(
-        'create', help="create new tasks in the database")
+        'create', help="Create new tasks in the database")
     create_parser.add_argument('command', help="command to run")
     create_parser.add_argument('arguments', nargs='*', help="arguments")
     create_parser.add_argument(
@@ -85,7 +84,7 @@ def make_parser():
         'delete', help="Remove all documents in a view")
     delete_parser.add_argument(
         'view', help="View to remove documents from (usually one of {0})"
-            .format(task_views | job_views))
+                     .format(task_views | job_views))
     delete_parser.add_argument(
         '-d', '--design', help="design document in CouchDB", default='Monitor')
     delete_parser.set_defaults(func=delete)
@@ -133,9 +132,9 @@ def make_parser():
     run_parser.add_argument('job_id', nargs='?', help="JOB ID to assume")
     run_parser.set_defaults(func=run)
 
-    scrub_parser = subparsers.add_parser('scrub',
-                                         help="Make old in progress tasks"
-                                              "available for processing again")
+    scrub_parser = subparsers.add_parser(
+        'scrub',
+        help="Make old in progress tasks available for processing again")
     scrub_task_views = task_views - frozenset(['done'])
     scrub_job_views = job_views - frozenset(['archived_jobs'])
     scrub_parser.add_argument('-D', '--days', type=int, default=0,
@@ -156,10 +155,10 @@ def make_parser():
     scrub_parser.set_defaults(func=scrub)
 
     summary_parser = subparsers.add_parser(
-        'summary', help="summary of the infrastructure")
+        'summary', help="Summary of the infrastructure")
     summary_parser.set_defaults(func=summary)
 
-    submit_parser = subparsers.add_parser('submit', help="start a job")
+    submit_parser = subparsers.add_parser('submit', help="Start a job")
     submit_parser.add_argument('host', help="host to run pilot job on")
     submit_parser.add_argument(
         '-m', '--max', type=int, default=2,
@@ -170,14 +169,18 @@ def make_parser():
         help="also start if there are more that MAX jobs running")
     submit_parser.set_defaults(func=submit)
 
-    return parser
-
 
 def main():
     """ Parse all arguments of the simcity script. """
-    parser = make_parser()
+    parser = argparse.ArgumentParser(prog='simcity',
+                                     description='SIM-CITY scripts')
+    fill_argument_parser(parser)
 
     args = parser.parse_args()
+    if 'func' not in args:
+        parser.print_help()
+        sys.exit(1)
+
     if args.func != init:
         simcity.init(config=args.config)
 

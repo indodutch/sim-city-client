@@ -18,6 +18,9 @@
 
 from flake8.api import legacy as flake8
 import os
+import logging
+
+logging.disable(logging.CRITICAL)
 
 
 def test_flake8():
