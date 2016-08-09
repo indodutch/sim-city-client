@@ -37,8 +37,7 @@ job_views = frozenset(['pending_jobs', 'running_jobs', 'finished_jobs',
                        'archived_jobs', 'active_jobs'])
 
 
-def main():
-    """ Parse all arguments of the simcity script. """
+def make_parser():
     global task_views, job_views
     parser = argparse.ArgumentParser(prog='simcity',
                                      description='SIM-CITY scripts')
@@ -86,7 +85,7 @@ def main():
         'delete', help="Remove all documents in a view")
     delete_parser.add_argument(
         'view', help="View to remove documents from (usually one of {0})"
-        .format(task_views | job_views))
+            .format(task_views | job_views))
     delete_parser.add_argument(
         '-d', '--design', help="design document in CouchDB", default='Monitor')
     delete_parser.set_defaults(func=delete)
@@ -136,7 +135,7 @@ def main():
 
     scrub_parser = subparsers.add_parser('scrub',
                                          help="Make old in progress tasks"
-                                         "available for processing again")
+                                              "available for processing again")
     scrub_task_views = task_views - frozenset(['done'])
     scrub_job_views = job_views - frozenset(['archived_jobs'])
     scrub_parser.add_argument('-D', '--days', type=int, default=0,
@@ -170,6 +169,13 @@ def main():
         '-f', '--force', action='store_true',
         help="also start if there are more that MAX jobs running")
     submit_parser.set_defaults(func=submit)
+
+    return parser
+
+
+def main():
+    """ Parse all arguments of the simcity script. """
+    parser = make_parser()
 
     args = parser.parse_args()
     if args.func != init:
@@ -270,7 +276,7 @@ def init(args):
             pass  # user does not exist yet
 
         try:
-            simcity.create(args.admin, args.password)
+            simcity.create(args.user, args.password)
         except couchdb.http.Unauthorized:
             print("User and/or password incorrect")
             sys.exit(1)
