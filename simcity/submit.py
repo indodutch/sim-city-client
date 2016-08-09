@@ -20,15 +20,19 @@ from .document import Job
 from .job import archive_job, queue_job
 from .management import get_config, get_job_database
 import json
-import xenon
-from xenon.conversions import dict_to_HashMap
 try:
     from httplib import HTTPConnection
 except ImportError:
     from http.client import HTTPConnection
-
 import subprocess
 from uuid import uuid4
+
+try:
+    import xenon
+    from xenon.conversions import dict_to_HashMap
+    xenon_support = True
+except ImportError:
+    xenon_support = False
 
 
 def create_adaptor(host_id, host_cfg):
@@ -40,6 +44,7 @@ def create_adaptor(host_id, host_cfg):
         properties
     @return: Adaptor
     """
+    global xenon_support
     try:
         if host_cfg['method'] == 'ssh':
             return SSHAdaptor(
@@ -61,6 +66,9 @@ def create_adaptor(host_id, host_cfg):
                 prefix=host_id + '-',
                 max_time=host_cfg.get('max_time'))
         elif host_cfg['method'] == 'xenon':
+            if not xenon_support:
+                raise EnvironmentError("Xenon not installed. Install "
+                                       "with pip install -U '.[xenon]'")
             return XenonAdaptor(
                 database=get_job_database(),
                 host=host_cfg['host'],

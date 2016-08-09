@@ -21,7 +21,11 @@ Then before every run or installation, include the `simcity` virtualenv:
 
 ## Installation
 
-Simply run
+If you want to submit to a cluster from the local host, run
+
+    pip install -U ".[xenon]"
+
+Otherwise, and on the cluster itself, run
 
     pip install -U .
 
@@ -79,7 +83,7 @@ The API consists of all methods exported in `__init__.py`. It assumes that a con
 
 To add a feature or bug-fix, create a new clone and/or branch. Install testing tools with
 
-    pip install -r requirements.txt '.[testing]'
+    pip install -r requirements.txt '.[test]'
 
 And run
 

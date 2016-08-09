@@ -38,14 +38,14 @@ from .management import (get_config, init, get_task_database, get_job_database,
                          get_current_job_id, set_current_job_id,
                          create, create_views, uses_webdav, get_webdav,
                          load_config_database)
-from .submit import (submit, Adaptor, OsmiumAdaptor,
-                     SSHAdaptor, XenonAdaptor, kill, status)
+from .submit import (submit, Adaptor, OsmiumAdaptor, xenon_support,
+                     SSHAdaptor, kill, status)
 from .task import (add_task, get_task, delete_task, scrub_tasks,
                    upload_attachment, download_attachment, delete_attachment)
 from .config import Config, CouchDBConfig, FileConfig
 from .document import Task, Job, Document, User
 from .database import CouchDB
-from .iterator import (TaskViewIterator, EndlessViewIterator,
+from .iterator import (ViewIterator, TaskViewIterator, EndlessViewIterator,
                        PrioritizedViewIterator)
 from .util import parse_parameters
 from .version import __version__, __version_info__
@@ -90,7 +90,6 @@ __all__ = [
     'queue_job',
     'RestRequests',
     'run_task',
-    'RunActor',
     'scrub_jobs',
     'scrub_tasks',
     'set_current_job_id',
@@ -106,7 +105,11 @@ __all__ = [
     'User',
     'uses_webdav',
     'ViewIterator',
-    'XenonAdaptor',
+    'xenon_support',
     '__version__',
     '__version_info__',
 ]
+
+if xenon_support:
+    from .submit import XenonAdaptor  # noqa: F401
+    __all__.append('XenonAdaptor')

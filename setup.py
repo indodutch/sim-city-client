@@ -51,10 +51,11 @@ setup(name='simcity',
         'Programming Language :: Python :: 3.5',
         'Topic :: System :: Distributed Computing'
       ],
-      install_requires=['pystache', 'CouchDB', 'pyxenon', 'jsonschema',
+      install_requires=['pystache', 'CouchDB', 'jsonschema',
                         'ijson', 'requests'],
       extras_require={
-          'testing': ['nose', 'flake8', 'coverage'],
+          'test': ['nose', 'flake8', 'coverage'],
+          'xenon': ['pyxenon'],
       },
       entry_points={
           'console_scripts': [

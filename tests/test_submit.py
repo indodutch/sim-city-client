@@ -17,6 +17,7 @@ import simcity
 from nose.tools import (assert_false, assert_equal, assert_not_equal,
                         assert_raises)
 from test_mock import MockDB, MockRow
+from nose.plugins.skip import SkipTest
 
 
 class MockSubmitter(simcity.Adaptor):
@@ -132,6 +133,10 @@ def test_Osmium_submit_method():
 
 
 def test_Xenon_submit_method():
+    try:
+        from simcity import XenonAdaptor
+    except ImportError:
+        raise SkipTest()
     simcity.management._reset_globals()
     # setup host with Xenon torque adaptor
     _set_host_config('nohost', method='xenon')
@@ -139,5 +144,5 @@ def test_Xenon_submit_method():
     cfg['host'] = 'torque://' + cfg['host']
     simcity.get_config().add_section('nohost-host', cfg)
     _set_database(0, 0, 0, 0)
-    simcity.XenonAdaptor.init()
+    XenonAdaptor.init()
     assert_raises(IOError, simcity.submit, 'nohost')
