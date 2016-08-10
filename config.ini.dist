@@ -71,4 +71,11 @@ input_dir = $HOME/in
 #method = xenon
 ## time in minutes: 1 day
 #max_time = 1440
+## Set alternative credentials (instead of the ones in
+## ~/.ssh/config) by commenting out the values below.
+## All values are optional
+#private-key = $HOME/.ssh/id_rsa
+## If a private-key is given, this is the password to
+## the private key. Otherwise, it is the login password.
+#password = mypassword
 

@@ -30,6 +30,7 @@ from uuid import uuid4
 try:
     import xenon
     from xenon.conversions import dict_to_HashMap
+    import jpype
     xenon_support = True
 except ImportError:
     xenon_support = False
@@ -400,6 +401,9 @@ class XenonAdaptor(Adaptor):
                              "hostname, syntax `scheme://host`.")
         self.scheme, self.hostname = urlsplit
         if properties is not None:
+            self.private_key = properties.get('private-key')
+            self.password = properties.get('password')
+
             self.xenon_properties = dict_to_HashMap({
                 key[len('xenon-property-'):]: value
                 for key, value in properties.items()
@@ -414,6 +418,8 @@ class XenonAdaptor(Adaptor):
         else:
             self.xenon_properties = None
             self.scheduler_properties = None
+            self.private_key = None
+            self.password = None
 
     @classmethod
     def init(cls, log_level='INFO'):
@@ -497,7 +503,24 @@ class XenonAdaptor(Adaptor):
 
     def scheduler(self, x):
         """ Get a Xenon Scheduler. """
-        return x.jobs().newScheduler(self.scheme, self.hostname, None,
+        credential = None
+        if (self.private_key is not None or
+                self.password is not None):
+            cred = x.credentials()
+            if self.password is not None:
+                password = jpype.JArray(jpype.JChar)(self.password)
+            else:
+                password = None
+
+            if self.private_key is not None:
+                credential = cred.newCertificateCredential(
+                    'ssh', self.private_key, None, password,
+                    None)
+            else:
+                credential = cred.newPasswordCredential(
+                    'ssh', None, password, None)
+
+        return x.jobs().newScheduler(self.scheme, self.hostname, credential,
                                      self.scheduler_properties)
 
     def jobs(self, x):
