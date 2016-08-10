@@ -18,7 +18,7 @@ matrix:
 install:
   - pip install -U pip
   - pip install -U . codacy-coverage
-  - pip install -U ".[test]"
+  - pip install -U ".[test,xenon]"
 script:
   - nosetests --with-coverage --cover-package=simcity --cover-xml $TESTS
 after_script:
