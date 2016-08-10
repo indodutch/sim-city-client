@@ -50,7 +50,7 @@ class RestRequests(object):
         """ Whether the path exists. """
         kwargs.update(self.kwargs)
         response = requests.head(self.path_to_url(path), auth=self.auth,
-                                 **kwargs)
+                                 allow_redirects=True, **kwargs)
         return response.status_code == 200
 
     def put(self, path, data, content_type=None, content_length=None,
