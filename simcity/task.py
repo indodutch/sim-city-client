@@ -134,7 +134,7 @@ def _put_attachment(task, filename, f, length, content_type=None):
                 dav.mkdir(id_hash, ignore_existing=True)
                 dav.mkdir(task_dir, ignore_existing=True)
 
-            dav.put(path, f, content_type=content_type)
+            dav.put(path, f, content_type=content_type, content_length=length)
 
             task.files[filename] = {
                 'url': dav.path_to_url(path),
