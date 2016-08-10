@@ -29,7 +29,7 @@ def verify(acceptable_statuses, response, message):
     """
     if response.status_code not in acceptable_statuses:
         header_str = '\n'.join(['{0}: {1}'.format(k, v)
-                                for k, v in response.headers])
+                                for k, v in response.headers.items()])
         raise IOError('{0}: HTTP status code {1}\nHeaders:\n{2}'
                       .format(message, response.status_code, header_str))
 
