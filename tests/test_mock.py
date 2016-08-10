@@ -44,7 +44,7 @@ class MockDAV(object):
         self.base_url = 'https://my.example.com'
         self.removed = []
 
-    def put(self, path, fp, content_type=None):
+    def put(self, path, fp, content_type=None, content_length=None):
         self.files[path] = fp.read()
 
     def delete(self, path, ignore_not_existing=False):
