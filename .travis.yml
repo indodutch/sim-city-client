@@ -1,12 +1,27 @@
 language: python
-python:
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "3.5"
+
+matrix:
+  fast_finish: true
+  # Only do docker integration tests with Python 3.5
+  include:
+    - python: "2.7"
+      env: TESTS="tests"
+    - python: "3.3"
+      env: TESTS="tests"
+    - python: "3.4"
+      env: TESTS="tests"
+    - python: "3.5"
+      env: TESTS="tests integration_tests"
+      sudo: true
+      services:
+        - docker
 install:
   - pip install -U pip
   - pip install -U . codacy-coverage
   - pip install -U ".[test]"
-script: nosetests --with-coverage --cover-package=simcity --cover-xml
-after_script: python-codacy-coverage -r coverage.xml
+script:
+  - nosetests --with-coverage --cover-package=simcity --cover-xml $TESTS
+after_script:
+  - if [ $TESTS == "tests integration_tests" ]; then
+    python-codacy-coverage -r coverage.xml;
+    fi
