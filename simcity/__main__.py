@@ -429,6 +429,9 @@ def check(args):
     for task in tasks:
         print("Marking task {} that ran in job {} as error"
               .format(task.id, task['job']))
+        task.error('Failed to finish task in time, the job has stopped '
+                   'already.')
+        simcity.get_task_database().save(task)
 
     if args.host is None:
         print("No host provided, not starting additional jobs")

@@ -29,7 +29,7 @@ def verify(acceptable_statuses, response, message):
     """
     if response.status_code not in acceptable_statuses:
         header_str = '\n'.join(['{0}: {1}'.format(k, v)
-                                for k, v in response.headers.items()])
+                                for k, v in response.headers.lower_items()])
         raise IOError('{0}: HTTP status code {1}\nHeaders:\n{2}'
                       .format(message, response.status_code, header_str))
 
@@ -53,16 +53,33 @@ class RestRequests(object):
                                  **kwargs)
         return response.status_code == 200
 
-    def put(self, path, data, content_type=None, **kwargs):
-        """ Put bytes or a file pointer. """
+    def put(self, path, data, content_type=None, content_length=None,
+            **kwargs):
+        """
+        Put bytes, dict, or a file pointer.
+        If a file pointer is given, the content_length needs to be specified,
+        in bytes.
+        """
         kwargs.update(self.kwargs)
         if content_type is None:
             headers = None
         else:
             headers = {'content-type': content_type}
-        response = requests.put(self.path_to_url(path), data=data,
-                                auth=self.auth, headers=headers, **kwargs)
-        verify((201,), response, 'Failed to upload file {0}'.format(path))
+
+        if content_length is None and hasattr(data, 'read'):
+            raise ValueError('Given file data needs specified content_length.')
+
+        # requests will make a multipart request for 0-length files, where both
+        # parts have both with 0 data. This may fail on some WebDAV servers
+        # (e.g. Apache httpd). Using an empty string resolves this.
+        if content_length == 0 and hasattr(data, 'read'):
+            response = requests.put(self.path_to_url(path), data=b'',
+                                    auth=self.auth, headers=headers, **kwargs)
+        else:
+            response = requests.put(self.path_to_url(path), data=data,
+                                    auth=self.auth, headers=headers, **kwargs)
+
+        verify((201, 204), response, 'Failed to upload file {0}'.format(path))
 
     def mkdir(self, path, ignore_existing=False, **kwargs):
         """
