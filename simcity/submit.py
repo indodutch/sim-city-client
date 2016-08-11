@@ -29,7 +29,6 @@ from uuid import uuid4
 
 try:
     import xenon
-    from xenon.conversions import dict_to_HashMap
     import jpype
     xenon_support = True
 except ImportError:
@@ -404,13 +403,13 @@ class XenonAdaptor(Adaptor):
             self.private_key = properties.get('private-key')
             self.password = properties.get('password')
 
-            self.xenon_properties = dict_to_HashMap({
+            self.xenon_properties = xenon.conversions.dict_to_HashMap({
                 key[len('xenon-property-'):]: value
                 for key, value in properties.items()
                 if key.startswith('xenon-property-')
             })
 
-            self.scheduler_properties = dict_to_HashMap({
+            self.scheduler_properties = xenon.conversions.dict_to_HashMap({
                 key[len('scheduler-property-'):]: value
                 for key, value in properties.items()
                 if key.startswith('scheduler-property-')
@@ -421,12 +420,12 @@ class XenonAdaptor(Adaptor):
             self.private_key = None
             self.password = None
 
-    @classmethod
-    def init(cls, log_level='INFO'):
+    @staticmethod
+    def init(log_level='INFO', **kwargs):
         """ Initialize Xenon. The method is a no-op after the first call. """
-        if not cls.xenon_init:
-            cls.xenon_init = True
-            xenon.init(log_level=log_level)
+        if not XenonAdaptor.xenon_init:
+            XenonAdaptor.xenon_init = True
+            xenon.init(log_level=log_level, **kwargs)
 
     def _do_submit(self, job, command):
         """ Submit a command with given job metadata. """
