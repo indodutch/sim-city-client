@@ -386,13 +386,15 @@ class SSHAdaptor(Adaptor):
 
 class XenonAdaptor(Adaptor):
     """ Submits job using Xenon. """
-    xenon_init = False
-
     def __init__(self, database, host, prefix, jobdir, max_time=1440,
                  properties=None):
         super(XenonAdaptor, self).__init__(database, host, prefix, jobdir,
                                            "xenon")
-        XenonAdaptor.init()
+        try:
+            xenon.init(log_level='INFO')
+        except ValueError:
+            pass  # xenon is already initialized
+
         self.max_time = max_time
         urlsplit = self.host.split('://')
         if len(urlsplit) != 2:
@@ -419,13 +421,6 @@ class XenonAdaptor(Adaptor):
             self.scheduler_properties = None
             self.private_key = None
             self.password = None
-
-    @staticmethod
-    def init(log_level='INFO', **kwargs):
-        """ Initialize Xenon. The method is a no-op after the first call. """
-        if not XenonAdaptor.xenon_init:
-            XenonAdaptor.xenon_init = True
-            xenon.init(log_level=log_level, **kwargs)
 
     def _do_submit(self, job, command):
         """ Submit a command with given job metadata. """
