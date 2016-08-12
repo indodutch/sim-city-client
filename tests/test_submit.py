@@ -144,5 +144,4 @@ def test_Xenon_submit_method():
     cfg['host'] = 'torque://' + cfg['host']
     simcity.get_config().add_section('nohost-host', cfg)
     _set_database(0, 0, 0, 0)
-    XenonAdaptor.init()
     assert_raises(IOError, simcity.submit, 'nohost')
