@@ -507,7 +507,8 @@ class XenonAdaptor(Adaptor):
                 self.password is not None):
             cred = x.credentials()
             if self.password is not None:
-                password = jpype.JArray(jpype.JChar)(self.password)
+                j_str = jpype.JString(self.password)
+                password = jpype.java.lang.String(j_str).toCharArray()
             else:
                 password = None
 
