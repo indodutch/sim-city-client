@@ -117,8 +117,7 @@ def check_job_status(dry_run=False, database=None):
     if database is None:
         database = get_job_database()
 
-    active = database.view('active_jobs').rows
-    jobs = [get_job(row.id) for row in active]
+    jobs = [get_job(row.id) for row in database.view('active_jobs')]
     jobs = [job for job in jobs if job.type == 'job']
     job_status = status(jobs)
 
@@ -153,7 +152,7 @@ def check_task_status(dry_run=False, database=None):
     while has_failed_saves:
         has_failed_saves = False
 
-        for row in database.view('in_progress').rows:
+        for row in database.view('in_progress'):
             task = get_task(row.id)
             job = get_job(task['job'])
             if job.is_done():

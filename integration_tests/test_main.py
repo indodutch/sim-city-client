@@ -59,11 +59,11 @@ def test_submit():
     assert_equals(1, totals['finished_jobs'])
     assert_equals(1, totals['archived_jobs'])
 
-    job_id = simcity.get_job_database().view('archived_jobs').rows[0].id
+    job_id = next(simcity.get_job_database().view('archived_jobs')).id
     job = simcity.get_job(job_id)
     assert_equals(1, job['parallelism'])
 
-    task_id = simcity.get_task_database().view('done').rows[0].id
+    task_id = next(simcity.get_task_database().view('done')).id
     task = simcity.get_task(task_id)
     assert_equals(1, task['parallelism'])
     assert_true(len(task['execute_properties']['env']) > 5)
