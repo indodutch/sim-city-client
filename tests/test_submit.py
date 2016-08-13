@@ -133,9 +133,7 @@ def test_Osmium_submit_method():
 
 
 def test_Xenon_submit_method():
-    try:
-        from simcity import XenonAdaptor
-    except ImportError:
+    if not simcity.xenon_support:
         raise SkipTest()
     simcity.management._reset_globals()
     # setup host with Xenon torque adaptor
