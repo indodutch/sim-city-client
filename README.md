@@ -75,6 +75,22 @@ To check the status of the jobs and tasks, clean up the database, and start jobs
 
 Use the `-n` flag to only list the actions that `check` would perform.
 
+To view tasks that are in progress, for example, run
+
+    simcity list in_progress
+
+or tasks that are done
+
+    simcity list done
+
+To get one such task, get it with
+
+    simcity get mytaskid
+
+or download all its attachments with
+
+    simcity get --download path/to/results mytaskid 
+
 ## API
 
 The API consists of all methods exported in `__init__.py`. It assumes that a configuration file is available to set the databases and execution options with. The `simcity.init(configfile)` must be called before any other `simcity` function.
