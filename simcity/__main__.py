@@ -23,7 +23,7 @@ import simcity
 from simcity import (PrioritizedViewIterator, TaskViewIterator,
                      EndlessViewIterator, Config, FileConfig,
                      load_config_database, submit_while_needed)
-from .util import seconds_to_str
+from .util import seconds_to_str, sizeof_fmt
 import argparse
 import getpass
 import couchdb
@@ -32,6 +32,8 @@ import json
 import signal
 import traceback
 import yaml
+from tqdm import tqdm
+import os
 from uuid import uuid4
 
 task_views = frozenset(['pending', 'done', 'in_progress', 'error'])
@@ -93,6 +95,8 @@ def fill_argument_parser(parser):
 
     get_parser = subparsers.add_parser('get', help='get document')
     get_parser.add_argument('id', help='document ID')
+    get_parser.add_argument('-d', '--download',
+                            help='download task to directory')
     get_parser.set_defaults(func=get)
 
     init_parser = subparsers.add_parser(
@@ -249,21 +253,44 @@ def delete(args):
 
 def get(args):
     """ Get document and print it """
+    if args.download is not None:
+        if not os.path.isdir(args.download):
+            os.makedirs(args.download)
     try:
         doc = simcity.get_task(args.id)
-        doc['lock'] = seconds_to_str(doc['lock'], 'not started')
-        doc['done'] = seconds_to_str(doc['done'], 'not done')
+        doc['lock_str'] = seconds_to_str(doc['lock'], 'not started')
+        doc['done_str'] = seconds_to_str(doc['done'], 'not done')
+        if args.download is not None:
+            lengths = {}
+            for filename in doc.list_files():
+                try:
+                    lengths[filename] = doc.files[filename]['length']
+                except KeyError:
+                    lengths[filename] = doc['_attachments'][filename]['length']
+            total_length = sum(lengths.values())
+
+            print('Downloading {0} to {1}'
+                  .format(sizeof_fmt(total_length), args.download))
+            pbar = tqdm(total=total_length, unit_scale=True, unit='B')
+            for filename in doc.list_files():
+                simcity.download_attachment(doc, args.download, filename)
+                pbar.update(lengths[filename])
+            pbar.close()
     except (ValueError, KeyError):
         try:
             doc = simcity.get_job(args.id)
-            doc['queue'] = seconds_to_str(doc['queue'], 'not queued')
-            doc['start'] = seconds_to_str(doc['start'], 'not started')
-            doc['done'] = seconds_to_str(doc['done'], 'not done')
+            doc['queue_str'] = seconds_to_str(doc['queue'], 'not queued')
+            doc['start_str'] = seconds_to_str(doc['start'], 'not started')
+            doc['done_str'] = seconds_to_str(doc['done'], 'not done')
         except (ValueError, KeyError):
             print("Document {0} not found".format(args.id))
             sys.exit(1)
 
-    print(yaml.safe_dump(dict(doc), default_flow_style=False))
+    if args.download is None:
+        print(yaml.safe_dump(dict(doc), default_flow_style=False))
+    else:
+        with open(os.path.join(args.download, '_document.json'), 'w') as f:
+            json.dump(dict(doc), f)
 
 
 def init(args):

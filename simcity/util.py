@@ -74,6 +74,15 @@ def seconds_to_str(seconds, default_value=''):
         return default_value
 
 
+def sizeof_fmt(num, suffix='B'):
+    """ formatted bytes """
+    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+        if abs(num) < 1000.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1000.0
+    return "%.1f %s%s" % (num, 'Y', suffix)
+
+
 class Timer(object):
     """ Measures elapsed time. """
     def __init__(self):

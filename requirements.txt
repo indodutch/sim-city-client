@@ -15,4 +15,5 @@ pystache==0.5.4
 pyxenon==0.2.2
 PyYAML==3.11
 requests==2.10.0
+tqdm==4.8.4
 -e .
