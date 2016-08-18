@@ -26,6 +26,7 @@ import jsonschema
 import ijson
 import mimetypes
 import io
+from datetime import datetime
 
 
 def parse_parameters(parameters, schema):
@@ -63,6 +64,14 @@ def merge_dicts(dict1, dict2):
 def seconds():
     """ Return the current time in seconds since the epoch. """
     return int(time.time())
+
+
+def seconds_to_str(seconds, default_value=''):
+    """ Convert a timestamp in seconds to string. """
+    if seconds > 0:
+        return datetime.fromtimestamp(seconds).strftime('%F %T')
+    else:
+        return default_value
 
 
 class Timer(object):

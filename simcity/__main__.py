@@ -23,6 +23,7 @@ import simcity
 from simcity import (PrioritizedViewIterator, TaskViewIterator,
                      EndlessViewIterator, Config, FileConfig,
                      load_config_database, submit_while_needed)
+from .util import seconds_to_str
 import argparse
 import getpass
 import couchdb
@@ -30,6 +31,7 @@ import sys
 import json
 import signal
 import traceback
+import yaml
 from uuid import uuid4
 
 task_views = frozenset(['pending', 'done', 'in_progress', 'error'])
@@ -89,6 +91,10 @@ def fill_argument_parser(parser):
         '-d', '--design', help="design document in CouchDB", default='Monitor')
     delete_parser.set_defaults(func=delete)
 
+    get_parser = subparsers.add_parser('get', help='get document')
+    get_parser.add_argument('id', help='document ID')
+    get_parser.set_defaults(func=get)
+
     init_parser = subparsers.add_parser(
         'init', help="Initialize the SIM-CITY databases and views as "
                      "configured.")
@@ -100,6 +106,16 @@ def fill_argument_parser(parser):
     init_parser.add_argument(
         '-u', '--user', help="admin user")
     init_parser.set_defaults(func=init)
+
+    list_parser = subparsers.add_parser('list', help='list documents')
+    list_parser.add_argument('view', help='view name',
+                             choices=task_views | job_views)
+    list_parser.add_argument('-l', '--limit', default=0, type=int,
+                             help='maximum number of items to show '
+                                  '(default: %(default))')
+    list_parser.add_argument('-o', '--offset', default=0,
+                             help='offset to show items from')
+    list_parser.set_defaults(func=list_documents)
 
     run_parser = subparsers.add_parser('run', help="Execute tasks")
     run_parser.add_argument('-D', '--days', type=int, default=1,
@@ -211,9 +227,9 @@ def create(args):
             except TypeError:
                 pass
 
-            simcity.add_task(task)
+            task = simcity.add_task(task)
 
-            print("added task %d" % i)
+            print("added task {0}".format(task.id))
         except Exception as ex:
             print("ERROR: task {0} failed to be added: {1}".format(i, ex),
                   file=sys.stderr)
@@ -229,6 +245,25 @@ def delete(args):
     is_deleted = db.delete_from_view(args.view, design_doc=args.design)
     print("Deleted %d out of %d tasks from view %s" %
           (sum(is_deleted), len(is_deleted), args.view))
+
+
+def get(args):
+    """ Get document and print it """
+    try:
+        doc = simcity.get_task(args.id)
+        doc['lock'] = seconds_to_str(doc['lock'], 'not started')
+        doc['done'] = seconds_to_str(doc['done'], 'not done')
+    except (ValueError, KeyError):
+        try:
+            doc = simcity.get_job(args.id)
+            doc['queue'] = seconds_to_str(doc['queue'], 'not queued')
+            doc['start'] = seconds_to_str(doc['start'], 'not started')
+            doc['done'] = seconds_to_str(doc['done'], 'not done')
+        except (ValueError, KeyError):
+            print("Document {0} not found".format(args.id))
+            sys.exit(1)
+
+    print(yaml.safe_dump(dict(doc), default_flow_style=False))
 
 
 def init(args):
@@ -283,6 +318,54 @@ def init(args):
         except couchdb.http.Unauthorized:
             print("User and/or password incorrect")
             sys.exit(1)
+
+
+def list_documents(args):
+    """ List documents in a view. """
+    global task_views
+
+    options = {}
+    if args.limit > 0:
+        options['limit'] = args.limit
+    if args.offset > 0:
+        options['skip'] = args.offset
+
+    if args.view in task_views:
+        view = simcity.get_task_database().view(args.view, **options)
+        if args.view == 'error':
+            for row in view:
+                print('{0}:'.format(row.id))
+                for error in row.value:
+                    print('  - time: {0}'
+                          .format(seconds_to_str(error['time'])))
+                    if 'message' in error:
+                        print('    message: {1}'
+                              .format(seconds_to_str(error['time']),
+                                      error.get('message', 'none')))
+                    if 'exception' in error:
+                        print('    exception:\n'
+                              '    ==========\n'
+                              '    {0}=========='
+                              .format('\n    '.join(
+                                    error['exception'].split('\n'))))
+        else:
+            print('{:<40} {:<22} {:<22}'.format('ID', 'started', 'stopped'))
+            print('-' * (40 + 1 + 22 + 1 + 22))
+            for row in view:
+                lock = seconds_to_str(row.value['lock'], 'not started')
+                done = seconds_to_str(row.value['done'], 'not done')
+                print('{:<40} {:<22} {:<22}'.format(row.id[:40], lock, done))
+    else:
+        view = simcity.get_job_database().view(args.view, **options)
+        print('{:<45} {:<22} {:<22} {:<22}'.format('ID', 'queued', 'started',
+                                                   'stopped'))
+        print('-' * (45 + 1 + 22 + 1 + 22 + 1 + 22))
+        for row in view:
+            queued = seconds_to_str(row.value['queue'], 'not queued')
+            start = seconds_to_str(row.value['start'], 'not started')
+            done = seconds_to_str(row.value['done'], 'not done')
+            print('{:<45} {:<22} {:<22} {:<22}'.format(row.id[:45], queued,
+                                                       start, done))
 
 
 def _is_cancelled():
@@ -397,8 +480,9 @@ def summary(args):
     """ Print summary of tasks. """
     print('Summary')
     print(20*'=')
-    for k, v in simcity.overview_total().items():
-        print('{:<15} {}'.format(k, v))
+    overview = simcity.overview_total()
+    for k in sorted(overview.keys()):
+        print('{0:<15} {1}'.format(k, overview[k]))
     print(20*'=')
 
 
