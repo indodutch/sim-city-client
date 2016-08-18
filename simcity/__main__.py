@@ -202,7 +202,11 @@ def main():
         sys.exit(1)
 
     if args.func != init:
-        simcity.init(config=args.config)
+        try:
+            simcity.init(config=args.config)
+        except couchdb.http.ResourceNotFound:
+            print('Configuration does not correctly specify the databases.')
+            sys.exit(1)
 
     args.func(args)
 
