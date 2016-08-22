@@ -86,9 +86,12 @@ def fill_argument_parser(parser):
 
     delete_parser = subparsers.add_parser(
         'delete', help="Remove all documents in a view")
-    delete_parser.add_argument(
-        'view', help="View to remove documents from (usually one of {0})"
-                     .format(task_views | job_views))
+    delete_group = delete_parser.add_mutually_exclusive_group(required=True)
+    delete_group.add_argument(
+        '-v', '--view',
+        help="View to remove documents from (usually one of {0})"
+             .format(task_views | job_views))
+    delete_group.add_argument('id', nargs='?', help="document ID")
     delete_parser.add_argument(
         '-d', '--design', help="design document in CouchDB", default='Monitor')
     delete_parser.set_defaults(func=delete)
@@ -244,15 +247,28 @@ def create(args):
 
 
 def delete(args):
-    """ Delete all documents from given view. """
-    if args.view in job_views:
-        db = simcity.get_job_database()
-    else:
-        db = simcity.get_task_database()
+    """ Delete documents """
+    if args.id is not None:
+        try:
+            db = simcity.get_task_database()
+            db.delete(db.get(args.id))
+        except ValueError:
+            try:
+                db = simcity.get_job_database()
+                db.delete(db.get(args.id))
+            except ValueError:
+                print("Cannot find document ID {0}".format(args.id))
+                sys.exit(1)
 
-    is_deleted = db.delete_from_view(args.view, design_doc=args.design)
-    print("Deleted %d out of %d tasks from view %s" %
-          (sum(is_deleted), len(is_deleted), args.view))
+    if args.view is not None:
+        if args.view in job_views:
+            db = simcity.get_job_database()
+        else:
+            db = simcity.get_task_database()
+
+        is_deleted = db.delete_from_view(args.view, design_doc=args.design)
+        print("Deleted %d out of %d tasks from view %s" %
+              (sum(is_deleted), len(is_deleted), args.view))
 
 
 def get(args):
