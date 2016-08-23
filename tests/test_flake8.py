@@ -30,7 +30,8 @@ def disable_logging():
     logging.disable(logging.NOTSET)
 
 
-@pytest.fixture(params=['tests', 'scripts', 'xenon', 'setup.py'])
+@pytest.fixture(params=['tests', 'integration_tests', 'scripts', 'simcity',
+                        'setup.py'])
 def flake8_filenames(request):
     """ Yield filenames for flake8 to run over recursively, given files and
     directories. """
