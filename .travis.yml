@@ -11,7 +11,7 @@ matrix:
     - python: "3.4"
       env: TESTS="tests"
     - python: "3.5"
-      env: TESTS="tests integration_tests"
+      env: TESTS=""  # run all tests
       sudo: true
       services:
         - docker
