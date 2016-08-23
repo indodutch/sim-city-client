@@ -309,7 +309,7 @@ def test_listfiles(tmpdir):
     dir2 = tmpdir.mkdir('dir2')
     dir1.ensure('d.txt')
     dir2.mkdir('dir3')
-    assert listfiles(str(tmpdir)) == ['a.txt', 'b.txt']
-    assert listdirs(str(tmpdir)) == ['dir1', 'dir2']
+    assert sorted(listfiles(str(tmpdir))) == ['a.txt', 'b.txt']
+    assert sorted(listdirs(str(tmpdir))) == ['dir1', 'dir2']
     pytest.raises(OSError, listfiles, 'non_existant_dir')
     pytest.raises(OSError, listdirs, 'non_existant_dir')
