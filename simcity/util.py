@@ -128,14 +128,24 @@ def expandfilenames(filenames):
 
 
 def listfiles(mypath):
-    """ Returns a list of regular filenames in given directory. """
+    """
+    List the regular files in given directory.
+    @param mypath: path of a directory
+    @raise OSError: if mypath is not a valid directory
+    @return: list of file names, relative to given mypath.
+    """
     return [f
             for f in os.listdir(mypath)
             if os.path.isfile(os.path.join(mypath, f))]
 
 
 def listdirs(mypath):
-    """ Returns a list of directories in given directory. """
+    """
+    List the directories in given directory.
+    @param mypath: path of a directory
+    @raise OSError: if mypath is not a valid directory
+    @return: list of directory names, relative to given mypath.
+    """
     return [d
             for d in os.listdir(mypath)
             if os.path.isdir(os.path.join(mypath, d))]

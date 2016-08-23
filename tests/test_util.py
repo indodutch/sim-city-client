@@ -76,11 +76,19 @@ def test_seconds():
     (-1, None, None),
     (-1, 1, 1),
     (0, 'nothing', 'nothing'),
-    (1, 'nothing', '1970-01-01 01:00:01'),
-    (1471953832, 'nothing', '2016-08-23 14:03:52'),
 ])
-def test_seconds_str(timestamp, default_value, expected):
+def test_seconds_str_default(timestamp, default_value, expected):
     assert seconds_to_str(timestamp, default_value=default_value) == expected
+
+
+def test_seconds_str():
+    # actual hour will be different if the test system is in another location
+    result = seconds_to_str(1)
+    assert result.startswith('1970-01-01 ')
+    assert result.endswith(':00:01')
+    result = seconds_to_str(1471953832)
+    assert result.startswith('2016-08-23 ')
+    assert result.endswith(':03:52')
 
 
 @pytest.mark.parametrize('length,byte_str', [
@@ -303,5 +311,5 @@ def test_listfiles(tmpdir):
     dir2.mkdir('dir3')
     assert listfiles(str(tmpdir)) == ['a.txt', 'b.txt']
     assert listdirs(str(tmpdir)) == ['dir1', 'dir2']
-    pytest.raises(IOError, listfiles, 'non_existant_dir')
-    pytest.raises(IOError, listdirs, 'non_existant_dir')
+    pytest.raises(OSError, listfiles, 'non_existant_dir')
+    pytest.raises(OSError, listdirs, 'non_existant_dir')
