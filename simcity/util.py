@@ -21,7 +21,6 @@ import glob
 import shutil
 from numbers import Number
 import time
-from copy import deepcopy
 import jsonschema
 import ijson
 import mimetypes
@@ -54,32 +53,30 @@ def parse_parameters(parameters, schema):
         raise ValueError(ex.message)
 
 
-def merge_dicts(dict1, dict2):
-    """ Deep merge two dictionaries. """
-    merge = deepcopy(dict1)
-    merge.update(dict2)
-    return merge
-
-
 def seconds():
     """ Return the current time in seconds since the epoch. """
     return int(time.time())
 
 
-def seconds_to_str(seconds, default_value=''):
+def seconds_to_str(timestamp, default_value=''):
     """ Convert a timestamp in seconds to string. """
-    if seconds > 0:
-        return datetime.fromtimestamp(seconds).strftime('%F %T')
+    if timestamp > 0:
+        return datetime.fromtimestamp(timestamp).strftime('%F %T')
     else:
         return default_value
 
 
 def sizeof_fmt(num, suffix='B'):
     """ formatted bytes """
-    for unit in ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z']:
+    if abs(num) < 1000.0:
+        return "%d %s" % (int(num), suffix)
+
+    num /= 1000.0
+    for unit in ['k', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if abs(num) < 1000.0:
             return "%3.1f %s%s" % (num, unit, suffix)
         num /= 1000.0
+
     return "%.1f %s%s" % (num, 'Y', suffix)
 
 
@@ -151,9 +148,13 @@ def copyglob(srcglob, dstdir, prefix=""):
     if not os.path.isdir(dstdir):
         raise ValueError("Destination of copyglob must be a directory")
 
+    new_files = []
     for src in glob.glob(expandfilename(srcglob)):
         _, fname = os.path.split(src)
-        shutil.copyfile(src, os.path.join(dstdir, prefix + fname))
+        new_file = os.path.join(dstdir, prefix + fname)
+        shutil.copyfile(src, new_file)
+        new_files.append(new_file)
+    return new_files
 
 
 def data_content_type(filename, data):

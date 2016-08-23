@@ -17,31 +17,22 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_equals, assert_true
-from test_mock import MockDB, MockRow
 
 
-def test_overview():
-    simcity.management._reset_globals()
-    db = MockDB(view=[MockRow('done', 1),
-                      MockRow('pending', 3),
-                      MockRow('finished_jobs', 2)])
-    simcity.management.set_task_database(db)
-    simcity.management.set_job_database(db)
+def test_overview(db):
+    db.set_view([('done', 1),
+                 ('pending', 3),
+                 ('finished_jobs', 2)])
     overview = simcity.overview_total()
-    assert_equals(overview['done'], 1)
-    assert_equals(overview['finished_jobs'], 2)
-    assert_equals(overview['pending_jobs'], 0)
+    assert overview['done'] == 1
+    assert overview['finished_jobs'] == 2
+    assert overview['pending_jobs'] == 0
 
 
-def test_run():
-    simcity.management._reset_globals()
-    task_db = MockDB()
-    simcity.management.set_task_database(task_db)
-    job_db = MockDB(view=[MockRow('running_jobs', 1)])
-    simcity.management.set_job_database(job_db)
+def test_run(task_db, job_db):
+    job_db.set_view([('running_jobs', 1)])
 
     task, job = simcity.run_task({'key': 'value'}, 'myhost', 1)
-    assert_true(isinstance(task, simcity.Task))
-    assert_true(job is None)
-    assert_true(task_db.get(task.id) is not None)
+    assert isinstance(task, simcity.Task)
+    assert job is None
+    assert task_db.get(task.id) is not None

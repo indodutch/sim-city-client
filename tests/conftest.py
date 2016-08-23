@@ -14,33 +14,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import argparse
 import random
-import tempfile
-import shutil
-import os
 import multiprocessing
+import pytest
+import simcity
 
-from simcity import Document
+
+@pytest.fixture(autouse=True)
+def reset_simcity_globals():
+    """ Reset simcity globals after each unit test. """
+    yield
+    simcity.management._reset_globals()
 
 
 class MockRow(object):
-    def __init__(self, key, value, id=None):
-        self.id = id
-        self.key = key
-        self.value = value
-
-
-class MockDAVConf(object):
     def __init__(self):
-        self.hostname = 'https://my.example.com'
-        self.root = ''
+        self.id = None
+        self.key = ''
+        self.value = ''
 
 
 class MockDAV(object):
-    def __init__(self, files=None):
-        if files is None:
-            files = {}
-        self.files = files
+    def __init__(self):
+        self.files = {}
         self.base_url = 'https://my.example.com'
         self.removed = []
 
@@ -74,26 +71,49 @@ class MockDAV(object):
         return url[len(self.base_url):].lstrip('/')
 
 
-class MockDB(object):
-    TASKS = [{'_id': 'a', 'lock': 0}, {'_id': 'b', 'lock': 0}]
-    JOBS = [{'_id': 'myjob'}, {'_id': 'myotherjob'}]
+@pytest.fixture
+def dav():
+    dav = MockDAV()
+    simcity.management._webdav[None] = dav
+    return dav
 
-    def __init__(self, view=[]):
+
+class MockDB(object):
+    def __init__(self):
         self.manager = multiprocessing.Manager()
-        self.tasks = dict((t['_id'], self.manager.dict(t.copy()))
-                          for t in MockDB.TASKS)  # deep copy
-        self.jobs = dict((t['_id'], self.manager.dict(t.copy()))
-                         for t in MockDB.JOBS)
+
+        task_list = [{'_id': 'a', 'lock': 0}, {'_id': 'b', 'lock': 0}]
+        job_list = [{'_id': 'myjob'}, {'_id': 'myotherjob'}]
+
+        self.tasks = dict((t['_id'], self.manager.dict(t))
+                          for t in task_list)
+        self.jobs = dict((j['_id'], self.manager.dict(j))
+                         for j in job_list)
         self.saved = self.manager.dict({})
-        self.viewList = self.manager.list(view)
+        self.viewList = []
         self.views = self.manager.dict({})
+
+    def set_view(self, view):
+        self.viewList = []
+        for row in view:
+            mock_row = MockRow()
+            if isinstance(row, tuple):
+                mock_row.key, mock_row.value = row
+            else:
+                if 'id' in row:
+                    mock_row.id = row['id']
+                if 'key' in row:
+                    mock_row.key = row['key']
+                if 'value' in row:
+                    mock_row.value = row['value']
+            self.viewList.append(mock_row)
 
     def copy(self):
         return self
 
     def get_single_from_view(self, view, **view_params):
         idx = random.choice(list(self.tasks.keys()))
-        return Document(self.tasks[idx])
+        return simcity.Document(self.tasks[idx])
 
     def get(self, idx):
         if idx in self.saved:
@@ -104,7 +124,7 @@ class MockDB(object):
             doc = self.jobs[idx]
         else:
             raise ValueError
-        return Document(doc)
+        return simcity.Document(doc)
 
     def save(self, doc):
         try:
@@ -149,14 +169,60 @@ class MockDB(object):
         }
 
 
-def setup_mock_directories():
-    temp_dir = tempfile.mkdtemp()
-    config = {
-        'tmp_dir': os.path.join(temp_dir, 'tmp_alala'),
-        'output_dir': os.path.join(temp_dir, 'out_alala'),
-        'input_dir': os.path.join(temp_dir, 'in_alala'),
+@pytest.fixture
+def job_db():
+    mock_db = MockDB()
+    simcity.management.set_job_database(mock_db)
+    return mock_db
+
+
+@pytest.fixture
+def task_db():
+    mock_db = MockDB()
+    simcity.management.set_task_database(mock_db)
+    return mock_db
+
+
+@pytest.fixture
+def db():
+    mock_db = MockDB()
+    simcity.management.set_job_database(mock_db)
+    simcity.management.set_task_database(mock_db)
+    return mock_db
+
+
+@pytest.fixture
+def job_id():
+    my_job_id = 'myjob'
+    simcity.set_current_job_id(my_job_id)
+    return my_job_id
+
+
+@pytest.fixture
+def other_job_id():
+    return 'myotherjob'
+
+
+@pytest.fixture
+def task_id():
+    return 'a'
+
+
+@pytest.fixture
+def mock_directories(tmpdir):
+    return {
+        'tmp_dir': str(tmpdir.mkdir('tmp_alala')),
+        'output_dir': str(tmpdir.mkdir('out_alala')),
+        'input_dir': str(tmpdir.mkdir('in_alala')),
     }
-    for sim_dir in config.values():
-        shutil.rmtree(sim_dir, ignore_errors=True)
-        os.makedirs(sim_dir)
-    return config
+
+
+class MockArgumentParser(argparse.ArgumentParser):
+    def error(self, *args, **kwargs):
+        # just return parsed arguments, no matter what
+        pass
+
+
+@pytest.fixture
+def argument_parser():
+    return MockArgumentParser()

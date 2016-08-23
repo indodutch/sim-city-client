@@ -15,17 +15,14 @@
 # limitations under the License.
 
 from simcity.iterator import TaskViewIterator
-from test_mock import MockDB
-from nose.tools import assert_equals, assert_true
 
 
-def test_iterator():
-    db = MockDB()
+def test_iterator(db):
     for task in TaskViewIterator('myjob', db, 'view'):
-        assert_equals('myjob', task['job'])
-        assert_true(task['lock'] > 0)
-        assert_equals(task.rev, '0')
-        assert_equals(db.saved[task.id], task)
+        assert 'myjob' == task['job']
+        assert task['lock'] > 0
+        assert task.rev == '0'
+        assert db.saved[task.id] == task
         break  # process one task only
 
-    assert_equals(len(db.saved), 1)
+    assert len(db.saved) == 1

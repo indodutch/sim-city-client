@@ -1,4 +1,4 @@
-# SIM-CITY client
+# sim-city-client
 #
 # Copyright 2015 Netherlands eScience Center
 #
@@ -19,38 +19,34 @@
 from flake8.api import legacy as flake8
 import os
 import logging
-
-logging.disable(logging.CRITICAL)
-
-
-def test_flake8():
-    """ Syntax and style check with flake8. """
-    for test in apply_flake8(directories=['tests', 'scripts', 'simcity'],
-                             files=['setup.py']):
-        yield test
+import pytest
 
 
-def assert_zero(func, *args):
-    """ Assert that given function with given arguments returns zero. """
-    assert func(*args) == 0
+@pytest.fixture
+def disable_logging():
+    # flake8 is logging is really verbose. disable.
+    logging.disable(logging.CRITICAL)
+    yield
+    logging.disable(logging.NOTSET)
 
 
-def apply_flake8(directories=(), files=()):
-    """ Yield tests where flake8 runs recursively over given files and
+@pytest.fixture(params=['tests', 'scripts', 'xenon', 'setup.py'])
+def flake8_filenames(request):
+    """ Yield filenames for flake8 to run over recursively, given files and
     directories. """
-    for directory in directories:
-        for path, dirs, file_names in os.walk(directory):
-            yield assert_zero, check_file_flake8, [
-                os.path.join(os.path.abspath(path), file_name)
-                for file_name in file_names
-                if file_name.endswith('.py')
-            ]
-
-    yield assert_zero, check_file_flake8, [os.path.abspath(f) for f in files]
-
-
-def check_file_flake8(paths):
-    if len(paths) > 0:
-        return flake8.get_style_guide().check_files(paths).total_errors
+    if os.path.isdir(request.param):
+        paths = []
+        for path, dirs, filenames in os.walk(request.param):
+            paths += [os.path.join(os.path.abspath(path), filename)
+                      for filename in filenames]
+        yield paths
     else:
-        return 0
+        yield [request.param]
+
+
+@pytest.mark.usefixtures("disable_logging")
+def test_flakes8(flake8_filenames):
+    """ Test a single file with flake8. """
+    if len(flake8_filenames) > 0:
+        report = flake8.get_style_guide().check_files(flake8_filenames)
+        assert report.total_errors == 0, "flake8 found a warning or error"

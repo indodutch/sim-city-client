@@ -54,7 +54,7 @@ setup(name='simcity',
       install_requires=['pystache', 'CouchDB', 'jsonschema',
                         'ijson', 'requests', 'PyYAML',  'tqdm'],
       extras_require={
-          'test': ['nose', 'flake8', 'coverage'],
+          'test': ['pytest', 'flake8', 'coverage'],
           'xenon': ['pyxenon'],
       },
       entry_points={

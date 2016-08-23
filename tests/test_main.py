@@ -15,24 +15,11 @@
 # limitations under the License.
 
 import simcity.__main__ as main
-from nose.tools import assert_true
-import argparse
-
-cmds = ['cancel', 'check', 'create', 'delete', 'init', 'run', 'scrub',
-        'summary', 'submit']
+import pytest
 
 
-class MockArgumentParser(argparse.ArgumentParser):
-    def error(self, *args, **kwargs):
-        # just return parsed arguments, no matter what
-        pass
-
-
-def test_main_parser_init():
-    global cmds
-
-    parser = MockArgumentParser()
-    main.fill_argument_parser(parser)
-
-    for cmd in cmds:
-        yield assert_true, 'func' in parser.parse_args([cmd])
+@pytest.fixture(params=['cancel', 'check', 'create', 'delete', 'init', 'run',
+                        'scrub', 'summary', 'submit'])
+def test_main_parser_init(request, argument_parser):
+    main.fill_argument_parser(argument_parser)
+    assert 'func' in argument_parser.parse_args([request.param])

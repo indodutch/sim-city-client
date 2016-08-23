@@ -3,14 +3,14 @@ services:
   taskdb:
     image: klaemo/couchdb
     ports:
-      - "5784:5984"
+      - "127.0.0.1:5784:5984"
     environment:
       COUCHDB_USER: simcityadmin
       COUCHDB_PASSWORD: simcity
   jobdb:
     image: klaemo/couchdb
     ports:
-      - "5884:5984"
+      - "127.0.0.1:5884:5984"
     environment:
       COUCHDB_USER: simcityadmin
       COUCHDB_PASSWORD: simcity
@@ -18,7 +18,7 @@ services:
     build:
       context: simcity-webdav
     ports:
-      - "8888:80"
+      - "127.0.0.1:8888:80"
   # Slurm stores accounting in MySQL
   mysql:
     image: mysql:5.5
@@ -28,7 +28,7 @@ services:
     build:
       context: simcity-slurm
     ports:
-      - "10022:22"
+      - "127.0.0.1:10022:22"
     links:
       - mysql
       - jobdb

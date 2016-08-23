@@ -14,10 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import simcity
-from nose.tools import (assert_false, assert_equal, assert_not_equal,
-                        assert_raises)
-from test_mock import MockDB, MockRow
-from nose.plugins.skip import SkipTest
+import pytest
 
 
 class MockSubmitter(simcity.Adaptor):
@@ -34,17 +31,20 @@ class MockSubmitter(simcity.Adaptor):
         else:
             return MockSubmitter.BATCH_ID
 
+    def kill(self, job):
+        return None
 
-def _set_database(in_progress, pending, running, pending_jobs):
-    db = MockDB(view=[
-        MockRow('running_jobs', running),
-        MockRow('pending_jobs', pending_jobs),
-        MockRow('pending', pending),
-        MockRow('in_progress', in_progress),
+    def status(self, jobs):
+        return None
+
+
+def config_database(db, in_progress, pending, running, pending_jobs):
+    db.set_view([
+        ('running_jobs', running),
+        ('pending_jobs', pending_jobs),
+        ('pending', pending),
+        ('in_progress', in_progress),
     ])
-    simcity.management.set_task_database(db)
-    simcity.management.set_job_database(db)
-    return db
 
 
 def _set_host_config(hostname, method='local'):
@@ -62,84 +62,73 @@ def _set_host_config(hostname, method='local'):
         pass  # ignore mal-configured databases in this config
 
 
-def test_submit_if_needed_already_active():
-    simcity.management._reset_globals()
-    _set_database(1, 1, 2, 0)
-    assert_equal(simcity.submit_if_needed('nohost', 2), None)
+def test_submit_if_needed_already_active(db):
+    config_database(db, 1, 1, 2, 0)
+    assert simcity.submit_if_needed('nohost', 2) is None
 
 
-def test_submit_if_needed_pending():
-    simcity.management._reset_globals()
-    _set_database(0, 1, 0, 1)
-    assert_equal(simcity.submit_if_needed('nohost', 2), None)
+def test_submit_if_needed_pending(db):
+    config_database(db, 0, 1, 0, 1)
+    assert simcity.submit_if_needed('nohost', 2) is None
 
 
-def test_submit_if_needed_maxed():
-    simcity.management._reset_globals()
-    _set_database(2, 5, 2, 0)
-    assert_equal(simcity.submit_if_needed('nohost', 2), None)
+def test_submit_if_needed_maxed(db):
+    config_database(db, 2, 5, 2, 0)
+    assert simcity.submit_if_needed('nohost', 2) is None
 
 
-def test_unconfigured():
-    simcity.management._reset_globals()
-    _set_database(0, 1, 0, 0)
+def test_unconfigured(db):
+    config_database(db, 0, 1, 0, 0)
     _set_host_config('otherhost')
-    assert_raises(ValueError, simcity.submit_if_needed, 'nohost', 2)
+    pytest.raises(ValueError, simcity.submit_if_needed, 'nohost', 2)
 
 
-def test_submit_if_needed_notactive():
-    simcity.management._reset_globals()
+def test_submit_if_needed_notactive(db):
     _set_host_config('nohost')
-    db = _set_database(0, 1, 0, 0)
+    config_database(db, 0, 1, 0, 0)
     submitter = MockSubmitter(db)
     job = simcity.submit_if_needed('nohost', 2, adaptor=submitter)
-    assert_not_equal(job, None)
-    assert_equal(job['batch_id'], MockSubmitter.BATCH_ID)
-    assert_equal(job['hostname'], 'nohost')
-    assert_equal(job['method'], 'local')
+    assert job is not None
+    assert job['batch_id'] == MockSubmitter.BATCH_ID
+    assert job['hostname'] == 'nohost'
+    assert job['method'] == 'local'
 
 
-def test_submit_error():
-    simcity.management._reset_globals()
+def test_submit_error(db, ):
     _set_host_config('nohost')
-    db = _set_database(0, 1, 5, 0)
+    config_database(db, 0, 1, 5, 0)
     submitter = MockSubmitter(db, do_raise=True)
-    assert_raises(IOError, simcity.submit, 'nohost', adaptor=submitter)
+    pytest.raises(IOError, simcity.submit, 'nohost', adaptor=submitter)
     for saved in db.saved.keys():
         if saved.startswith('job_myjob') and db.saved[saved]['archive'] > 0:
             break
     else:
-        assert_false("job not archived")
+        pytest.fail("job not archived")
 
 
 def test_submit_method_not_configured():
-    simcity.management._reset_globals()
     _set_host_config('nohost')
-    assert_raises(EnvironmentError, simcity.submit, 'nohost')
+    pytest.raises(EnvironmentError, simcity.submit, 'nohost')
 
 
-def test_SSH_submit_method():
-    simcity.management._reset_globals()
+def test_ssh_submit_method(db):
     _set_host_config('nohost', method='ssh')
-    _set_database(0, 0, 0, 0)
-    assert_raises(IOError, simcity.submit, 'nohost')
+    config_database(db, 0, 0, 0, 0)
+    pytest.raises(IOError, simcity.submit, 'nohost')
 
 
-def test_Osmium_submit_method():
-    simcity.management._reset_globals()
+def test_osmium_submit_method(db):
     _set_host_config('nohost', method='osmium')
-    _set_database(0, 0, 0, 0)
-    assert_raises(IOError, simcity.submit, 'nohost')
+    config_database(db, 0, 0, 0, 0)
+    pytest.raises(IOError, simcity.submit, 'nohost')
 
 
-def test_Xenon_submit_method():
-    if not simcity.xenon_support:
-        raise SkipTest()
-    simcity.management._reset_globals()
+@pytest.mark.skipif(not simcity.xenon_support, reason="xenon is not installed")
+def test_xenon_submit_method(db):
     # setup host with Xenon torque adaptor
     _set_host_config('nohost', method='xenon')
     cfg = simcity.get_config().section('nohost-host')
     cfg['host'] = 'torque://' + cfg['host']
     simcity.get_config().add_section('nohost-host', cfg)
-    _set_database(0, 0, 0, 0)
-    assert_raises(IOError, simcity.submit, 'nohost')
+    config_database(db, 0, 0, 0, 0)
+    pytest.raises(IOError, simcity.submit, 'nohost')

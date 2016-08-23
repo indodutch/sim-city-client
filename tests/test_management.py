@@ -17,51 +17,45 @@
 from __future__ import print_function
 
 import simcity
-from test_mock import MockDB
-from nose.tools import assert_raises, assert_true, assert_false
+import pytest
 
 
 def test_init():
-    simcity.management._reset_globals()
-    assert_raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
+    pytest.raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
     cfg = simcity.Config()
-    assert_raises(KeyError, simcity.init, cfg)
+    pytest.raises(KeyError, simcity.init, cfg)
     cfg.add_section('task-db', {
         'url': 'http://doesnotexistforsure_atleasti_think_so.nl/',
         'username': 'example',
         'password': 'example',
         'database': 'example',
     })
-    assert_raises(IOError, simcity.init, cfg)
+    pytest.raises(IOError, simcity.init, cfg)
 
 
 def test_uses_webdav():
-    simcity.management._reset_globals()
     simcity.management._config = simcity.Config()
-    assert_false(simcity.uses_webdav())
+    assert not simcity.uses_webdav()
     cfg = simcity.management._config
     webdav_cfg = {}
     cfg.add_section('webdav', webdav_cfg)
-    assert_false(simcity.uses_webdav())
+    assert not simcity.uses_webdav()
     webdav_cfg['url'] = 'something'
-    assert_true(simcity.uses_webdav())
+    assert simcity.uses_webdav()
     webdav_cfg['user'] = 'something'
-    assert_true(simcity.uses_webdav())
+    assert simcity.uses_webdav()
     webdav_cfg['enabled'] = False
-    assert_false(simcity.uses_webdav())
+    assert not simcity.uses_webdav()
     webdav_cfg['enabled'] = True
-    assert_true(simcity.uses_webdav())
+    assert simcity.uses_webdav()
 
 
-def test_views():
-    simcity.management._reset_globals()
-    simcity.management._job_db = MockDB()
-    simcity.management._task_db = MockDB()
+def test_views(job_db, task_db):
     simcity.create_views()
-    assert_true('running_jobs' in simcity.management._job_db.views)
-    assert_true('overview_total' in simcity.management._job_db.views)
-    assert_true('pending' not in simcity.management._job_db.views)
+    assert 'running_jobs' in job_db.views
+    assert 'overview_total' in job_db.views
+    assert 'pending' not in job_db.views
 
-    assert_true('pending' in simcity.management._task_db.views)
-    assert_true('overview_total' in simcity.management._task_db.views)
-    assert_true('running_jobs' not in simcity.management._task_db.views)
+    assert 'pending' in task_db.views
+    assert 'overview_total' in task_db.views
+    assert 'running_jobs' not in task_db.views

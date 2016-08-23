@@ -17,8 +17,6 @@
 from simcity import Task
 from simcity.worker import Worker, ExecuteWorker
 from multiprocessing import Queue, Semaphore
-from nose.tools import assert_true, assert_equals, assert_not_equals
-from test_mock import setup_mock_directories
 
 
 class MockWorker(Worker):
@@ -27,6 +25,14 @@ class MockWorker(Worker):
 
     def process_task(self, task):
         task.output['myoutput'] = 1
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.task_q.put(None)
+        self.join()
 
 
 def test_worker_not_implemented():
@@ -39,12 +45,12 @@ def test_worker_not_implemented():
     task_q.put(None)
     w.run()
     result_task = result_q.get()
-    assert_equals(task.id, result_task.id)
+    assert task.id == result_task.id
     errors = result_task.get_errors()
     print(errors)
-    assert_true(len(errors) == 1)
-    assert_true('NotImplementedError' in errors[0]['exception'])
-    assert_equals(None, result_q.get())
+    assert len(errors) == 1
+    assert 'NotImplementedError' in errors[0]['exception']
+    assert result_q.get() is None
 
 
 def test_worker_mp_not_implemented():
@@ -57,14 +63,14 @@ def test_worker_mp_not_implemented():
     try:
         task_q.put(task)
         result_task = result_q.get()
-        assert_equals(task.id, result_task.id)
+        assert task.id == result_task.id
         errors = result_task.get_errors()
-        assert_not_equals(task.get_errors(), errors)
+        assert task.get_errors() != errors
         print(errors)
-        assert_true(len(errors) == 1)
-        assert_true('NotImplementedError' in errors[0]['exception'])
+        assert len(errors) == 1
+        assert 'NotImplementedError' in errors[0]['exception']
         task_q.put(None)
-        assert_equals(None, result_q.get())
+        assert result_q.get() is None
     finally:
         task_q.put(None)
         w.join()
@@ -75,14 +81,9 @@ def test_worker_mp():
     result_q = Queue()
     semaphore = Semaphore(value=1)
     task = Task({'something': 'anything', 'parallelism': 1})
-    w = MockWorker(1, {}, task_q, result_q, semaphore)
-    w.start()
-    try:
+    with MockWorker(1, {}, task_q, result_q, semaphore):
         task_q.put(task)
-        assert_equals(1, result_q.get().output['myoutput'])
-    finally:
-        task_q.put(None)
-        w.join()
+        assert 1 == result_q.get().output['myoutput']
 
 
 def test_worker_mp_parallelism_22():
@@ -90,14 +91,9 @@ def test_worker_mp_parallelism_22():
     result_q = Queue()
     semaphore = Semaphore(value=2)
     task = Task({'something': 'anything', 'parallelism': 2})
-    w = MockWorker(1, {}, task_q, result_q, semaphore)
-    w.start()
-    try:
+    with MockWorker(1, {}, task_q, result_q, semaphore):
         task_q.put(task)
-        assert_equals(1, result_q.get().output['myoutput'])
-    finally:
-        task_q.put(None)
-        w.join()
+        assert 1 == result_q.get().output['myoutput']
 
 
 def test_worker_mp_parallelism_12():
@@ -105,17 +101,12 @@ def test_worker_mp_parallelism_12():
     result_q = Queue()
     semaphore = Semaphore(value=2)
     task = Task({'something': 'anything', 'parallelism': 1})
-    w = MockWorker(1, {}, task_q, result_q, semaphore)
-    w.start()
-    try:
+    with MockWorker(1, {}, task_q, result_q, semaphore):
         task_q.put(task)
-        assert_equals(1, result_q.get().output['myoutput'])
-    finally:
-        task_q.put(None)
-        w.join()
+        assert 1 == result_q.get().output['myoutput']
 
 
-def test_execute_worker():
+def test_execute_worker(mock_directories):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=1)
@@ -125,11 +116,10 @@ def test_execute_worker():
         'parallelism': 1,
     })
 
-    config = setup_mock_directories()
-    worker = ExecuteWorker(1, config, task_q, result_q, semaphore)
+    worker = ExecuteWorker(1, mock_directories, task_q, result_q, semaphore)
     task_q.put(task)
     task_q.put(None)
     worker.run()
     result = result_q.get()
     data = result.get_attachment('stdout.txt')['data']
-    assert_equals('hello', data.decode('utf-8'))
+    assert 'hello' == data.decode('utf-8')

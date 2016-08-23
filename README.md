@@ -103,9 +103,9 @@ To add a feature or bug-fix, create a new clone and/or branch. Install testing t
 
 And run
 
-    nosetests tests
+    pytest tests
 
 before every commit. When you're done, make a pull request on GitHub. To run integration tests, install `docker-compose` and run
 
-    nosetests integration_tests
+    pytest --cov=simcity tests integration_tests
 

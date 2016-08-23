@@ -19,101 +19,105 @@ from __future__ import print_function
 import simcity
 from simcity import Job
 from simcity.util import seconds
-from nose.tools import assert_true, assert_equals, assert_raises
-from test_mock import MockDB, MockRow
+import pytest
 
 
-class TestJob(object):
+@pytest.mark.usefixtures('job_db')
+def test_get_job(job_id, other_job_id):
+    job = simcity.get_job()
+    assert job.id == job_id
+    simcity.set_current_job_id(None)
+    pytest.raises(EnvironmentError, simcity.get_job)
+    otherJob = simcity.get_job(other_job_id)
+    assert otherJob.id == other_job_id
+    assert type(otherJob) == type(Job({'_id': 'aaaa'}))  # noqa
 
-    def setup(self):
-        simcity.management._reset_globals()
-        self.db = MockDB()
-        self.test_id = MockDB.JOBS[0]['_id']
-        self.test_other_id = MockDB.JOBS[1]['_id']
-        simcity.set_current_job_id(self.test_id)
-        simcity.management._job_db = self.db
 
-    def test_get_job(self):
-        job = simcity.get_job()
-        assert_equals(job.id, self.test_id)
-        simcity.set_current_job_id(None)
-        assert_raises(EnvironmentError, simcity.get_job)
-        otherJob = simcity.get_job(self.test_other_id)
-        assert_equals(otherJob.id, self.test_other_id)
-        assert_equals(type(otherJob), type(Job({'_id': 'aaaa'})))
+@pytest.mark.usefixtures('job_db')
+def test_start_job(job_id):
+    job = simcity.start_job()
+    assert job.id == job_id
+    assert job['start'] > 0
+    assert simcity.get_job()['start'] > 0
+    assert job['queue'] == 0
+    assert job['done'] == 0
 
-    def test_start_job(self):
-        job = simcity.start_job()
-        assert_equals(job.id, self.test_id)
-        assert_true(job['start'] > 0)
-        assert_true(simcity.get_job()['start'] > 0)
-        assert_equals(job['queue'], 0)
-        assert_equals(job['done'], 0)
 
-    def test_finish_job(self):
-        job = simcity.start_job()
-        simcity.finish_job(job)
-        assert_true(job['start'] > 0)
-        assert_true(job['done'] > 0)
-        assert_true(simcity.get_job()['done'] > 0)
-        job = simcity.queue_job(job, 'ssh')
-        assert_true(job['archive'] > 0)
+@pytest.mark.usefixtures('job_id', 'job_db')
+def test_finish_job():
+    job = simcity.start_job()
+    simcity.finish_job(job)
+    assert job['start'] > 0
+    assert job['done'] > 0
+    assert simcity.get_job()['done'] > 0
+    job = simcity.queue_job(job, 'ssh')
+    assert job['archive'] > 0
 
-    def test_queue_job(self):
-        job = simcity.queue_job(Job({'_id': 'aaaa'}), 'ssh')
-        assert_true(job['queue'] > 0)
-        assert_equals(len(self.db.saved), 1)
-        job = simcity.queue_job(simcity.get_job(), 'ssh')
-        assert_true(job['queue'] > 0)
-        assert_true(simcity.get_job()['queue'] > 0)
-        job = simcity.finish_job(job)
-        assert_true(job['archive'] > 0)
 
-    def test_archive_job(self):
-        job = simcity.get_job()
-        self.db.save(job)
-        job = simcity.archive_job(simcity.get_job())
-        assert_equals(job.id, self.test_id)
+def test_queue_job(job_db):
+    job = simcity.queue_job(Job({'_id': 'aaaa'}), 'ssh')
+    assert job['queue'] > 0
+    assert len(job_db.saved) == 1
+    job = simcity.queue_job(simcity.get_job(), 'ssh')
+    assert job['queue'] > 0
+    assert simcity.get_job()['queue'] > 0
+    job = simcity.finish_job(job)
+    assert job['archive'] > 0
 
-    def test_cancel_job(self):
-        job = simcity.get_job()
-        simcity.cancel_endless_job(job)
-        assert_true(job['cancel'] >= seconds() - 1)
-        assert_true(job['cancel'] <= seconds())
 
-    def test_scrub_job(self):
-        job = simcity.get_job()
-        job.start()
-        assert_equals(0, job['archive'])
-        self.db.jobs[job.id]['_rev'] = 'myrev'
-        self.db.jobs[job.id]['done'] = 0
-        print(self.db.jobs[job.id])
-        self.db.viewList = [MockRow(job.id, job, job.id)]
-        assert_equals(0, len(self.db.saved))
+def test_archive_job(job_id, job_db):
+    job = simcity.get_job()
+    job_db.save(job)
+    job = simcity.archive_job(simcity.get_job())
+    assert job.id == job_id
 
-        simcity.scrub_jobs('running_jobs', age=0)
-        assert_equals(1, len(self.db.saved))
-        job_id, job = self.db.saved.popitem()
-        assert_true(job['archive'] > 0)
 
-    def test_scrub_old_job_none(self):
-        job = simcity.get_job()
-        job.start()
-        assert_equals(0, len(self.db.saved))
-        self.db.viewList = [MockRow(job.id, job, job.id)]
-        simcity.scrub_jobs('running_jobs', age=2)
-        assert_equals(0, len(self.db.saved))
+@pytest.mark.usefixtures('job_id', 'job_db')
+def test_cancel_job():
+    job = simcity.get_job()
+    simcity.cancel_endless_job(job)
+    assert job['cancel'] >= seconds() - 1
+    assert job['cancel'] <= seconds()
 
-    def test_scrub_old_job(self):
-        job = simcity.get_job()
-        job['start'] = seconds() - 100
-        assert_equals(0, job['archive'])
-        self.db.jobs[job.id]['_rev'] = 'myrev'
-        self.db.jobs[job.id]['done'] = 0
-        self.db.viewList = [MockRow(job.id, job, job.id)]
-        assert_equals(0, len(self.db.saved))
 
-        simcity.scrub_jobs('running_jobs', age=2)
-        assert_equals(1, len(self.db.saved))
-        job_id, job = self.db.saved.popitem()
-        assert_true(job['archive'] > 0)
+def test_scrub_job(job_db, job_id):
+    job = simcity.get_job()
+    job.start()
+    assert 0 == job['archive']
+    job_db.jobs[job.id]['_rev'] = 'myrev'
+    job_db.jobs[job.id]['done'] = 0
+    print(job_db.jobs[job.id])
+    job_db.set_view([{'id': job.id, 'key': job.id, 'value': job}])
+    assert 0 == len(job_db.saved)
+
+    simcity.scrub_jobs('running_jobs', age=0)
+    assert 1 == len(job_db.saved)
+    saved_id, job = job_db.saved.popitem()
+    assert job['archive'] > 0
+    assert saved_id == job_id
+
+
+@pytest.mark.usefixtures('job_id')
+def test_scrub_old_job_none(job_db):
+    job = simcity.get_job()
+    job.start()
+    assert 0 == len(job_db.saved)
+    job_db.set_view([{'id': job.id, 'key': job.id, 'value': job}])
+    simcity.scrub_jobs('running_jobs', age=2)
+    assert 0 == len(job_db.saved)
+
+
+def test_scrub_old_job(job_db, job_id):
+    job = simcity.get_job()
+    job['start'] = seconds() - 100
+    assert 0 == job['archive']
+    job_db.jobs[job.id]['_rev'] = 'myrev'
+    job_db.jobs[job.id]['done'] = 0
+    job_db.set_view([{'id': job.id, 'key': job.id, 'value': job}])
+    assert 0 == len(job_db.saved)
+
+    simcity.scrub_jobs('running_jobs', age=2)
+    assert 1 == len(job_db.saved)
+    saved_id, job = job_db.saved.popitem()
+    assert job['archive'] > 0
+    assert saved_id == job_id
