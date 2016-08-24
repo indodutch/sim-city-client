@@ -97,15 +97,12 @@ The API consists of all methods exported in `__init__.py`. It assumes that a con
 
 ## Contributing
 
-To add a feature or bug-fix, create a new clone and/or branch. Install testing tools with
+To add a feature or bug-fix, create a new clone and/or branch. First make sure Python versions 2.7 and 3.5 are installed as well as `docker-compose`. Then install testing tools with
 
-    pip install -r requirements.txt '.[test]'
+    pip install tox
 
 And run
 
-    pytest tests
+    tox
 
-before every commit. When you're done, make a pull request on GitHub. To run integration tests, install `docker-compose` and run
-
-    pytest --cov=simcity tests integration_tests
-
+When you're done, make a pull request on GitHub.
