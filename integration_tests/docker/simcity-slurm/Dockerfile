@@ -44,7 +44,7 @@ RUN mkdir /var/run/munge && \
 USER xenon
 RUN virtualenv --python=/usr/bin/python3 simcity && . simcity/bin/activate && \
   git clone https://github.com/indodutch/sim-city-client.git && \
-  cd sim-city-client && pip install -U pip && pip install . #rrr
+  cd sim-city-client && pip install -U pip && pip install .
 
 USER root
 CMD ["/sbin/my_init"]
