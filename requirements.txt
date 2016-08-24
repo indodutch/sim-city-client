@@ -1,7 +1,8 @@
 argcomplete==1.4.1
 CouchDB==1.1
 coverage==4.2
-flake8==3.0.2
+enum34==1.1.6; python_version < '3.4'
+flake8==3.0.4
 ijson==2.3
 JPype1==0.6.1
 jsonschema==2.5.1
@@ -14,6 +15,7 @@ pyflakes==1.2.3
 pystache==0.5.4
 pytest==3.0.0
 pytest-cov==2.3.1
+pytest-flake8==0.6
 pyxenon==0.2.2
 PyYAML==3.11
 requests==2.10.0
