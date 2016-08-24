@@ -2,6 +2,8 @@ config*.ini
 *.pyc
 /build
 /.coverage
+/.cache
+/.tox
 .ipynb_checkpoints/
 /coverage.xml
 /src
