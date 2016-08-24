@@ -9,7 +9,8 @@ services:
   - docker
 install:
   - pip install -U pip
-  - pip install -U . codacy-coverage
+  - pip install -U codacy-coverage
+  - pip install -U -e .
   - pip install -U ".[test,xenon]"
 script: py.test -v --cov --cov-report xml --cov-report term-missing
 after_script: python-codacy-coverage -r coverage.xml
