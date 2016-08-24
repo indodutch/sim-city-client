@@ -1,14 +1,14 @@
 version: '2'
 services:
   taskdb:
-    image: klaemo/couchdb
+    image: klaemo/couchdb:1.6.1
     ports:
       - "127.0.0.1:5784:5984"
     environment:
       COUCHDB_USER: simcityadmin
       COUCHDB_PASSWORD: simcity
   jobdb:
-    image: klaemo/couchdb
+    image: klaemo/couchdb:1.6.1
     ports:
       - "127.0.0.1:5884:5984"
     environment:
