@@ -1,27 +1,15 @@
 language: python
-
-matrix:
-  fast_finish: true
-  # Only do docker integration tests with Python 3.5
-  include:
-    - python: "2.7"
-      env: TESTS="tests"
-    - python: "3.3"
-      env: TESTS="tests"
-    - python: "3.4"
-      env: TESTS="tests"
-    - python: "3.5"
-      env: TESTS="tests integration_tests"  # run all tests
-      sudo: true
-      services:
-        - docker
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+sudo: true
+services:
+  - docker
 install:
   - pip install -U pip
   - pip install -U . codacy-coverage
   - pip install -U ".[test,xenon]"
-script:
-  - pytest -v --cov-report xml --cov-report term-missing --cov=simcity/ $TESTS
-after_script:
-  - if [ $TESTS == "tests integration_tests" ]; then
-    python-codacy-coverage -r coverage.xml;
-    fi
+script: py.test -v --cov --cov-report xml --cov-report term-missing
+after_script: python-codacy-coverage -r coverage.xml
