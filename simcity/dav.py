@@ -35,12 +35,18 @@ def verify(acceptable_statuses, response, message):
 
 
 class RestRequests(object):
-    """ Rest requests with a base URL. """
+    """
+    Rest requests with a base URL.
+
+    Each method takes **kwargs as an argument, which will be passed to the
+    requests.request() function.
+    """
     def __init__(self, base_url, auth=None, **kwargs):
         """
         @param base_url: base url of the service
         @param auth: requests authentication tuple
-        @param kwargs: kwargs to pass on to the requests.request() function
+        @param kwargs: kwargs to pass on to the requests.request() function.
+            These can be updated in each subsequent function.
         """
         self.base_url = base_url.rstrip('/')
         self.auth = auth
@@ -88,7 +94,7 @@ class RestRequests(object):
         """
         kwargs.update(self.kwargs)
         response = requests.request('MKCOL', self.path_to_url(path),
-                                    auth=self.auth)
+                                    auth=self.auth, **kwargs)
         if ignore_existing:
             acceptable_status = 201, 405
         else:
@@ -98,8 +104,8 @@ class RestRequests(object):
 
     def delete(self, path, ignore_not_existing=False, **kwargs):
         """
-        Make a new directory. Set ignore_existing to not throw an error if
-        the directory already exists.
+        Recursively delete a path. Set ignore_not_existing to not throw an
+        error if given path does not exist.
         """
         kwargs.update(self.kwargs)
         response = requests.delete(self.path_to_url(path), auth=self.auth,
