@@ -1,8 +1,22 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
+concurrency =
+    thread
+    multiprocessing
+source = simcity/
+
+[paths]
+source =
+    simcity/
+    /home/travis/simcity/
+
+[xml]
+output = coverage.xml
 
 [report]
+show_missing = True
+fail_under = 60
 # Regexes for lines to exclude from consideration
 exclude_lines =
     # Have to re-enable the standard pragma

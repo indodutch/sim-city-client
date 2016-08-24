@@ -11,7 +11,7 @@ matrix:
     - python: "3.4"
       env: TESTS="tests"
     - python: "3.5"
-      env: TESTS=""  # run all tests
+      env: TESTS="tests integration_tests"  # run all tests
       sudo: true
       services:
         - docker
@@ -20,7 +20,7 @@ install:
   - pip install -U . codacy-coverage
   - pip install -U ".[test,xenon]"
 script:
-  - pytest -v --cov-report xml --cov-report term-missing --cov=simcity $TESTS
+  - pytest -v --cov-report xml --cov-report term-missing --cov $TESTS
 after_script:
   - if [ $TESTS == "tests integration_tests" ]; then
     python-codacy-coverage -r coverage.xml;
