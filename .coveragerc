@@ -1,15 +1,11 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
+source = simcity/
 concurrency =
     thread
     multiprocessing
-source = simcity/
-
-[paths]
-source =
-    simcity/
-    /home/travis/indodutch/sim-city-client/simcity/
+parallel = True
 
 [report]
 show_missing = True

@@ -11,5 +11,10 @@ install:
   - pip install -U pip
   - pip install -U codacy-coverage
   - pip install -U ".[test,xenon]"
-script: py.test -v --flake8 --cov --cov-report xml --cov-report term-missing
-after_script: python-codacy-coverage -r coverage.xml
+script:
+  - coverage run -m pytest -v --flake8
+  - coverage combine
+  - coverage report
+after_script:
+  - coverage xml
+  - python-codacy-coverage -r coverage.xml

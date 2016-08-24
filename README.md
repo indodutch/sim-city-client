@@ -108,4 +108,4 @@ And run
 When you're done, make a pull request on GitHub. If it is not feasible to install Python 2.7 and 3.5 or docker-compose, run the unit tests with
 
     pip install -U ".[test]"
-    py.test --flake8 simcity tests
+    pytest --flake8 simcity tests
