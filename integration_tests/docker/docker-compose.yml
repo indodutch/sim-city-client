@@ -19,19 +19,12 @@ services:
       context: simcity-webdav
     ports:
       - "127.0.0.1:8888:80"
-  # Slurm stores accounting in MySQL
-  mysql:
-    image: mysql:5.5
-    environment:
-      - MYSQL_ROOT_PASSWORD=xenon-slurm-pw
   slurm:
     build:
       context: simcity-slurm
     ports:
       - "127.0.0.1:10022:22"
     links:
-      - mysql
       - jobdb
       - taskdb
       - webdav
-

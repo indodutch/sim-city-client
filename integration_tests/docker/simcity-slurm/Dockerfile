@@ -35,15 +35,11 @@ COPY service /etc/service
 COPY etc /etc/slurm-llnl
 
 RUN mkdir /var/run/munge && \
-mkdir -p /var/spool/slurmctld/state && \
-mkdir -p /var/spool/slurmd.node-0 && \
-mkdir -p /var/spool/slurmd.node-1 && \
-chmod 600 /etc/munge/munge.key && \
-chown root.root /var/lib/munge /etc/munge && \
-touch /var/spool/slurmctld/accounting.txt && \
-chown slurm /var/spool/slurmctld/accounting.txt && \
-chown slurm /var/spool/slurmctld/state && \
-chown slurm /etc/slurm-llnl/slurm.key
+  mkdir -p /var/spool/slurmctld/state /var/spool/slurmd.node-0 /var/spool/slurmd.node-1 && \
+  chmod 600 /etc/munge/munge.key && \
+  chown root.root /var/lib/munge /etc/munge && \
+  touch /var/spool/slurmctld/accounting.txt /var/spool/slurmctld/job_completions.txt && \
+  chown slurm /var/spool/slurmctld/accounting.txt /var/spool/slurmctld/job_completions.txt /var/spool/slurmctld/state /etc/slurm-llnl/slurm.key
 
 USER xenon
 RUN virtualenv --python=/usr/bin/python3 simcity && . simcity/bin/activate && \

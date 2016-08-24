@@ -12,7 +12,7 @@ def docker_compose(request):
                                cwd='integration_tests/docker')
     compose.wait()
     assert 0 == compose.returncode
-    time.sleep(10)
+    time.sleep(5)
 
     yield
 
