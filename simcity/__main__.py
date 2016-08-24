@@ -494,14 +494,9 @@ def scrub(args):
     """
     Scrub tasks or jobs in a given view to return to their previous status.
     """
-    global task_views
-
     age = _time_args_to_seconds(args)
 
-    if args.view in task_views:
-        scrubbed, total = simcity.scrub_tasks(args.view, age=age)
-    else:
-        scrubbed, total = simcity.scrub_jobs(args.view, age=age)
+    scrubbed, total = simcity.scrub(args.view, age=age)
 
     if scrubbed > 0:
         print("Scrubbed %d out of %d documents from '%s'" %

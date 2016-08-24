@@ -15,7 +15,6 @@
 # limitations under the License.
 
 import simcity
-from simcity.util import seconds
 import os
 import pytest
 
@@ -134,45 +133,3 @@ def test_delete_attachment_couchdb(task_id, tmpdir):
     assert filename in task['_attachments']
     simcity.delete_attachment(task, filename)
     assert filename not in task['_attachments']
-
-
-def test_scrub_task(task_db, task_id):
-    task = simcity.get_task(task_id)
-    assert 0 == task['lock']
-    task.lock('myid')
-    assert 0 != task['lock']
-    task_db.tasks[task.id]['_rev'] = 'myrev'
-    task_db.tasks[task.id]['lock'] = task['lock']
-    task_db.set_view([{'id': task.id, 'key': task.id, 'value': task}])
-    assert 0 == len(task_db.saved)
-
-    simcity.scrub_tasks('in_progress', age=0)
-    assert 1 == len(task_db.saved)
-    task_id, task = task_db.saved.popitem()
-    assert 0 == task['lock']
-
-
-def test_scrub_old_task_none(task_db, task_id):
-    task = simcity.get_task(task_id)
-    task.lock('myid')
-    assert 0 == len(task_db.saved)
-    task_db.set_view([{'id': task.id, 'key': task.id, 'value': task}])
-    simcity.scrub_tasks('in_progress', age=2)
-    assert 0 == len(task_db.saved)
-
-
-def test_scrub_old_task(task_db, task_id):
-    task = simcity.get_task(task_id)
-    task['lock'] = seconds() - 100
-    assert 0 != task['lock']
-    task_db.tasks[task.id]['_rev'] = 'myrev'
-    task_db.tasks[task.id]['lock'] = task['lock']
-    task_db.set_view([{'id': task.id, 'key': task.id, 'value': task}])
-    assert 0 == len(task_db.saved)
-
-    simcity.scrub_tasks('in_progress', age=2)
-    assert 1 == len(task_db.saved)
-    old_task_id = task.id
-    task_id, task = task_db.saved.popitem()
-    assert task_id == old_task_id
-    assert 0 == task['lock']

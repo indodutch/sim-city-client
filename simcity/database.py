@@ -73,6 +73,7 @@ class CouchDB(object):
     def get_from_view(self, view, **view_params):
         """
         Get Documents from the specified view that has task _id as key.
+
         :param view: name of the view that has a row id coupled to a document
         :param view_params: name of the view optional extra parameters for the
                             view.
@@ -98,7 +99,9 @@ class CouchDB(object):
         return Document(data)
 
     def get_single_from_view(self, view, window_size=1, **view_params):
-        """Get a document from the specified view.
+        """
+        Get a document from the specified view.
+
         :param view: the view to get the document from.
         :param view_params: the parameters that should be added to the view
         request. Optional.
@@ -122,7 +125,8 @@ class CouchDB(object):
         return self.db.view(design_doc + '/' + view, **view_params)
 
     def save(self, doc):
-        """ Save a Document to the database.
+        """
+        Save a Document to the database.
 
         Updates the document to have the new _rev value.
         :param doc: Document object
@@ -135,15 +139,16 @@ class CouchDB(object):
         return doc
 
     def save_documents(self, docs):
-        """Save a sequence of Documents to the database.
+        """
+        Save a sequence of Documents to the database.
 
         - If the document was newly created and the _id is already is in the
           database the document will not be added.
         - If the document is an existing document, it will be updated if the
           _rev key matches.
 
-        :param tasks [task1, task2, ...]; tasks for which the save was
-                succesful will get new _rev values
+        :param docs [task1, task2, ...]; tasks for which the save was
+                successful will get new _rev values
         :return: a sequence of [succeeded1, succeeded2, ...] values.
         """
         updated = self.db.update(docs)
@@ -160,7 +165,8 @@ class CouchDB(object):
 
     def add_view(self, view, map_fun, reduce_fun=None, design_doc="Monitor",
                  *args, **kwargs):
-        """ Add a view to the database
+        """
+        Add a view to the database
         All extra parameters are passed to couchdb.design.ViewDefinition
         :param view: name of the view
         :param map_fun: string of the javascript map function
@@ -189,7 +195,7 @@ class CouchDB(object):
         The Documents must have a valid and current _id and _rev, so they must
         be retrieved from the database and not be altered there in the mean
         time.
-        :param tasks: list of Document objects
+        :param docs: list of Document objects
         :return: array of booleans indicating whether the respective Document
                 was deleted.
         """
@@ -214,6 +220,7 @@ class CouchDB(object):
         Delete all documents in a view
 
         :param view: name of the view
+        :param design_doc: design document in CouchDB
         :return: array of booleans indicating whether the respective tasks
                 were deleted
         """

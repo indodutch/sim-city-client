@@ -15,6 +15,7 @@
 # limitations under the License.
 
 """ Integrates the task and job API. """
+from .document import Job, Task
 from .management import get_task_database, get_job_database
 from .job import get_job, archive_job
 from .task import add_task, get_task
@@ -165,3 +166,59 @@ def check_task_status(dry_run=False, database=None):
                         has_failed_saves = True
 
     return new_tasks
+
+
+def scrub(view, age=24 * 60 * 60, database=None):
+    """
+    Intends to update job metadata of defunct jobs or tasks.
+
+    If their starting time is before given age, Tasks that were locked will be
+    unlocked and Jobs will be archived.
+
+    Parameters
+    ----------
+    view : {in_progress, error, pending_jobs, running_jobs, finished_jobs}
+        View to scrub jobs from
+    age : int
+        select jobs started at least this number of seconds ago. Set to at most
+        0 to select all documents.
+    database : couchdb database, optional
+        database to update the documents from. Defaults to
+        simcity.get_{job,task}_database()
+
+    Returns
+    -------
+    A tuple with (the number of documents updated,
+                  total number of documents in given view)
+    """
+    task_views = ['in_progress', 'error']
+    job_views = ['pending_jobs', 'running_jobs', 'finished_jobs']
+    if view in task_views:
+        is_task = True
+        age_var = 'lock'
+    elif view in job_views:
+        is_task = False
+        age_var = 'start'
+    else:
+        raise ValueError('View "%s" not one of "%s"' % (view, str(task_views +
+                                                                  job_views)))
+    if database is None:
+        database = get_task_database() if is_task else get_job_database()
+
+    min_t = int(time.time()) - age
+    total = 0
+    updates = []
+    for row in database.view(view):
+        total += 1
+        if age <= 0 or row.value[age_var] < min_t:
+            doc = database.get(row.id)
+            if is_task:
+                doc = Task(doc).scrub()
+            else:
+                doc = Job(doc).archive()
+            updates.append(doc)
+
+    if len(updates) > 0:
+        database.save_documents(updates)
+
+    return len(updates), total

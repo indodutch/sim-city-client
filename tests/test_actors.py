@@ -37,7 +37,7 @@ def test_actor(mock_directories, db):
     iterator = simcity.TaskViewIterator('myid', db, 'pending')
     actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     actor.run()
-    assert db.jobs['myjob']['done'] > 0
+    assert db.saved['myjob']['done'] > 0
     assert db.saved['mytask']['done'] > 0
     assert os.path.exists(exec_config['tmp_dir'])
     assert os.path.exists(exec_config['output_dir'])
@@ -60,9 +60,9 @@ def test_actor_maximize_parallelism(mock_directories, db):
     iterator = simcity.TaskViewIterator('myjob', db, 'pending')
     actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     actor.run()
-    assert db.jobs['myjob']['start'] > 0
+    assert db.saved['myjob']['start'] > 0
     assert 'myjob' == db.saved['mytask']['job']
-    assert db.jobs['myjob']['done'] > 0
+    assert db.saved['myjob']['done'] > 0
     assert db.saved['mytask']['done'] > 0
     assert os.path.exists(exec_config['tmp_dir'])
     assert os.path.exists(exec_config['output_dir'])
@@ -93,7 +93,7 @@ def test_actor_parallelism(mock_directories, db):
     elapsed = time.time() - t0
     assert elapsed < 0.6
     assert elapsed > 0.3
-    assert db.jobs['myjob']['done'] > 0
+    assert db.saved['myjob']['done'] > 0
     assert db.saved['mytask']['done'] > 0
     assert os.path.exists(exec_config['tmp_dir'])
     assert os.path.exists(exec_config['output_dir'])

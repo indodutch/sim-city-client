@@ -20,7 +20,6 @@ from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
 from .document import Job
 from .util import seconds
-import time
 
 
 def get_job(job_id=None, database=None):
@@ -150,48 +149,3 @@ def archive_job(job, database=None):
     except ResourceConflict:
         job = get_job(job_id=job.id, database=database)
         return archive_job(job, database=database)
-
-
-def scrub_jobs(view, age=24 * 60 * 60, database=None):
-    """
-    Intends to update job metadata of defunct jobs.
-
-    The jobs in given view will be converted to archived_jobs if their starting
-    time is before given age.
-
-    Parameters
-    ----------
-    view : one of (pending_jobs, running_jobs, finished_jobs)
-        View to scrub jobs from
-    age : int
-        select jobs started at least this number of seconds ago. Set to at most
-        0 to select all jobs.
-    database : couchdb database, optional
-        database to update the job from. Defaults to simcity.get_job_database()
-
-    Returns
-    -------
-    A tuple with (the number of documents updated,
-                  total number of documents in given view)
-    """
-    views = ['pending_jobs', 'running_jobs', 'finished_jobs']
-    if view not in views:
-        raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
-
-    if database is None:
-        database = get_job_database()
-
-    min_t = int(time.time()) - age
-    total = 0
-    updates = []
-    for row in database.view(view):
-        total += 1
-        if age <= 0 or row.value['start'] < min_t:
-            job = get_job(row.id, database=database)
-            database.delete(job)
-            updates.append(job.archive())
-
-    if len(updates) > 0:
-        database.save_documents(updates)
-
-    return len(updates), total

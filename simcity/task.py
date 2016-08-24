@@ -18,7 +18,6 @@
 from .document import Task
 from .management import get_task_database, get_webdav
 from .util import data_content_type, file_content_type
-import time
 import os
 import io
 
@@ -64,51 +63,6 @@ def delete_task(task, database=None):
         dav.delete(task_dir, ignore_not_existing=True)
 
 
-def scrub_tasks(view, age=24 * 60 * 60, database=None):
-    """
-    Intends to update task metadata of defunct tasks.
-
-    The tasks in given view will returned to jobs to be processed
-    if their starting time is before given age.
-
-    Parameters
-    ----------
-    view : one of (in_progress, error)
-        View to scrub tasks from
-    age : int
-        select tasks started at least this number of seconds ago. Set to at
-        most 0 to select all tasks.
-    database : couchdb database, optional
-        database to update the tasks from. Defaults to
-        simcity.get_task_database()
-
-    Returns
-    -------
-    A tuple with (the number of documents updated,
-                  total number of documents in given view)
-    """
-    views = ['in_progress', 'error']
-    if view not in views:
-        raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
-
-    if database is None:
-        database = get_task_database()
-
-    min_t = int(time.time()) - age
-    total = 0
-    updates = []
-    for row in database.view(view):
-        total += 1
-        if age <= 0 or row.value['lock'] < min_t:
-            task = get_task(row.id)
-            updates.append(task.scrub())
-
-    if len(updates) > 0:
-        database.save_documents(updates)
-
-    return len(updates), total
-
-
 def upload_attachment(task, directory, filename, content_type=None):
     """ Uploads an attachment using the configured file storage layer. """
     file_path = os.path.abspath(os.path.join(directory, filename))
@@ -123,6 +77,7 @@ def upload_attachment(task, directory, filename, content_type=None):
 
 
 def _put_attachment(task, filename, f, length, content_type=None):
+    """ Put given attachment file descriptor to a task. """
     try:
         dav = get_webdav()
     except EnvironmentError:
@@ -159,12 +114,10 @@ def write_attachment(task, filename, data, content_type=None):
     @param content_type: content type of the data. If None, it is guessed from
         the file name.
     """
-    # determine whether a json type is geojson
     if content_type is None:
         content_type = data_content_type(filename, data)
 
-    _put_attachment(task, filename, io.BytesIO(data), len(data),
-                    content_type)
+    _put_attachment(task, filename, io.BytesIO(data), len(data), content_type)
 
 
 def read_attachment(task, filename, task_db=None):

@@ -30,17 +30,17 @@ from .dav import RestRequests
 from .ensemble import ensemble_view
 from .worker import ExecuteWorker
 from .job import (get_job, start_job, queue_job, finish_job, archive_job,
-                  cancel_endless_job, scrub_jobs)
+                  cancel_endless_job)
 from .integration import (overview_total, run_task, submit_if_needed,
                           submit_while_needed, check_job_status,
-                          check_task_status)
+                          check_task_status, scrub)
 from .management import (get_config, init, get_task_database, get_job_database,
                          get_current_job_id, set_current_job_id,
                          create, create_views, uses_webdav, get_webdav,
                          load_config_database)
 from .submit import (submit, Adaptor, OsmiumAdaptor, xenon_support,
                      SSHAdaptor, kill, status)
-from .task import (add_task, get_task, delete_task, scrub_tasks,
+from .task import (add_task, get_task, delete_task,
                    upload_attachment, download_attachment, delete_attachment)
 from .config import Config, CouchDBConfig, FileConfig
 from .document import Task, Job, Document, User
@@ -90,8 +90,7 @@ __all__ = [
     'queue_job',
     'RestRequests',
     'run_task',
-    'scrub_jobs',
-    'scrub_tasks',
+    'scrub',
     'set_current_job_id',
     'SSHAdaptor',
     'start_job',

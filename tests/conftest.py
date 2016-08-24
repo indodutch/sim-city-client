@@ -133,11 +133,10 @@ class MockDB(object):
             doc['_rev'] = '0'
 
         if doc.id in self.jobs:
-            self.jobs[doc.id] = doc
-        else:
-            if doc.id in self.tasks:
-                del self.tasks[doc.id]
-            self.saved[doc.id] = doc
+            del self.jobs[doc.id]
+        elif doc.id in self.tasks:
+            del self.tasks[doc.id]
+        self.saved[doc.id] = doc
 
         return doc
 
