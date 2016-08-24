@@ -390,11 +390,12 @@ def list_documents(args):
                               .format(seconds_to_str(error['time']),
                                       error.get('message', 'none')))
                     if 'exception' in error:
+                        exception_str = '\n    '.join(
+                            error['exception'].splitlines())
                         print('    exception:\n'
                               '    ==========\n'
                               '    {0}=========='
-                              .format('\n    '.join(
-                                    error['exception'].split('\n'))))
+                              .format(exception_str))
         else:
             print('{:<40} {:<22} {:<22}'.format('ID', 'started', 'stopped'))
             print('-' * (40 + 1 + 22 + 1 + 22))
@@ -526,11 +527,11 @@ def submit(args):
 def summary(args):
     """ Print summary of tasks. """
     print('Summary')
-    print(20*'=')
+    print(20 * '=')
     overview = simcity.overview_total()
     for k in sorted(overview.keys()):
         print('{0:<15} {1}'.format(k, overview[k]))
-    print(20*'=')
+    print(20 * '=')
 
 
 def check(args):

@@ -152,7 +152,7 @@ def archive_job(job, database=None):
         return archive_job(job, database=database)
 
 
-def scrub_jobs(view, age=24*60*60, database=None):
+def scrub_jobs(view, age=24 * 60 * 60, database=None):
     """
     Intends to update job metadata of defunct jobs.
 

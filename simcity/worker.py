@@ -162,7 +162,7 @@ class ExecuteWorker(Worker):
         """ Create the directories to read and store data. """
         dir_map = {
             'SIMCITY_TMP': 'tmp_dir',
-            'SIMCITY_IN':  'input_dir',
+            'SIMCITY_IN': 'input_dir',
             'SIMCITY_OUT': 'output_dir'
         }
 

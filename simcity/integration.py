@@ -101,7 +101,7 @@ def submit_while_needed(host_id, max_jobs, adaptor=None, dry_run=False):
     new_jobs = max(0, min(num_tasks, max_jobs) - num_jobs)
 
     if dry_run:
-        return [None]*new_jobs
+        return [None] * new_jobs
     else:
         return [submit(host_id, adaptor) for _ in range(new_jobs)]
 
@@ -122,7 +122,7 @@ def check_job_status(dry_run=False, database=None):
     job_status = status(jobs)
 
     new_jobs = []
-    five_days = 5*24*60*60
+    five_days = 5 * 24 * 60 * 60
     for stat, job in zip(job_status, jobs):
         if ((stat is None and seconds() - job['queue'] > five_days) or
                 stat == Adaptor.DONE):

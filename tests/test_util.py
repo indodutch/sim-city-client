@@ -150,13 +150,13 @@ def test_parse_parameters(point2d_ref):
             'b': {'type': 'number'},
             'c': {
                 'allOf': [
-                   point2d_ref,
-                   {'properties': {'name': {'type': 'string'}}}
+                    point2d_ref,
+                    {'properties': {'name': {'type': 'string'}}}
                 ]
             },
             'd': {'enum': ['ja', 'da']},
             'e': {'items': {'type': 'string'},
-                  'minItems': 1,  'maxItems': 2},
+                  'minItems': 1, 'maxItems': 2},
             'f': {'items': point2d_ref},
         },
     }

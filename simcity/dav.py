@@ -119,7 +119,7 @@ class RestRequests(object):
         verify((200,), response, 'Failed to get file {0}'.format(path))
         return response.content
 
-    def download(self, path, file_path, chunk_size=1024*1024, **kwargs):
+    def download(self, path, file_path, chunk_size=1024 * 1024, **kwargs):
         """ Download path to file_path. """
         kwargs.update(self.kwargs)
         response = requests.get(self.path_to_url(path), stream=True,

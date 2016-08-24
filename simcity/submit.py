@@ -177,7 +177,7 @@ def status(jobs, adaptor=None):
     except KeyError:
         raise ValueError('Job has no host_section set')
 
-    result = [None]*len(jobs)
+    result = [None] * len(jobs)
     idx = {job.id: i for i, job in enumerate(jobs)}
     for section in sections:
         host_id, host_cfg = get_host_config(section=section)
@@ -298,9 +298,9 @@ class OsmiumAdaptor(Adaptor):
         request = {
             "prestaged": [],
             "poststaged": [],
-            'executable':  command[0],
-            'arguments':   command[1:],
-            'jobdir':      self.jobdir,
+            'executable': command[0],
+            'arguments': command[1:],
+            'jobdir': self.jobdir,
             'environment': {'SIMCITY_JOBID': job.id},
         }
         if self.launcher is not None:
@@ -381,7 +381,7 @@ class SSHAdaptor(Adaptor):
         """ Cannot check status of jobs, always returns list of None. """
         for job in jobs:
             self.check_job(job)
-        return [None]*len(jobs)
+        return [None] * len(jobs)
 
 
 class XenonAdaptor(Adaptor):
