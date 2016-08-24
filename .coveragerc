@@ -9,10 +9,7 @@ source = simcity/
 [paths]
 source =
     simcity/
-    /home/travis/simcity/
-
-[xml]
-output = coverage.xml
+    /home/travis/indodutch/sim-city-client/simcity/
 
 [report]
 show_missing = True
