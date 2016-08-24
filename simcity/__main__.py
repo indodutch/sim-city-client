@@ -386,9 +386,8 @@ def list_documents(args):
                     print('  - time: {0}'
                           .format(seconds_to_str(error['time'])))
                     if 'message' in error:
-                        print('    message: {1}'
-                              .format(seconds_to_str(error['time']),
-                                      error.get('message', 'none')))
+                        print('    message: {0}'
+                              .format(error['message']))
                     if 'exception' in error:
                         exception_str = '\n    '.join(
                             error['exception'].splitlines())
