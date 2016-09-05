@@ -25,7 +25,7 @@ from uuid import uuid4
 
 try:
     import xenon
-    import jpype
+    from xenon import java
     xenon_support = True
 except ImportError:
     xenon_support = False
@@ -495,8 +495,7 @@ class XenonAdaptor(Adaptor):
                 self.password is not None):
             cred = x.credentials()
             if self.password is not None:
-                j_str = jpype.JString(self.password)
-                password = jpype.java.lang.String(j_str).toCharArray()
+                password = java.lang.String(self.password).toCharArray()
             else:
                 password = None
 
