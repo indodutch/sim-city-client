@@ -19,11 +19,7 @@
 from .document import Job
 from .job import archive_job, queue_job
 from .management import get_config, get_job_database
-import json
-try:
-    from httplib import HTTPConnection
-except ImportError:
-    from http.client import HTTPConnection
+import requests
 import subprocess
 from uuid import uuid4
 
@@ -279,16 +275,13 @@ class OsmiumAdaptor(Adaptor):
 
     def _request(self, location="/", method="GET", data=None):
         """ Make a HTTPS request to the Osmium service. """
-        conn = HTTPConnection(self.host)
         url = 'http://{0}{1}'.format(self.host, location)
-        conn.request(method, url, data)
-        response = conn.getresponse()
-        conn.close()
-        if response.status < 200 or response.status >= 300:
+        response = requests.request(method, url, json=data)
+        if response.status_code < 200 or response.status_code >= 300:
             err = IOError("Request failed " + response.reason +
-                          "(HTTP status " + response.status + ")",
-                          response.status)
-            err.status = response.status
+                          "(HTTP status " + response.status_code + ")",
+                          response.status_code)
+            err.status = response.status_code
             raise err
 
         return response
@@ -309,7 +302,7 @@ class OsmiumAdaptor(Adaptor):
             request['max_time'] = int(self.max_time)
 
         response = self._request(method="POST", data=request)
-        return response.location.split('/')[-1]
+        return response.headers['location'].split('/')[-1]
 
     def status(self, jobs):
         """ Get the status dict of a single job from Osmium. """
@@ -320,7 +313,7 @@ class OsmiumAdaptor(Adaptor):
             single_status = None
             try:
                 response = self._request('/job/{0}'.format(job['batch_id']))
-                value = json.loads(response.data)
+                value = response.json()
                 if value['status']['running']:
                     single_status = Adaptor.RUNNING
                 elif value['status']['done']:
