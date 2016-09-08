@@ -17,7 +17,6 @@
 """
 CouchDB document types.
 """
-import socket
 from .util import seconds, data_content_type
 import base64
 import traceback
@@ -115,11 +114,6 @@ class Document(couchdb.Document):
         @raise KeyError: if document name does not exist
         """
         del self.attachments[name]
-        return self
-
-    def _update_hostname(self):
-        """ Update the hostname value to the current host. """
-        self['hostname'] = socket.gethostname()
         return self
 
     def list_files(self):
@@ -263,33 +257,6 @@ class Job(Document):
             })
         if self.id is None:
             raise ValueError('Job ID must be set')
-
-    def queue(self, method, host=None):
-        """ Save that the job was queued. """
-        self['method'] = method
-        if host is not None:
-            self['hostname'] = host
-        self['queue'] = seconds()
-        return self
-
-    def start(self):
-        """ Save that the job has started. """
-        self['start'] = seconds()
-        self['done'] = 0
-        self['archive'] = 0
-        return self._update_hostname()
-
-    def finish(self):
-        """ Save that the job is done. """
-        self['done'] = seconds()
-        return self
-
-    def archive(self):
-        """ Move the job to an archived state. """
-        if self['done'] <= 0:
-            self['done'] = seconds()
-        self['archive'] = seconds()
-        return self
 
     def is_done(self):
         """ Whether the job is done. """

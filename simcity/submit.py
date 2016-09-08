@@ -17,8 +17,6 @@
 """ Submit jobs to physical infrastructure. """
 
 from .document import Job
-from .job import archive_job, queue_job
-from .management import get_config, get_job_database
 import requests
 import subprocess
 from uuid import uuid4
@@ -31,192 +29,147 @@ except ImportError:
     xenon_support = False
 
 
-def create_adaptor(host_id, host_cfg):
-    """ Create the appropriate adaptor given the host_id and host config.
+class SubmitHandler(object):
+    def __init__(self, config, job_handler):
+        self.config = config
+        self.job_handler = job_handler
 
-    @param host_id: host_id as mentioned in the configuration
-    @param host_cfg: configuration dict of the host
-    @raise EnvironmentError: if host_cfg does not configure all needed
-        properties
-    @return: Adaptor
-    """
-    global xenon_support
-    try:
-        if host_cfg['method'] == 'ssh':
-            return SSHAdaptor(
-                database=get_job_database(),
-                host=host_cfg['host'],
-                jobdir=host_cfg['path'],
-                prefix=host_id + '-')
-        elif host_cfg['method'] == 'osmium':
-            try:
-                osmium_cfg = get_config().section('osmium')
-            except KeyError:
-                osmium_cfg = {'host': 'localhost:9998'}
+    def adaptor(self, host_id=None, job=None, section=None):
+        """
+        Create the appropriate adaptor given the host_id and host config.
 
-            return OsmiumAdaptor(
-                database=get_job_database(),
-                launcher=host_cfg.get('launcher'),
-                url=host_cfg.get('host', osmium_cfg['host']),
-                jobdir=host_cfg['path'],
-                prefix=host_id + '-',
-                max_time=host_cfg.get('max_time'))
-        elif host_cfg['method'] == 'xenon':
-            if not xenon_support:
-                raise EnvironmentError("Xenon not installed. Install "
-                                       "with pip install -U '.[xenon]'")
-            return XenonAdaptor(
-                database=get_job_database(),
-                host=host_cfg['host'],
-                jobdir=host_cfg['path'],
-                prefix=host_id + '-',
-                max_time=host_cfg.get('max_time', 1440),
-                properties=host_cfg)
+        @param host_id: host_id as mentioned in the configuration
+        @param job: existing job
+        @param section: section in the configuration
+        @raise EnvironmentError: if host_cfg does not configure all needed
+            properties
+        @return: SubmitAdaptor
+        """
+        global xenon_support
+
+        if section is None and job is not None and 'host_section' in job:
+            section = job['host_section']
+
+        if host_id is not None or section is not None:
+            if host_id is None:
+                if section.endswith('-host'):
+                    host_id = section[:-5]
+                else:
+                    host_id = section
+            elif section is None:
+                section = host_id + '-host'
+
+            host_cfg = self.config.section(section)
         else:
-            raise EnvironmentError('Connection method for %s unknown' %
-                                   host_id)
-    except KeyError:
-        raise EnvironmentError(
-            "Connection method for %s not well configured" % host_id)
+            raise ValueError('No adaptor is specified.')
+
+        try:
+            default_command = [host_cfg['script']]
+            default_command += host_cfg.get('arguments', '').split()
+            if host_cfg['method'] == 'ssh':
+                return SSHAdaptor(
+                    job_handler=self.job_handler,
+                    host=host_cfg['host'],
+                    default_command=default_command,
+                    jobdir=host_cfg['path'],
+                    prefix=host_id + '-')
+            elif host_cfg['method'] == 'osmium':
+                try:
+                    osmium_cfg = self.config.section('osmium')
+                except KeyError:
+                    osmium_cfg = {'host': 'localhost:9998'}
+
+                return OsmiumAdaptor(
+                    job_handler=self.job_handler,
+                    launcher=host_cfg.get('launcher'),
+                    url=host_cfg.get('host', osmium_cfg['host']),
+                    default_command=default_command,
+                    jobdir=host_cfg['path'],
+                    prefix=host_id + '-',
+                    max_time=host_cfg.get('max_time'))
+            elif host_cfg['method'] == 'xenon':
+                if not xenon_support:
+                    raise EnvironmentError(
+                        "Xenon not installed. Install with "
+                        "pip install -U 'simcity[xenon]'")
+                return XenonAdaptor(
+                    job_handler=self.job_handler,
+                    host=host_cfg['host'],
+                    default_command=default_command,
+                    jobdir=host_cfg['path'],
+                    prefix=host_id + '-',
+                    max_time=host_cfg.get('max_time', 1440),
+                    properties=host_cfg)
+            else:
+                raise EnvironmentError('Connection method for %s unknown' %
+                                       host_id)
+        except KeyError:
+            raise EnvironmentError(
+                "Connection method for %s not well configured" % host_id)
+
+    def status(self, jobs):
+        """
+        Get the status of a list of jobs.
+
+        @param jobs: given list of Job classes with a 'host_section' attribute.
+        @raise ValueError: a Job has not set 'host_section'
+        @raise EnvironmentError: SIM-CITY configuration does not have host_section
+            fully configured
+        @return: a status list in the same order as the input list. Values are one
+            of SubmitAdaptor.{DONE, RUNNING, PENDING} or None if unknown.
+        """
+        sections = {}
+        try:
+            for job in jobs:
+                sections.setdefault(job['host_section'], []).append(job)
+        except KeyError:
+            raise ValueError('Job has no host_section set')
+
+        result = [None] * len(jobs)
+        idx = {job.id: i for i, job in enumerate(jobs)}
+        for section in sections:
+            adaptor = self.adaptor(section=section)
+
+            job_status = zip(sections[section],
+                             adaptor.status(sections[section]))
+            for job, job_result in job_status:
+                result[idx[job.id]] = job_result
+
+        return result
 
 
-def get_host_config(section=None, host_id=None):
-    """
-    Get the SIM-CITY host_config for a given section in the configuration or
-    host_id. At least one of host_id or section must be provided.
-    @param section: name of the section in the SIM-CITY configuration
-    @param host_id: host ID in the SIM-CITY configuration
-    @return: tuple (host_id, host_cfg)
-    @raise ValueError: if section and host_id are both None
-    """
-    if host_id is None and section is None:
-        raise ValueError('Specify host or section')
-    elif host_id is None:
-        host_id = section[:-5] if section.endswith('-host') else section
-    elif section is None:
-        section = host_id + '-host'
-
-    try:
-        return host_id, get_config().section(section)
-    except KeyError:
-        raise ValueError('{0} not configured under {1} section'
-                         .format(host_id, section))
-
-
-def submit(host_id, adaptor=None):
-    """
-    Submit a new job to given host.
-
-    @param host_id: given host ID in the SIM-CITY configuration
-    @param adaptor: use a custom adaptor instead of reading it from the
-        configuration
-    @raise EnvironmentError: SIM-CITY configuration does not have host_id fully
-        configured
-    @return: submitted Job
-    """
-    host_id, host_cfg = get_host_config(host_id=host_id)
-
-    if adaptor is None:
-        adaptor = create_adaptor(host_id, host_cfg)
-
-    try:
-        script = [host_cfg['script']] + host_cfg.get('arguments', '').split()
-    except KeyError:
-        raise EnvironmentError(
-            "Connection method for %s not well configured" % host_id)
-
-    return adaptor.submit(script)
-
-
-def kill(job, adaptor=None):
-    """
-    Stop a running job.
-
-    @param job: given Job with a 'host_section' attribute.
-    @param adaptor: use a custom adaptor instead of reading it from the
-        configuration
-    @raise ValueError: job has not set 'host_section'
-    @raise EnvironmentError: SIM-CITY configuration does not have host_section
-        fully configured
-    @return: the updated Job object
-    """
-    try:
-        section = job['host_section']
-    except KeyError:
-        raise ValueError('Job has no host_section set')
-
-    host_id, host_cfg = get_host_config(section=section)
-
-    if adaptor is None:
-        adaptor = create_adaptor(host_id, host_cfg)
-
-    return adaptor.kill(job)
-
-
-def status(jobs, adaptor=None):
-    """
-    Get the status of a list of jobs.
-
-    @param jobs: given list of Job classes with a 'host_section' attribute.
-    @param adaptor: use a custom adaptor instead of reading it from the
-        configuration
-    @raise ValueError: a Job has not set 'host_section'
-    @raise EnvironmentError: SIM-CITY configuration does not have host_section
-        fully configured
-    @return: a status list in the same order as the input list. Values are one
-        of Adaptor.{DONE, RUNNING, PENDING} or None if unknown.
-    """
-    sections = {}
-    try:
-        for job in jobs:
-            sections.setdefault(job['host_section'], []).append(job)
-    except KeyError:
-        raise ValueError('Job has no host_section set')
-
-    result = [None] * len(jobs)
-    idx = {job.id: i for i, job in enumerate(jobs)}
-    for section in sections:
-        host_id, host_cfg = get_host_config(section=section)
-
-        if adaptor is None:
-            adaptor = create_adaptor(host_id, host_cfg)
-
-        job_status = zip(sections[section], adaptor.status(sections[section]))
-        for job, job_result in job_status:
-            result[idx[job.id]] = job_result
-
-    return result
-
-
-class Adaptor(object):
+class SubmitAdaptor(object):
     """ Submits a job """
     PENDING, RUNNING, DONE = 'PENDING', 'RUNNING', 'DONE'
 
-    def __init__(self, database, host, prefix, jobdir, method):
-        self.database = database
+    def __init__(self, job_handler, host, prefix, jobdir, method,
+                 default_command):
+        self.job_handler = job_handler
         self.host = host
         self.jobdir = jobdir
         self.prefix = prefix
         self.method = method
+        self.default_command = default_command
 
-    def submit(self, command):
+    def submit(self, command=None):
         """
         Submit given command to the configured host.
 
         Raises IOError if the command could not be submitted.
         """
+        if command is None:
+            command = self.default_command
+
         job_id = 'job_' + self.prefix + uuid4().hex
-        job = queue_job(Job({'_id': job_id}), self.method,
-                        host=self.host, database=self.database)
-        job['host_section'] = self.prefix + 'host'
+        job = self.job_handler.prepare_for_queue(
+            Job({'_id': job_id}), self.method, self.prefix + 'host', self.host)
         try:
-            job['batch_id'] = self._do_submit(job, command)
+            batch_id = self._do_submit(job, command)
         except:
-            archive_job(job, database=self.database)
+            self.job_handler.archive(job)
             raise
         else:
-            self.database.save(job)
-            return job
+            return self.job_handler.queued(job, batch_id)
 
     def _do_submit(self, job, command):
         """
@@ -232,7 +185,7 @@ class Adaptor(object):
 
         Override in subclasses.
         @return: Job if it can be killed or None if not
-        @raise IOError: Adaptor tried to kill Job but failed
+        @raise IOError: SubmitAdaptor tried to kill Job but failed
         @raise ValueError: if the Job object was submitted with a different
             adaptor.
         """
@@ -258,18 +211,18 @@ class Adaptor(object):
         @raise ValueError: if one of the Job objects was submitted with a
             different adaptor.
         @param jobs: list of jobs
-        @return: list of Adaptor.{DONE, RUNNING, PENDING} or None if impossible
+        @return: list of SubmitAdaptor.{DONE, RUNNING, PENDING} or None if impossible
             to know
         """
         raise NotImplementedError
 
 
-class OsmiumAdaptor(Adaptor):
+class OsmiumAdaptor(SubmitAdaptor):
     """ Submits a job to Osmium. """
-    def __init__(self, database, url, prefix, launcher, jobdir="~",
-                 max_time=None):
+    def __init__(self, job_handler, url, prefix, launcher, default_command,
+                 jobdir="~", max_time=None):
         super(OsmiumAdaptor, self).__init__(
-            database, url, prefix, jobdir, method="osmium")
+            job_handler, url, prefix, jobdir, "osmium", default_command)
         self.launcher = launcher
         self.max_time = max_time
 
@@ -315,11 +268,11 @@ class OsmiumAdaptor(Adaptor):
                 response = self._request('/job/{0}'.format(job['batch_id']))
                 value = response.json()
                 if value['status']['running']:
-                    single_status = Adaptor.RUNNING
+                    single_status = SubmitAdaptor.RUNNING
                 elif value['status']['done']:
-                    single_status = Adaptor.DONE
+                    single_status = SubmitAdaptor.DONE
                 else:
-                    single_status = Adaptor.PENDING
+                    single_status = SubmitAdaptor.PENDING
             except IOError:
                 pass
 
@@ -334,17 +287,17 @@ class OsmiumAdaptor(Adaptor):
         self.check_job(job)
         try:
             self._request('/job/{0}'.format(job['batch_id']), method='DELETE')
-            return archive_job(job)
+            return self.job_handler.archive(job)
         except IOError:
             return None
 
 
-class SSHAdaptor(Adaptor):
+class SSHAdaptor(SubmitAdaptor):
     """ Submits a job over SSH, remotely running the Torque qsub utility. """
 
-    def __init__(self, database, host, prefix, jobdir="~"):
+    def __init__(self, job_handler, host, prefix, default_command, jobdir="~"):
         super(SSHAdaptor, self).__init__(
-            database, host, prefix, jobdir, method="ssh")
+            job_handler, host, prefix, jobdir, "ssh", default_command)
 
     def _do_submit(self, job, command):
         """ Submit a command with given job metadata. """
@@ -377,12 +330,12 @@ class SSHAdaptor(Adaptor):
         return [None] * len(jobs)
 
 
-class XenonAdaptor(Adaptor):
+class XenonAdaptor(SubmitAdaptor):
     """ Submits job using Xenon. """
-    def __init__(self, database, host, prefix, jobdir, max_time=1440,
-                 properties=None):
-        super(XenonAdaptor, self).__init__(database, host, prefix, jobdir,
-                                           "xenon")
+    def __init__(self, job_handler, host, prefix, default_command, jobdir,
+                 max_time=1440, properties=None):
+        super(XenonAdaptor, self).__init__(job_handler, host, prefix, jobdir,
+                                           "xenon", default_command)
         try:
             xenon.init(log_level='INFO')
         except ValueError:
@@ -466,7 +419,7 @@ class XenonAdaptor(Adaptor):
                 for xjob in self.jobs(x):
                     if xjob.getIdentifier() == job['batch_id']:
                         x.jobs().cancelJob(xjob)
-                        return archive_job(job)
+                        return self.job_handler.archive(job)
             except xenon.exceptions.XenonException as ex:
                 raise IOError(ex.javaClass(),
                               "Cannot kill job with Xenon: {0}"
@@ -476,7 +429,7 @@ class XenonAdaptor(Adaptor):
     def status(self, jobs):
         """
         Get the status of a list of running jobs, one of:
-        Adaptor.{DONE, RUNNING, PENDING}
+        SubmitAdaptor.{DONE, RUNNING, PENDING}
 
         @raise ValueError: if job does not contain 'host_section' and
             'batch_id' attributes.
@@ -521,7 +474,7 @@ class XenonAdaptor(Adaptor):
         @param job: SIM-CITY Job
         @param xjobs: list of Xenon Job objects
         @param x: Xenon
-        @return one of Adaptor.{DONE, RUNNING, PENDING}.
+        @return one of SubmitAdaptor.{DONE, RUNNING, PENDING}.
         """
         try:
             for xjob in xjobs:
@@ -529,11 +482,11 @@ class XenonAdaptor(Adaptor):
                     xstatus = x.jobs().getJobStatus(xjob)
 
                     if xstatus.isRunning():
-                        return Adaptor.RUNNING
+                        return SubmitAdaptor.RUNNING
                     elif xstatus.isDone():
-                        return Adaptor.DONE
+                        return SubmitAdaptor.DONE
                     else:
-                        return Adaptor.PENDING
-            return Adaptor.DONE
+                        return SubmitAdaptor.PENDING
+            return SubmitAdaptor.DONE
         except xenon.exceptions.XenonException:
             return None

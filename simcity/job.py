@@ -16,136 +16,137 @@
 
 """ Manage job metadata. """
 
-from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
 from .document import Job
 from .util import seconds
+import socket
 
 
-def get_job(job_id=None, database=None):
-    """
-    Get a job from the job database.
+class JobHandler(object):
+    def __init__(self, database, current_job_id=None):
+        self.database = database
+        self.job_id = current_job_id
 
-    If no job_id is given, the job ID of the current process is used, if
-    specified. If no database is provided, the standard job database is used.
-    """
-    if database is None:
-        database = get_job_database()
+    def get(self, job_id):
+        """ Get a job from the job database. """
+        return Job(self.database.get(job_id))
 
-    if job_id is None:
-        job_id = get_current_job_id()
-    if job_id is None:
-        raise EnvironmentError("Job ID cannot be determined "
-                               "(from $SIMCITY_JOBID or command-line)")
-    return Job(database.get(job_id))
+    def prepare_for_queue(self, job, method, host_section, host=None):
+        """
+        Mark a job from the job database for queueing.
 
+        The job is a Job object, the method a string with the type of queue
+        being used, the host is the hostname that it was queued on.
+        """
+        self.update_latest(_prepare_for_queue, job, method, host_section, host)
 
-def queue_job(job, method, host=None, database=None):
-    """
-    Mark a job from the job database as being queued.
+    def queued(self, job, batch_id):
+        """
+        Mark a job from the job database in-queue
 
-    The job is a Job object, the method a string with the type of queue being
-    used, the host is the hostname that it was queued on. If no database is
-    provided, the standard job database is used.
-    """
-    if database is None:
-        database = get_job_database()
-
-    try:
-        job = database.save(job.queue(method, host))
-    except ResourceConflict:
-        job = get_job(job_id=job.id, database=database)
-        return queue_job(job, method, host=host, database=database)
-    else:
+        The job is a Job object, the method a string with the type of queue
+        being used, the host is the hostname that it was queued on.
+        """
+        job = self.update_latest(_queued, job, batch_id)
         if job['done'] > 0:
-            return archive_job(job, database)
+            return self.archive(job)
         else:
             return job
 
+    def update_latest(self, f, job, *args, **kwargs):
+        """ Perform given function on the latest version of a job. """
+        while True:
+            try:
+                f(job, *args, **kwargs)
+                return self.database.save(job)
+            except ResourceConflict:
+                job = self.get(job.id)
 
-def start_job(database=None, properties=None):
-    """
-    Mark a job from the job database as being started.
+    def start(self, properties=None):
+        """
+        Mark a job from the job database as being started.
 
-    The job ID of the current process is used. If no database is
-    provided, the standard job database is used.
-    """
-    if database is None:
-        database = get_job_database()
+        The job ID of the current process is used.
+        """
+        if self.job_id is None:
+            raise EnvironmentError("Job ID cannot be determined "
+                                   "(from $SIMCITY_JOBID or command-line)")
 
-    try:  # EnvironmentError if job_id cannot be determined falls through
-        job = get_job()
-    except ValueError:  # job ID was not yet added to database
-        job = Job({'_id': get_current_job_id()})
+        try:
+            job = self.get(self.job_id)
+        except ValueError:  # job ID was not yet added to database
+            job = Job({'_id': self.job_id})
 
-    if properties is not None:
-        for k, v in properties.items():
-            job[k] = v
+        self.update_latest(_update_job, job, properties)
 
-    try:
-        return database.save(job.start())
-    # Check for concurrent modification: the job may be added to the
-    # database by the submission script.
-    # Since this happens only once, we don't risk unlimited recursion
-    except ResourceConflict:
-        return start_job(database, properties=properties)
+    def finish(self, job, tasks_processed=None):
+        """
+        Mark a job from the job database as being finished.
 
-
-def finish_job(job, database=None):
-    """
-    Mark a job from the job database as being finished.
-
-    The job is a Job object. If no database is
-    provided, the standard job database is used.
-    """
-    if database is None:
-        database = get_job_database()
-
-    try:
-        job = database.save(job.finish())
-    # Check for concurrent modification: the job may be added to the
-    # database by the submission script after starting.
-    # Since this happens only once, we don't risk unlimited recursion
-    except ResourceConflict:
-        job = get_job(job_id=job.id, database=database)
-        return finish_job(job, database=database)
-    else:
+        The job is a Job object.
+        """
+        job = self.update_latest(_finish, job, tasks_processed)
         if job['queue'] > 0:
-            return archive_job(job, database=database)
+            return self.archive(job)
         else:
             return job
 
+    def cancel_endless(self, job):
+        """
+        Mark a job from the job database for cancellation.
 
-def cancel_endless_job(job, database=None):
-    """
-    Mark a job from the job database for cancellation.
+        The job is a Job object.
+        """
+        self.update_latest(_cancel_job, job)
 
-    The job is a Job object. If no database is
-    provided, the standard job database is used.
-    """
-    if database is None:
-        database = get_job_database()
+    def archive(self, job):
+        """
+        Archive a job in the job database.
 
-    try:
-        job['cancel'] = seconds()
-        return database.save(job)
-    except ResourceConflict:
-        job = get_job(job_id=job.id, database=database)
-        return cancel_endless_job(job, database=database)
+        The job is a Job object.
+        """
+        self.update_latest(_archive, job)
 
 
-def archive_job(job, database=None):
-    """
-    Archive a job in the job database.
+def _prepare_for_queue(job, method, host_section, host=None):
+    """ Save that the job was queued. """
+    job['method'] = method
+    job['host_section'] = host_section
+    if host is not None:
+        job['hostname'] = host
+    job['queue'] = seconds()
 
-    The job is a Job object. If no database is
-    provided, the standard job database is used.
-    """
-    if database is None:
-        database = get_job_database()
 
-    try:
-        return database.save(job.archive())
-    except ResourceConflict:
-        job = get_job(job_id=job.id, database=database)
-        return archive_job(job, database=database)
+def _queued(job, batch_id):
+    job['batch_id'] = batch_id
+
+
+def _start(job):
+    """ Save that the job has started. """
+    job['start'] = seconds()
+    job['done'] = 0
+    job['archive'] = 0
+    job['hostname'] = socket.gethostname()
+
+
+def _finish(job, tasks_processed):
+    """ Save that the job is done. """
+    if tasks_processed is not None:
+        job['tasks_processed'] = tasks_processed
+    job['done'] = seconds()
+
+
+def _archive(job):
+    """ Move the job to an archived state. """
+    if job['done'] <= 0:
+        job['done'] = seconds()
+    job['archive'] = seconds()
+
+
+def _update_job(job, properties):
+    if properties is not None:
+        job.update(properties)
+
+
+def _cancel_job(job):
+    job['cancel'] = seconds()

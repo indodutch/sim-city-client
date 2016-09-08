@@ -26,22 +26,13 @@ server.
 """
 
 from .actors import JobActor
-from .dav import RestRequests
+from .dav import (RestRequests, Attachments)
 from .ensemble import ensemble_view
 from .worker import ExecuteWorker
-from .job import (get_job, start_job, queue_job, finish_job, archive_job,
-                  cancel_endless_job)
-from .integration import (overview_total, run_task, submit_if_needed,
-                          submit_while_needed, check_job_status,
-                          check_task_status, scrub)
-from .management import (get_config, init, get_task_database, get_job_database,
-                         get_current_job_id, set_current_job_id,
-                         create, create_views, uses_webdav, get_webdav,
-                         load_config_database)
-from .submit import (submit, Adaptor, OsmiumAdaptor, xenon_support,
-                     SSHAdaptor, kill, status)
-from .task import (add_task, get_task, delete_task,
-                   upload_attachment, download_attachment, delete_attachment)
+from .job import JobHandler
+from .management import Barbecue, load_config, load_database, load_webdav
+from .submit import (SubmitHandler, SubmitAdaptor, xenon_support)
+from .task import TaskHandler
 from .config import Config, CouchDBConfig, FileConfig
 from .document import Task, Job, Document, User
 from .database import CouchDB
@@ -51,58 +42,29 @@ from .util import parse_parameters
 from .version import __version__, __version_info__
 
 __all__ = [
-    'Adaptor',
-    'add_task',
-    'archive_job',
-    'cancel_endless_job',
-    'check_job_status',
-    'check_task_status',
+    'Attachments',
+    'Barbecue',
     'Config',
     'CouchDB',
     'CouchDBConfig',
-    'create',
-    'create_views',
-    'delete_attachment',
-    'delete_task',
     'Document',
-    'download_attachment',
     'EndlessViewIterator',
     'ensemble_view',
     'ExecuteWorker',
     'FileConfig',
-    'finish_job',
-    'get_config',
-    'get_current_job_id',
-    'get_job',
-    'get_job_database',
-    'get_task',
-    'get_task_database',
-    'get_webdav',
-    'init',
     'Job',
     'JobActor',
-    'kill',
-    'load_config_database',
-    'OsmiumAdaptor',
-    'overview_total',
+    'load_config',
+    'load_database',
+    'load_webdav',
     'parse_parameters',
     'PrioritizedViewIterator',
-    'queue_job',
     'RestRequests',
-    'run_task',
-    'scrub',
-    'set_current_job_id',
-    'SSHAdaptor',
-    'start_job',
-    'status',
-    'submit',
-    'submit_if_needed',
-    'submit_while_needed',
+    'SubmitAdaptor',
+    'SubmitHandler',
     'Task',
     'TaskViewIterator',
-    'upload_attachment',
     'User',
-    'uses_webdav',
     'ViewIterator',
     'xenon_support',
     '__version__',

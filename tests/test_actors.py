@@ -23,7 +23,7 @@ import time
 
 
 @pytest.mark.usefixtures("dav")
-def test_actor(mock_directories, db):
+def test_actor(mock_directories, db, job_id):
     cfg = simcity.Config()
     exec_config = {'parallelism': 1}
     exec_config.update(mock_directories)
@@ -32,10 +32,12 @@ def test_actor(mock_directories, db):
         'url': 'https://my.example.com'
     })
     db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo'}}
-    pytest.raises(KeyError, simcity.management.set_config, cfg)
-    simcity.management.set_current_job_id('myjob')
-    iterator = simcity.TaskViewIterator('myid', db, 'pending')
-    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
+    pytest.raises(KeyError, simcity.Barbecue, cfg)
+    job_handler = simcity.JobHandler(db, job_id)
+    attachments = simcity.Attachments()
+    iterator = simcity.TaskViewIterator(job_id, db, 'pending')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker, cfg, db,
+                             job_handler)
     actor.run()
     assert db.saved['myjob']['done'] > 0
     assert db.saved['mytask']['done'] > 0

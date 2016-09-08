@@ -17,7 +17,6 @@
 """ Workers to execute a single process in a job. """
 
 from .util import listfiles, expandfilename
-from .task import upload_attachment, download_attachment
 import json
 import os
 from subprocess import call
@@ -34,13 +33,14 @@ class Worker(Process):
     @param config: config object
     """
     def __init__(self, number, config, task_q, result_q, queued_semaphore,
-                 *args, **kwargs):
+                 attachments, *args, **kwargs):
         super(Worker, self).__init__(*args, **kwargs)
         self.number = number
         self.config = config
         self.task_q = task_q
         self.result_q = result_q
         self.queued_semaphore = queued_semaphore
+        self.attachments = attachments
 
     def process_task(self, task):
         """
@@ -114,7 +114,7 @@ class ExecuteWorker(Worker):
             json.dump(task.input, f)
 
         for attachment in task.input.get('uploads', []):
-            download_attachment(task, dirs['SIMCITY_IN'], attachment)
+            self.attachments.download(task, attachment, dirs['SIMCITY_IN'])
 
         command = expandfilename(task['command'])
 
@@ -144,7 +144,7 @@ class ExecuteWorker(Worker):
         # Read all files in as attachments
         out_files = listfiles(dirs['SIMCITY_OUT'])
         for filename in out_files:
-            upload_attachment(task, dirs['SIMCITY_OUT'], filename)
+            self.attachments.upload(task, filename, dirs['SIMCITY_OUT'])
 
         if not task.has_error():  # don't override error status
             task.done()

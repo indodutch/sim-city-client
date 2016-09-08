@@ -18,7 +18,6 @@
 
 from __future__ import print_function
 
-import simcity
 from .util import Timer
 from couchdb.http import ResourceConflict
 try:
@@ -32,25 +31,18 @@ class JobActor(object):
     """
     Executes tasks as a single job with multiple processes
     """
-    def __init__(self, iterator, worker_cls, task_db=None, parallelism=None,
-                 job_db=None, config=None):
+    def __init__(self, iterator, worker_cls, config, task_db, job_handler,
+                 attachments, parallelism=None):
         """
         @param iterator: the iterator to get the tasks from.
         """
         self.iterator = iterator
         self.worker_cls = worker_cls
 
-        if task_db is None:
-            task_db = simcity.get_task_database()
         self.task_db = task_db
-
-        if job_db is None:
-            job_db = simcity.get_job_database()
-        self.job_db = job_db
-
-        if config is None:
-            config = simcity.get_config()
+        self.job_handler = job_handler
         self.config = config.section('Execution')
+        self.attachments = attachments
 
         if parallelism is None:
             parallelism = self.config.get('parallelism', 1)
@@ -65,7 +57,7 @@ class JobActor(object):
         self.result_q = self.manager.Queue()
         self.queued_semaphore = self.manager.Semaphore(self.parallelism)
         self.workers = [worker_cls(i, self.config, self.task_q, self.result_q,
-                                   self.queued_semaphore)
+                                   self.queued_semaphore, self.attachments)
                         for i in range(self.parallelism)]
 
         self.tasks_processed = self.manager.Value('i', 0)
@@ -119,8 +111,8 @@ class JobActor(object):
     def prepare_env(self):
         """ Prepares the current job by registering it as started in the
         database. """
-        self.job = simcity.start_job(
-            database=self.job_db, properties={'parallelism': self.parallelism})
+        self.job = self.job_handler.start(
+            properties={'parallelism': self.parallelism})
 
     def cleanup_env(self):
         """ Cleans up the current job by registering it as finished. """
@@ -134,8 +126,7 @@ class JobActor(object):
             w.join()
         self.collector.join()
 
-        self.job['tasks_processed'] = self.tasks_processed.value
-        simcity.finish_job(self.job, database=self.job_db)
+        self.job_handler.finish(self.job, self.tasks_processed.value)
 
 
 class CollectActor(Process):

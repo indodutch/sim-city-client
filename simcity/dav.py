@@ -14,12 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Basic WebDAV implementation
+Attachment handler with basic WebDAV implementation
 
 Reason this exists: easywebdav is not Python 3 compatible, webdavclient is
 flaky and not compatible with (at least) Beehub.
 """
 import requests
+import os
+import io
+from .util import file_content_type, data_content_type
 
 
 def verify(acceptable_statuses, response, message):
@@ -148,3 +151,149 @@ class RestRequests(object):
             raise ValueError('URL {0} cannot be translated to webdav at {1}'
                              .format(url, self.base_url))
         return url[len(self.base_url):].lstrip('/')
+
+
+class CouchAttachmentHandler(object):
+    def __init__(self, db):
+        self.db = db
+
+    def put(self, task, filename, f, length, content_type=None):
+        task.put_attachment(filename, f.read(), content_type)
+
+    def contains(self, task, name):
+        return name in task.attachments
+
+    def delete(self, task, name):
+        task.delete_attachment(name)
+
+    def get(self, task, name):
+        return task.get_attachment(task, name, retrieve_from_database=self.db)
+
+    def download(self, task, name, directory):
+        attach = self.get(task, name)
+        with open(os.path.join(directory, name), 'wb') as f:
+            f.write(attach['data'])
+
+
+class RestAttachmentHandler(object):
+    def __init__(self, dav):
+        self.dav = dav
+
+    def put(self, task, filename, f, length, content_type=None):
+        path, task_dir, id_hash = _webdav_id_to_path(task.id, filename)
+
+        if len(task.files) == 0:
+            self.dav.mkdir(id_hash, ignore_existing=True)
+            self.dav.mkdir(task_dir, ignore_existing=True)
+
+        self.dav.put(path, f, content_type=content_type,
+                     content_length=length)
+
+        task.files[filename] = {
+            'url': self.dav.path_to_url(path),
+            'length': length,
+        }
+        if content_type is not None:
+            task.files[filename]['content_type'] = content_type
+
+    def contains(self, task, name):
+        return (name in task.files and
+                task.files[name]['url'].startswith(self.dav.base_url))
+
+    def delete(self, task, name):
+        self.dav.delete(self.dav.url_to_path(task.files[name]['url']),
+                        ignore_not_existing=True)
+        del task.files[name]
+
+    def get(self, task, name):
+        url = task.files[name]['url']
+        return self.dav.get(self.dav.url_to_path(url))
+
+    def download(self, task, directory, name):
+        url = task.files[name]['url']
+        file_path = os.path.join(directory, name)
+        self.dav.download(self.dav.url_to_path(url), file_path)
+
+
+class Attachments(object):
+    def __init__(self):
+        self.handlers = []
+
+    def containing_handler(self, task, name):
+        for handler in self.handlers:
+            if handler.contains(task, name):
+                return handler
+        raise IOError("attachment {0} of task {1} does not have a suitable "
+                      "file handler configured.".format(name, task.id))
+
+    def upload(self, task, filename, directory, content_type=None):
+        """ Uploads an attachment using the configured file storage layer. """
+        file_path = os.path.abspath(os.path.join(directory, filename))
+
+        # determine whether a json type is geojson
+        if content_type is None:
+            content_type = file_content_type(filename, file_path)
+
+        with open(file_path, 'rb') as f:
+            for handler in self.handlers:
+                try:
+                    handler.put(task, filename, f, os.stat(file_path).st_size,
+                                content_type)
+                    return
+                except IOError:
+                    pass
+            else:
+                raise IOError("Cannot upload attachment {0} of task {1} with"
+                              "any configured file handler.".format(filename,
+                                                                    task.id))
+
+    def put(self, task, filename, data, content_type=None):
+        """
+        Writes data as an attachment using the configured file storage layer.
+        @param data: bytes data
+        @param task: task that the data belongs to
+        @param filename: filename that the data should take
+        @param content_type: content type of the data. If None, it is guessed from
+            the file name.
+        """
+        if content_type is None:
+            content_type = data_content_type(filename, data)
+
+        for handler in self.handlers:
+            try:
+                handler.put(task, filename, io.BytesIO(data), len(data),
+                            content_type)
+                return
+            except IOError:
+                pass
+        else:
+            raise IOError("Cannot upload attachment {0} of task {1} with"
+                          "any configured file handler.".format(name,
+                                                                task.id))
+
+    def get(self, task, name):
+        """
+        Reads an attachment from the configured file storage layer as bytes data.
+        """
+        return self.containing_handler(task, name).get(task, name)
+
+    def download(self, task, name, directory):
+        """ Uploads an attachment from the configured file storage layer. """
+        self.containing_handler(task, name).download(task, name, directory)
+
+    def delete(self, task, name):
+        """ Deletes an attachment from the configured file storage layer. """
+        self.containing_handler(task, name).delete(task, name)
+
+
+def _webdav_id_to_path(task_id, filename=''):
+    """ Deduces the path from a task ID. """
+    if len(task_id) >= 7:
+        # use hash (hopefully) by default
+        task_hash = task_id[5:7]
+    else:
+        # use the start of the string, less effective, but hey.
+        task_hash = task_id[:2]
+    task_dir = task_hash + '/' + task_id
+    return task_dir + '/' + filename, task_dir, task_hash
+

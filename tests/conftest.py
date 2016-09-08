@@ -21,13 +21,6 @@ import pytest
 import simcity
 
 
-@pytest.fixture(autouse=True)
-def reset_simcity_globals():
-    """ Reset simcity globals after each unit test. """
-    yield
-    simcity.management._reset_globals()
-
-
 class MockRow(object):
     def __init__(self):
         self.id = None
@@ -73,9 +66,7 @@ class MockDAV(object):
 
 @pytest.fixture
 def dav():
-    dav = MockDAV()
-    simcity.management._webdav[None] = dav
-    return dav
+    return MockDAV()
 
 
 class MockDB(object):
@@ -170,31 +161,22 @@ class MockDB(object):
 
 @pytest.fixture
 def job_db():
-    mock_db = MockDB()
-    simcity.management.set_job_database(mock_db)
-    return mock_db
+    return MockDB()
 
 
 @pytest.fixture
 def task_db():
-    mock_db = MockDB()
-    simcity.management.set_task_database(mock_db)
-    return mock_db
+    return MockDB()
 
 
 @pytest.fixture
 def db():
-    mock_db = MockDB()
-    simcity.management.set_job_database(mock_db)
-    simcity.management.set_task_database(mock_db)
-    return mock_db
+    return MockDB()
 
 
 @pytest.fixture
 def job_id():
-    my_job_id = 'myjob'
-    simcity.set_current_job_id(my_job_id)
-    return my_job_id
+    return 'myjob'
 
 
 @pytest.fixture

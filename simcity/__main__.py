@@ -20,9 +20,8 @@ SIM-CITY scripts
 
 from __future__ import print_function
 import simcity
-from simcity import (PrioritizedViewIterator, TaskViewIterator,
-                     EndlessViewIterator, Config, FileConfig,
-                     load_config_database, submit_while_needed)
+from simcity import (Barbecue, PrioritizedViewIterator, TaskViewIterator,
+                     EndlessViewIterator, load_config)
 from .util import seconds_to_str, sizeof_fmt
 import argparse
 import getpass
@@ -204,23 +203,75 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    if args.func != init:
+    if args.func == init:
+        init(args)
+    else:
         try:
-            simcity.init(config=args.config)
+            bbq = Barbecue(config=args.config)
         except couchdb.http.ResourceNotFound:
             print('Configuration does not correctly specify the databases.')
             sys.exit(1)
+        else:
+            args.func(bbq, args)
 
-    args.func(args)
 
-
-def cancel(args):
+def cancel(bbq, args):
     """ Cancel running job. """
-    job = simcity.get_job(args.job_id)
-    simcity.cancel_endless_job(job)
+    job = bbq.jobs.get(args.job_id)
+    bbq.jobs.cancel_endless(job)
 
 
-def create(args):
+def check(bbq, args):
+    """
+    Checks the consistency of the database
+
+    1. active_jobs that are no longer in the queue can be archived
+    2. tasks registered with jobs that are no longer running can be cancelled
+    3. if there are tasks pending with not enough running_jobs or pending_jobs
+       a new job can be started.
+
+    run `simcity check` in cron.
+    """
+    if args.dry_run:
+        print("Dry run: will not modify any state")
+
+    print('BEFORE: ', end='')
+    summary(bbq, args)
+
+    # check job status
+    jobs = bbq.check_job_status(dry_run=args.dry_run)
+    for job in jobs:
+        if job['archive'] > 0:
+            print("Archiving stopped job {}".format(job.id))
+
+    tasks = bbq.check_task_status(dry_run=args.dry_run)
+    for task in tasks:
+        print("Marking task {} that ran in job {} as error"
+              .format(task.id, task['job']))
+        task.error('Failed to finish task in time, the job has stopped '
+                   'already.')
+        bbq.task_db.save(task)
+
+    if args.host is None:
+        print("No host provided, not starting additional jobs")
+    else:
+        jobs = bbq.submit_while_needed(args.host, args.max,
+                                       dry_run=args.dry_run)
+        if len(jobs) == 0:
+            print("Enough jobs running. Will not start any new jobs")
+        else:
+            if args.dry_run:
+                print("Would start {} jobs".format(len(jobs)))
+            else:
+                for job in jobs:
+                    print("Job {0} (ID: {1}) started"
+                          .format(job['batch_id'], job.id))
+
+    print('AFTER: ', end='')
+    summary(bbq, args)
+
+
+def create(bbq, args):
     """
     Create tasks with a single command
     """
@@ -238,7 +289,7 @@ def create(args):
             except TypeError:
                 pass
 
-            task = simcity.add_task(task)
+            task = bbq.task.add(task)
 
             print("added task {0}".format(task.id))
         except Exception as ex:
@@ -246,15 +297,15 @@ def create(args):
                   file=sys.stderr)
 
 
-def delete(args):
+def delete(bbq, args):
     """ Delete documents """
     if args.id is not None:
         try:
-            db = simcity.get_task_database()
+            db = bbq.task_db
             db.delete(db.get(args.id))
         except ValueError:
             try:
-                db = simcity.get_job_database()
+                db = bbq.job_db
                 db.delete(db.get(args.id))
             except ValueError:
                 print("Cannot find document ID {0}".format(args.id))
@@ -262,22 +313,22 @@ def delete(args):
 
     if args.view is not None:
         if args.view in job_views:
-            db = simcity.get_job_database()
+            db = bbq.job_db
         else:
-            db = simcity.get_task_database()
+            db = bbq.task_db
 
         is_deleted = db.delete_from_view(args.view, design_doc=args.design)
         print("Deleted %d out of %d tasks from view %s" %
               (sum(is_deleted), len(is_deleted), args.view))
 
 
-def get(args):
+def get(bbq, args):
     """ Get document and print it """
     if args.download is not None:
         if not os.path.isdir(args.download):
             os.makedirs(args.download)
     try:
-        doc = simcity.get_task(args.id)
+        doc = bbq.tasks.get(args.id)
         doc['lock_str'] = seconds_to_str(doc['lock'], 'not started')
         doc['done_str'] = seconds_to_str(doc['done'], 'not done')
         if args.download is not None:
@@ -293,12 +344,12 @@ def get(args):
                   .format(sizeof_fmt(total_length), args.download))
             pbar = tqdm(total=total_length, unit_scale=True, unit='B')
             for filename in doc.list_files():
-                simcity.download_attachment(doc, args.download, filename)
+                bbq.attachments.download(doc, args.download, filename)
                 pbar.update(lengths[filename])
             pbar.close()
     except (ValueError, KeyError):
         try:
-            doc = simcity.get_job(args.id)
+            doc = bbq.jobs.get(args.id)
             doc['queue_str'] = seconds_to_str(doc['queue'], 'not queued')
             doc['start_str'] = seconds_to_str(doc['start'], 'not started')
             doc['done_str'] = seconds_to_str(doc['done'], 'not done')
@@ -324,14 +375,9 @@ def init(args):
             print("")
             sys.exit(1)
 
-    if args.view:
-        config = Config()
-        config.configurators.append(FileConfig(args.config))
-        try:
-            config.configurators.append(load_config_database(config))
-        except KeyError:
-            pass
+    config = load_config(args.config)
 
+    if args.view:
         if args.user is not None:
             config.add_section('task-db', {
                 'username': args.user,
@@ -343,8 +389,8 @@ def init(args):
                     'password': args.password,
                 })
         try:
-            simcity.init(config)
-            simcity.create_views()
+            bbq = Barbecue(config=config)
+            bbq.create_views()
         except couchdb.http.ResourceNotFound:
             print("Database not initialized, run `simcity init` without -v "
                   "flag.")
@@ -354,20 +400,13 @@ def init(args):
             sys.exit(1)
     else:
         try:
-            simcity.init(config=args.config)
-        except couchdb.http.ResourceNotFound:
-            pass  # database does not exist yet
-        except couchdb.http.Unauthorized:
-            pass  # user does not exist yet
-
-        try:
-            simcity.create(args.user, args.password)
+            Barbecue.create(config, args.user, args.password)
         except couchdb.http.Unauthorized:
             print("User and/or password incorrect")
             sys.exit(1)
 
 
-def list_documents(args):
+def list_documents(bbq, args):
     """ List documents in a view. """
     global task_views
 
@@ -378,7 +417,7 @@ def list_documents(args):
         options['skip'] = args.offset
 
     if args.view in task_views:
-        view = simcity.get_task_database().view(args.view, **options)
+        view = bbq.task_db.view(args.view, **options)
         if args.view == 'error':
             for row in view:
                 print('{0}:'.format(row.id))
@@ -403,7 +442,7 @@ def list_documents(args):
                 done = seconds_to_str(row.value['done'], 'not done')
                 print('{:<40} {:<22} {:<22}'.format(row.id[:40], lock, done))
     else:
-        view = simcity.get_job_database().view(args.view, **options)
+        view = bbq.job_db.view(args.view, **options)
         print('{:<45} {:<22} {:<22} {:<22}'.format('ID', 'queued', 'started',
                                                    'stopped'))
         print('-' * (45 + 1 + 22 + 1 + 22 + 1 + 22))
@@ -415,22 +454,20 @@ def list_documents(args):
                                                        start, done))
 
 
-def _is_cancelled():
+def _is_cancelled(bbq):
     """ Whether the job was cancelled """
-    db = simcity.get_job_database()
     try:
-        job_id = simcity.get_current_job_id()
-        return db.get(job_id)['cancel'] > 0
+        return bbq.jobs.get(bbq.jobs.job_id)['cancel'] > 0
     except KeyError:
         return False
 
 
-def _signal_handler(signal, frame):
+def _signal_handler(bbq, signal, frame):
     """ Catch signals to do a proper cleanup.
         The job then has time to write out any results or errors. """
     print('Caught signal %d; finishing job.' % signal, file=sys.stderr)
     try:
-        simcity.finish_job(simcity.get_job())
+        bbq.finish(bbq.jobs.get())
     except Exception as ex:
         print('Failed during clean-up: {0}'.format(ex))
 
@@ -446,28 +483,27 @@ def _time_args_to_seconds(args):
     return args.seconds + 60 * (args.minutes + 60 * hours)
 
 
-def run(args):
+def run(bbq, args):
     """ Run job to process tasks. """
     if args.job_id is not None:
-        simcity.set_current_job_id(args.job_id)
+        bbq.jobs.job_id = args.job_id
     elif args.local:
-        simcity.set_current_job_id('local-' + uuid4().hex)
+        bbq.jobs.job_id = 'local-' + uuid4().hex
 
-    job_id = simcity.get_current_job_id()
-
-    db = simcity.get_task_database()
+    job_id = bbq.jobs.job_id
 
     if args.prioritize:
-        iterator = PrioritizedViewIterator(job_id, db, 'pending_priority',
-                                           'pending')
+        iterator = PrioritizedViewIterator(job_id, bbq.task_db,
+                                           'pending_priority', 'pending')
     else:
-        iterator = TaskViewIterator(job_id, db, 'pending')
+        iterator = TaskViewIterator(job_id, bbq.task_db, 'pending')
 
     if args.endless:
-        iterator = EndlessViewIterator(job_id, iterator,
-                                       stop_callback=_is_cancelled)
+        iterator = EndlessViewIterator(
+            job_id, iterator, stop_callback=lambda: _is_cancelled(bbq))
 
-    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker, bbq.config,
+                             bbq.task_db, bbq.jobs, bbq.attachments)
 
     for sig_name in ['HUP', 'INT', 'QUIT', 'ABRT', 'TERM']:
         try:
@@ -475,7 +511,7 @@ def run(args):
         except Exception as ex:
             print(ex, file=sys.stderr)
         else:
-            signal.signal(sig, _signal_handler)
+            signal.signal(sig, lambda s, f: _signal_handler(bbq, s, f))
 
     # Start work!
     print("Connected to the database successfully. Now starting work...")
@@ -490,13 +526,13 @@ def run(args):
     print("No more tasks to process, done.")
 
 
-def scrub(args):
+def scrub(bbq, args):
     """
     Scrub tasks or jobs in a given view to return to their previous status.
     """
     age = _time_args_to_seconds(args)
 
-    scrubbed, total = simcity.scrub(args.view, age=age)
+    scrubbed, total = bbq.scrub(args.view, age=age)
 
     if scrubbed > 0:
         print("Scrubbed %d out of %d documents from '%s'" %
@@ -505,12 +541,13 @@ def scrub(args):
         print("No scrubbing required")
 
 
-def submit(args):
+def submit(bbq, args):
     """ Submit job to the infrastructure """
     if args.force:
-        job = simcity.submit(args.host)
+        adaptor = bbq.submitter.adaptor(host_id=args.host)
+        job = adaptor.submit()
     else:
-        job = simcity.submit_if_needed(args.host, args.max)
+        job = bbq.submit_if_needed(args.host, args.max)
     if job is None:
         print("No tasks to process or already %d jobs running (increase "
               "maximum number of jobs with -m)" % args.max)
@@ -518,60 +555,11 @@ def submit(args):
         print("Job %s (ID: %s) started" % (job['batch_id'], job.id))
 
 
-def summary(args):
+def summary(bbq, args):
     """ Print summary of tasks. """
     print('Summary')
     print(20 * '=')
-    overview = simcity.overview_total()
+    overview = bbq.overview_total()
     for k in sorted(overview.keys()):
         print('{0:<15} {1}'.format(k, overview[k]))
     print(20 * '=')
-
-
-def check(args):
-    """
-    Checks the consistency of the database
-
-    1. active_jobs that are no longer in the queue can be archived
-    2. tasks registered with jobs that are no longer running can be cancelled
-    3. if there are tasks pending with not enough running_jobs or pending_jobs
-       a new job can be started.
-
-    run `simcity check` in cron.
-    """
-    if args.dry_run:
-        print("Dry run: will not modify any state")
-
-    print('BEFORE: ', end='')
-    summary(args)
-
-    # check job status
-    jobs = simcity.check_job_status(dry_run=args.dry_run)
-    for job in jobs:
-        if job['archive'] > 0:
-            print("Archiving stopped job {}".format(job.id))
-
-    tasks = simcity.check_task_status(dry_run=args.dry_run)
-    for task in tasks:
-        print("Marking task {} that ran in job {} as error"
-              .format(task.id, task['job']))
-        task.error('Failed to finish task in time, the job has stopped '
-                   'already.')
-        simcity.get_task_database().save(task)
-
-    if args.host is None:
-        print("No host provided, not starting additional jobs")
-    else:
-        jobs = submit_while_needed(args.host, args.max, dry_run=args.dry_run)
-        if len(jobs) == 0:
-            print("Enough jobs running. Will not start any new jobs")
-        else:
-            if args.dry_run:
-                print("Would start {} jobs".format(len(jobs)))
-            else:
-                for job in jobs:
-                    print("Job {0} (ID: {1}) started"
-                          .format(job['batch_id'], job.id))
-
-    print('AFTER: ', end='')
-    summary(args)
