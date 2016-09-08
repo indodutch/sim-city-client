@@ -14,8 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from simcity import Task
+from simcity import Task, Attachments
 from simcity.worker import Worker, ExecuteWorker
+from simcity.dav import CouchAttachmentHandler
 from multiprocessing import Queue, Semaphore
 
 
@@ -35,12 +36,14 @@ class MockWorker(Worker):
         self.join()
 
 
-def test_worker_not_implemented():
+def test_worker_not_implemented(task_db):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=1)
     task = Task({'something': 'anything', 'parallelism': 1})
-    w = Worker(1, {}, task_q, result_q, semaphore)
+    attachments = Attachments()
+    attachments.handlers.append(CouchAttachmentHandler(task_db))
+    w = Worker(1, {}, task_q, result_q, semaphore, attachments)
     task_q.put(task)
     task_q.put(None)
     w.run()
@@ -53,12 +56,14 @@ def test_worker_not_implemented():
     assert result_q.get() is None
 
 
-def test_worker_mp_not_implemented():
+def test_worker_mp_not_implemented(task_db):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=1)
     task = Task({'something': 'anything', 'parallelism': 1})
-    w = Worker(1, {}, task_q, result_q, semaphore)
+    attachments = Attachments()
+    attachments.handlers.append(CouchAttachmentHandler(task_db))
+    w = Worker(1, {}, task_q, result_q, semaphore, attachments)
     w.start()
     try:
         task_q.put(task)
@@ -76,37 +81,43 @@ def test_worker_mp_not_implemented():
         w.join()
 
 
-def test_worker_mp():
+def test_worker_mp(task_db):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=1)
     task = Task({'something': 'anything', 'parallelism': 1})
-    with MockWorker(1, {}, task_q, result_q, semaphore):
+    attachments = Attachments()
+    attachments.handlers.append(CouchAttachmentHandler(task_db))
+    with MockWorker(1, {}, task_q, result_q, semaphore, attachments):
         task_q.put(task)
         assert 1 == result_q.get().output['myoutput']
 
 
-def test_worker_mp_parallelism_22():
+def test_worker_mp_parallelism_22(task_db):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=2)
     task = Task({'something': 'anything', 'parallelism': 2})
-    with MockWorker(1, {}, task_q, result_q, semaphore):
+    attachments = Attachments()
+    attachments.handlers.append(CouchAttachmentHandler(task_db))
+    with MockWorker(1, {}, task_q, result_q, semaphore, attachments):
         task_q.put(task)
         assert 1 == result_q.get().output['myoutput']
 
 
-def test_worker_mp_parallelism_12():
+def test_worker_mp_parallelism_12(task_db):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=2)
     task = Task({'something': 'anything', 'parallelism': 1})
-    with MockWorker(1, {}, task_q, result_q, semaphore):
+    attachments = Attachments()
+    attachments.handlers.append(CouchAttachmentHandler(task_db))
+    with MockWorker(1, {}, task_q, result_q, semaphore, attachments):
         task_q.put(task)
         assert 1 == result_q.get().output['myoutput']
 
 
-def test_execute_worker(mock_directories):
+def test_execute_worker(mock_directories, task_db):
     task_q = Queue()
     result_q = Queue()
     semaphore = Semaphore(value=1)
@@ -115,8 +126,10 @@ def test_execute_worker(mock_directories):
         'arguments': ['-n', 'hello'],
         'parallelism': 1,
     })
-
-    worker = ExecuteWorker(1, mock_directories, task_q, result_q, semaphore)
+    attachments = Attachments()
+    attachments.handlers.append(CouchAttachmentHandler(task_db))
+    worker = ExecuteWorker(1, mock_directories, task_q, result_q, semaphore,
+                           attachments)
     task_q.put(task)
     task_q.put(None)
     worker.run()

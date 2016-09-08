@@ -17,7 +17,7 @@ import simcity
 import pytest
 
 
-class MockSubmitter(simcity.Adaptor):
+class MockSubmitter(simcity.SubmitAdaptor):
     BATCH_ID = 'my_batch_id'
 
     def __init__(self, database, do_raise=False, method='local'):
