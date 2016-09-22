@@ -24,6 +24,9 @@ services:
       context: simcity-slurm
     ports:
       - "127.0.0.1:10022:22"
+    environment:
+      COUCHDB_USER: simcityadmin
+      COUCHDB_PASSWORD: simcity
     links:
       - jobdb
       - taskdb

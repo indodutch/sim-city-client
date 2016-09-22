@@ -18,7 +18,7 @@ RUN /etc/my_init.d/00_regen_ssh_host_keys.sh
 
 # Upgrade OS
 RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold" && \
-  apt-get install -y mailutils slurm-llnl python3 git python-pip && \
+  apt-get install -y mailutils slurm-llnl python3 git python-pip python-dev python3-dev && \
   apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
   pip install virtualenv
 
@@ -27,6 +27,7 @@ RUN /usr/sbin/useradd -p $(openssl passwd javagat) -d /home/xenon -m --shell /bi
 WORKDIR /home/xenon
 COPY insecure-ssh-keys /home/xenon/.ssh
 COPY config.ini /home/xenon/.simcity_client
+COPY start.sh /home/xenon/start.sh
 RUN mkdir in out && chmod 600 .ssh/* && chown -R xenon .ssh in out
 
 COPY munge.key /etc/munge/munge.key
@@ -44,7 +45,8 @@ RUN mkdir /var/run/munge && \
 USER xenon
 RUN virtualenv --python=/usr/bin/python3 simcity && . simcity/bin/activate && \
   git clone https://github.com/indodutch/sim-city-client.git && \
-  cd sim-city-client && pip install -U pip && pip install .
+  cd sim-city-client && \
+  pip install -U pip && pip install -r requirements.txt .
 
 USER root
-CMD ["/sbin/my_init"]
+CMD ["/home/xenon/start.sh"]
