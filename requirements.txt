@@ -1,3 +1,19 @@
+CouchDB==1.1
+coverage==4.2
+enum34==1.1.6; python_version < '3.4'
+flake8==3.0.4
+ijson==2.3
+JPype1==0.6.1
+jsonschema==2.5.1
+mccabe==0.5.2
+py==1.4.31
+pycodestyle==2.0.0
+pyflakes==1.2.3
 pystache==0.5.4
--e git+https://github.com/blootsvoets/picasclient.git@v0.2.3#egg=picas-0.2.3
--e git+https://github.com/djc/couchdb-python.git#egg=CouchDB-1.0.1
+pytest==3.0.1
+pytest-flake8==0.6
+pyxenon==0.3.0
+PyYAML==3.11
+requests==2.11.1
+tqdm==4.8.4
+-e .

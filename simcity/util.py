@@ -1,6 +1,6 @@
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
+# Copyright 2015 Netherlands eScience Center
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,65 +14,92 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-try:
-    from ConfigParser import ConfigParser
-except ImportError:
-    from configparser import ConfigParser
+""" Utility functions. """
 
-import json
 import os
 import glob
 import shutil
 from numbers import Number
+import time
+import jsonschema
+import ijson
+import mimetypes
+import io
+from datetime import datetime
 
 
-class Config(object):
-    DEFAULT_FILENAMES = [
-        "config.ini", ("..", "config.ini"), ("~", ".simcity_client")]
+def parse_parameters(parameters, schema):
+    """
+    Validates given parameters according to a JSON schema
 
-    def __init__(self, filenames=None, from_file=True):
-        if from_file:
-            if filenames is None:
-                filenames = Config.DEFAULT_FILENAMES
+    Parameters
+    ----------
+    parameters: dict
+        a deep dict of values, where values may be simple types, dicts or lists
+    schema: dict
+        an object conforming to JSON schema syntax and semantics. Parameters
+        will be checked according to this schema.
 
-            exp_filenames = expandfilenames(filenames)
-
-            self.parser = ConfigParser()
-            self.filename = self.parser.read(exp_filenames)
-            if len(self.filename) == 0:
-                raise ValueError(
-                    "No valid configuration files could be found: tried " +
-                    str(exp_filenames))
-        else:
-            self.parser = None
-            self.filename = None
-
-        self.sections = {}
-
-    def add_section(self, name, keyvalue):
-        self.sections[name] = dict_value_expandvar(keyvalue)
-
-    def section(self, name):
-        try:
-            return self.sections[name]
-        except KeyError:
-            if (self.parser is not None and (name == 'DEFAULT' or
-                                             self.parser.has_section(name))):
-                return dict_value_expandvar(dict(self.parser.items(name)))
-
-            raise
+    Raises
+    ------
+    ValueError: if the parameters do not conform to the schema
+    EnvironmentError: if the schema is not a valid JSON schema
+    """
+    try:
+        jsonschema.validate(parameters, schema)
+    except jsonschema.SchemaError as ex:
+        raise EnvironmentError(ex.message)
+    except jsonschema.ValidationError as ex:
+        raise ValueError(ex.message)
 
 
-def dict_value_expandvar(d):
-    for key in d:
-        try:
-            d[key] = os.path.expandvars(d[key])
-        except TypeError:
-            pass  # d[key] is not a string
-    return d
+def seconds():
+    """ Return the current time in seconds since the epoch. """
+    return int(time.time())
+
+
+def seconds_to_str(timestamp, default_value=''):
+    """ Convert a timestamp in seconds to string. """
+    if timestamp > 0:
+        return datetime.fromtimestamp(timestamp).strftime('%F %T')
+    else:
+        return default_value
+
+
+def sizeof_fmt(num, suffix='B'):
+    """ formatted bytes """
+    if abs(num) < 1000.0:
+        return "%d %s" % (int(num), suffix)
+
+    num /= 1000.0
+    for unit in ['k', 'M', 'G', 'T', 'P', 'E', 'Z']:
+        if abs(num) < 1000.0:
+            return "%3.1f %s%s" % (num, unit, suffix)
+        num /= 1000.0
+
+    return "%.1f %s%s" % (num, 'Y', suffix)
+
+
+class Timer(object):
+    """ Measures elapsed time. """
+    def __init__(self):
+        self.t = time.time()
+
+    def elapsed(self):
+        """ Return elapsed time since creation or last reset."""
+        return time.time() - self.t
+
+    def reset(self):
+        """ Reset the timer. """
+        new_t = time.time()
+        diff = new_t - self.t
+        self.t = new_t
+        return diff
 
 
 def get_truthy(value):
+    """ Returns True on non-zero numbers and on '1', 'true', 'yes', 'on'.
+        False otherwise. """
     truthy = ['1', 'true', 'yes', 'on']
     if isinstance(value, Number):
         return bool(value)
@@ -81,42 +108,95 @@ def get_truthy(value):
 
 
 def issequence(obj):
+    """ True if given object is a list or a tuple. """
     return isinstance(obj, (list, tuple))
 
 
 def expandfilename(filename):
+    """ Joins sequences of filenames as directories, and expands variables and
+        user directory. """
     if issequence(filename):
         filename = os.path.join(*filename)
     return os.path.expandvars(os.path.expanduser(filename))
 
 
 def expandfilenames(filenames):
+    """ Runs expandfilename on each item of a given list. """
     if not issequence(filenames):
         filenames = [filenames]
     return [expandfilename(fname) for fname in filenames]
 
 
-def write_json(fname, obj):
-    with open(fname, 'w') as outfile:
-        json.dump(obj, outfile)
-
-
 def listfiles(mypath):
+    """
+    List the regular files in given directory.
+    @param mypath: path of a directory
+    @raise OSError: if mypath is not a valid directory
+    @return: list of file names, relative to given mypath.
+    """
     return [f
             for f in os.listdir(mypath)
             if os.path.isfile(os.path.join(mypath, f))]
 
 
 def listdirs(mypath):
+    """
+    List the directories in given directory.
+    @param mypath: path of a directory
+    @raise OSError: if mypath is not a valid directory
+    @return: list of directory names, relative to given mypath.
+    """
     return [d
             for d in os.listdir(mypath)
             if os.path.isdir(os.path.join(mypath, d))]
 
 
 def copyglob(srcglob, dstdir, prefix=""):
+    """ Copy a number of files in glob (wildcard) to a directory.
+        Raises ValueError if the destination is not a directory. Each filename
+        is first prefixed with given prefix. """
     if not os.path.isdir(dstdir):
         raise ValueError("Destination of copyglob must be a directory")
 
+    new_files = []
     for src in glob.glob(expandfilename(srcglob)):
         _, fname = os.path.split(src)
-        shutil.copyfile(src, os.path.join(dstdir, prefix + fname))
+        new_file = os.path.join(dstdir, prefix + fname)
+        shutil.copyfile(src, new_file)
+        new_files.append(new_file)
+    return new_files
+
+
+def data_content_type(filename, data):
+    """ Get the content type of bytes data with a filename. """
+    if filename.endswith('json'):
+        with io.BytesIO(data) as f:
+            if is_geojson(f):
+                return 'application/vnd.geo+json'
+    return filename_content_type(filename)
+
+
+def file_content_type(filename, path):
+    """ Get the content type of a path with a filename. """
+    if filename.endswith('json'):
+        with open(path, 'rb') as f:
+            if is_geojson(f):
+                return 'application/vnd.geo+json'
+    return filename_content_type(filename)
+
+
+def is_geojson(f):
+    """ Whether given file pointer contains GeoJSON data. """
+    try:
+        json_type = next(ijson.items(f, 'type'))
+        return json_type in ['Feature', 'FeatureCollection']
+    except (ijson.common.JSONError, StopIteration):
+        return False
+
+
+def filename_content_type(filename):
+    """ Guess content type based on filename. """
+    content_type, encoding = mimetypes.guess_type(filename)
+    if content_type is None:
+        content_type = 'text/plain'
+    return content_type

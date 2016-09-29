@@ -1,0 +1,33 @@
+version: '2'
+services:
+  taskdb:
+    image: klaemo/couchdb:1.6.1
+    ports:
+      - "127.0.0.1:5784:5984"
+    environment:
+      COUCHDB_USER: simcityadmin
+      COUCHDB_PASSWORD: simcity
+  jobdb:
+    image: klaemo/couchdb:1.6.1
+    ports:
+      - "127.0.0.1:5884:5984"
+    environment:
+      COUCHDB_USER: simcityadmin
+      COUCHDB_PASSWORD: simcity
+  webdav:
+    build:
+      context: simcity-webdav
+    ports:
+      - "127.0.0.1:8888:80"
+  slurm:
+    build:
+      context: simcity-slurm
+    ports:
+      - "127.0.0.1:10022:22"
+    environment:
+      COUCHDB_USER: simcityadmin
+      COUCHDB_PASSWORD: simcity
+    links:
+      - jobdb
+      - taskdb
+      - webdav

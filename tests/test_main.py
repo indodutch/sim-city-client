@@ -1,8 +1,6 @@
-#!/usr/bin/env python
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>,
-#                Anatoli Danezi  <anatoli.danezi@surfsara.nl>
+# Copyright 2015 Netherlands eScience Center
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,19 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-'''
-Create views necessary to run simcity client with.
-'''
-import simcity
-import argparse
+import simcity.__main__ as main
+import pytest
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description="create views in the database")
-    parser.add_argument(
-        '-c', '--config', help="configuration file", default=None)
-    args = parser.parse_args()
-
-    simcity.init(config=args.config)
-    simcity.create_views()
+@pytest.fixture(params=['cancel', 'check', 'create', 'delete', 'init', 'run',
+                        'scrub', 'summary', 'submit'])
+def test_main_parser_init(request, argument_parser):
+    main.fill_argument_parser(argument_parser)
+    assert 'func' in argument_parser.parse_args([request.param])

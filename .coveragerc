@@ -1,8 +1,15 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
+source = simcity/
+concurrency =
+    thread
+    multiprocessing
+parallel = True
 
 [report]
+show_missing = True
+fail_under = 60
 # Regexes for lines to exclude from consideration
 exclude_lines =
     # Have to re-enable the standard pragma

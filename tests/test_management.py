@@ -1,6 +1,6 @@
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
+# Copyright 2015 Netherlands eScience Center
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,17 +17,45 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_raises
+import pytest
 
 
 def test_init():
-    assert_raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
-    cfg = simcity.Config(from_file=False)
-    assert_raises(KeyError, simcity.init, cfg)
+    pytest.raises(ValueError, simcity.init, 'thispathdoesnotexist.ini')
+    cfg = simcity.Config()
+    pytest.raises(KeyError, simcity.init, cfg)
     cfg.add_section('task-db', {
         'url': 'http://doesnotexistforsure_atleasti_think_so.nl/',
         'username': 'example',
         'password': 'example',
         'database': 'example',
     })
-    assert_raises(IOError, simcity.init, cfg)
+    pytest.raises(IOError, simcity.init, cfg)
+
+
+def test_uses_webdav():
+    simcity.management._config = simcity.Config()
+    assert not simcity.uses_webdav()
+    cfg = simcity.management._config
+    webdav_cfg = {}
+    cfg.add_section('webdav', webdav_cfg)
+    assert not simcity.uses_webdav()
+    webdav_cfg['url'] = 'something'
+    assert simcity.uses_webdav()
+    webdav_cfg['user'] = 'something'
+    assert simcity.uses_webdav()
+    webdav_cfg['enabled'] = False
+    assert not simcity.uses_webdav()
+    webdav_cfg['enabled'] = True
+    assert simcity.uses_webdav()
+
+
+def test_views(job_db, task_db):
+    simcity.create_views()
+    assert 'running_jobs' in job_db.views
+    assert 'overview_total' in job_db.views
+    assert 'pending' not in job_db.views
+
+    assert 'pending' in task_db.views
+    assert 'overview_total' in task_db.views
+    assert 'running_jobs' not in task_db.views

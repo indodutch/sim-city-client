@@ -1,6 +1,6 @@
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
+# Copyright 2015 Netherlands eScience Center
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,59 +17,64 @@
 from __future__ import print_function
 
 import simcity
-from picas import Job
-from nose.tools import (assert_true, assert_equals, assert_raises,
-                        assert_not_equals)
-from test_mock import MockDB
+from simcity import Job
+from simcity.util import seconds
+import pytest
 
 
-class TestJob():
+@pytest.mark.usefixtures('job_db')
+def test_get_job(job_id, other_job_id):
+    job = simcity.get_job()
+    assert job.id == job_id
+    simcity.set_current_job_id(None)
+    pytest.raises(EnvironmentError, simcity.get_job)
+    otherJob = simcity.get_job(other_job_id)
+    assert otherJob.id == other_job_id
+    assert type(otherJob) == type(Job({'_id': 'aaaa'}))  # noqa
 
-    def setup(self):
-        self.db = MockDB()
-        self.test_id = MockDB.JOBS[0]['_id']
-        self.test_other_id = MockDB.JOBS[1]['_id']
-        simcity.set_current_job_id(self.test_id)
-        simcity.management._job_db = self.db
 
-    def test_get_job(self):
-        job = simcity.get_job()
-        assert_equals(job.id, self.test_id)
-        simcity.set_current_job_id(None)
-        assert_raises(EnvironmentError, simcity.get_job)
-        otherJob = simcity.get_job(self.test_other_id)
-        assert_equals(otherJob.id, self.test_other_id)
-        assert_equals(type(otherJob), type(Job({'_id': 'aaaa'})))
+@pytest.mark.usefixtures('job_db')
+def test_start_job(job_id):
+    job = simcity.start_job()
+    assert job.id == job_id
+    assert job['start'] > 0
+    assert simcity.get_job()['start'] > 0
+    assert job['queue'] == 0
+    assert job['done'] == 0
 
-    def test_start_job(self):
-        job = simcity.start_job()
-        assert_equals(job.id, self.test_id)
-        assert_true(job['start'] > 0)
-        assert_true(simcity.get_job()['start'] > 0)
-        assert_equals(job['queue'], 0)
-        assert_equals(job['done'], 0)
 
-    def test_finish_job(self):
-        job = simcity.start_job()
-        simcity.finish_job(job)
-        assert_true(job['start'] > 0)
-        assert_true(job['done'] > 0)
-        assert_true(simcity.get_job()['done'] > 0)
-        job = simcity.queue_job(job, 'ssh')
-        assert_true(job['archive'] > 0)
+@pytest.mark.usefixtures('job_id', 'job_db')
+def test_finish_job():
+    job = simcity.start_job()
+    simcity.finish_job(job)
+    assert job['start'] > 0
+    assert job['done'] > 0
+    assert simcity.get_job()['done'] > 0
+    job = simcity.queue_job(job, 'ssh')
+    assert job['archive'] > 0
 
-    def test_queue_job(self):
-        job = simcity.queue_job(Job({'_id': 'aaaa'}), 'ssh')
-        assert_true(job['queue'] > 0)
-        assert_equals(len(self.db.saved), 1)
-        job = simcity.queue_job(simcity.get_job(), 'ssh')
-        assert_true(job['queue'] > 0)
-        assert_true(simcity.get_job()['queue'] > 0)
-        job = simcity.finish_job(job)
-        assert_true(job['archive'] > 0)
 
-    def test_archive_job(self):
-        job = simcity.get_job()
-        self.db.save(job)
-        job = simcity.archive_job(simcity.get_job())
-        assert_not_equals(job.id, self.test_id)
+def test_queue_job(job_db):
+    job = simcity.queue_job(Job({'_id': 'aaaa'}), 'ssh')
+    assert job['queue'] > 0
+    assert len(job_db.saved) == 1
+    job = simcity.queue_job(simcity.get_job(), 'ssh')
+    assert job['queue'] > 0
+    assert simcity.get_job()['queue'] > 0
+    job = simcity.finish_job(job)
+    assert job['archive'] > 0
+
+
+def test_archive_job(job_id, job_db):
+    job = simcity.get_job()
+    job_db.save(job)
+    job = simcity.archive_job(simcity.get_job())
+    assert job.id == job_id
+
+
+@pytest.mark.usefixtures('job_id', 'job_db')
+def test_cancel_job():
+    job = simcity.get_job()
+    simcity.cancel_endless_job(job)
+    assert job['cancel'] >= seconds() - 1
+    assert job['cancel'] <= seconds()

@@ -1,6 +1,6 @@
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
+# Copyright 2015 Netherlands eScience Center
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+""" Manage job metadata. """
+
 from .management import get_current_job_id, get_job_database
 from couchdb.http import ResourceConflict
-from picas import Job
-from picas.util import seconds
-import time
+from .document import Job
+from .util import seconds
 
 
 def get_job(job_id=None, database=None):
@@ -62,7 +63,7 @@ def queue_job(job, method, host=None, database=None):
             return job
 
 
-def start_job(database=None):
+def start_job(database=None, properties=None):
     """
     Mark a job from the job database as being started.
 
@@ -77,13 +78,17 @@ def start_job(database=None):
     except ValueError:  # job ID was not yet added to database
         job = Job({'_id': get_current_job_id()})
 
+    if properties is not None:
+        for k, v in properties.items():
+            job[k] = v
+
     try:
         return database.save(job.start())
     # Check for concurrent modification: the job may be added to the
     # database by the submission script.
     # Since this happens only once, we don't risk unlimited recursion
     except ResourceConflict:
-        return start_job(database)
+        return start_job(database, properties=properties)
 
 
 def finish_job(job, database=None):
@@ -140,33 +145,7 @@ def archive_job(job, database=None):
         database = get_job_database()
 
     try:
-        database.delete(job)
+        return database.save(job.archive())
     except ResourceConflict:
         job = get_job(job_id=job.id, database=database)
         return archive_job(job, database=database)
-    else:
-        return database.save(job.archive())
-
-
-def scrub_jobs(view, age=24*60*60, database=None):
-    views = ['pending_jobs', 'active_jobs', 'finished_jobs']
-    if view not in views:
-        raise ValueError('View "%s" not one of "%s"' % (view, str(views)))
-
-    if database is None:
-        database = get_job_database()
-
-    min_t = int(time.time()) - age
-    total = 0
-    updates = []
-    for row in database.view(view):
-        total += 1
-        if age <= 0 or row.value['start'] < min_t:
-            job = get_job(row.id, database=database)
-            database.delete(job)
-            updates.append(job.archive())
-
-    if len(updates) > 0:
-        database.save_documents(updates)
-
-    return (len(updates), total)

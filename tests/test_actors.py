@@ -1,6 +1,6 @@
 # SIM-CITY client
 #
-# Copyright 2015 Joris Borgdorff <j.borgdorff@esciencecenter.nl>
+# Copyright 2015 Netherlands eScience Center
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,36 +17,84 @@
 from __future__ import print_function
 
 import simcity
-from nose.tools import assert_true, assert_raises
-from test_mock import MockDB
+import pytest
 import os
-import shutil
+import time
 
 
-def test_actor():
-    try:
-        shutil.rmtree('tests/tmp')
-    except OSError:
-        pass
-
-    os.mkdir('tests/tmp')
-    cfg = simcity.util.Config(from_file=False)
-    cfg.add_section('Execution', {
-        'tmp_dir': 'tests/tmp/tmp_alala',
-        'output_dir': 'tests/tmp/out_alala',
-        'input_dir': 'tests/tmp/in_alala',
+@pytest.mark.usefixtures("dav")
+def test_actor(mock_directories, db):
+    cfg = simcity.Config()
+    exec_config = {'parallelism': 1}
+    exec_config.update(mock_directories)
+    cfg.add_section('Execution', exec_config)
+    cfg.add_section('webdav', {
+        'url': 'https://my.example.com'
     })
-    db = MockDB()
     db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo'}}
-    assert_raises(KeyError, simcity.management.set_config, cfg)
-    simcity.management.set_task_database(db)
-    simcity.management.set_job_database(db)
+    pytest.raises(KeyError, simcity.management.set_config, cfg)
     simcity.management.set_current_job_id('myjob')
-    actor = simcity.ExecuteActor()
+    iterator = simcity.TaskViewIterator('myid', db, 'pending')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
     actor.run()
-    assert_true(db.jobs['myjob']['done'] > 0)
-    assert_true(db.saved['mytask']['done'] > 0)
-    assert_true(os.path.exists('tests/tmp/tmp_alala'))
-    assert_true(os.path.exists('tests/tmp/out_alala'))
-    assert_true(os.path.exists('tests/tmp/in_alala'))
-    shutil.rmtree('tests/tmp')
+    assert db.saved['myjob']['done'] > 0
+    assert db.saved['mytask']['done'] > 0
+    assert os.path.exists(exec_config['tmp_dir'])
+    assert os.path.exists(exec_config['output_dir'])
+    assert os.path.exists(exec_config['input_dir'])
+
+
+@pytest.mark.usefixtures("dav")
+def test_actor_maximize_parallelism(mock_directories, db):
+    cfg = simcity.Config()
+    exec_config = {'parallelism': 1}
+    exec_config.update(mock_directories)
+    cfg.add_section('Execution', exec_config)
+    cfg.add_section('webdav', {
+        'url': 'https://my.example.com'
+    })
+    db.tasks = {'mytask': {'_id': 'mytask', 'command': 'echo',
+                           'parallelism': '2'}}
+    pytest.raises(KeyError, simcity.management.set_config, cfg)
+    simcity.management.set_current_job_id('myjob')
+    iterator = simcity.TaskViewIterator('myjob', db, 'pending')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
+    actor.run()
+    assert db.saved['myjob']['start'] > 0
+    assert 'myjob' == db.saved['mytask']['job']
+    assert db.saved['myjob']['done'] > 0
+    assert db.saved['mytask']['done'] > 0
+    assert os.path.exists(exec_config['tmp_dir'])
+    assert os.path.exists(exec_config['output_dir'])
+    assert os.path.exists(exec_config['input_dir'])
+
+
+@pytest.mark.usefixtures("dav")
+def test_actor_parallelism(mock_directories, db):
+    cfg = simcity.Config()
+    exec_config = {'parallelism': 2}
+    exec_config.update(mock_directories)
+    cfg.add_section('Execution', exec_config)
+    cfg.add_section('webdav', {
+        'url': 'https://my.example.com'
+    })
+    pytest.raises(KeyError, simcity.management.set_config, cfg)
+    db.tasks = {'mytask': {'_id': 'mytask', 'command': 'sleep',
+                           'arguments': ['0.3']},
+                'mytask2': {'_id': 'mytask2', 'command': 'sleep',
+                            'arguments': ['0.3']}}
+    simcity.management.set_current_job_id('myjob')
+    iterator = simcity.TaskViewIterator('myid', db, 'pending')
+    actor = simcity.JobActor(iterator, simcity.ExecuteWorker)
+    t0 = time.time()
+    actor.run()
+    print(db.jobs)
+    print(db.saved)
+    elapsed = time.time() - t0
+    assert elapsed < 0.6
+    assert elapsed > 0.3
+    assert db.saved['myjob']['done'] > 0
+    assert db.saved['mytask']['done'] > 0
+    assert os.path.exists(exec_config['tmp_dir'])
+    assert os.path.exists(exec_config['output_dir'])
+    assert os.path.exists(exec_config['input_dir'])
