@@ -67,7 +67,11 @@ def ensemble_view(task_db, name, version, url=None, ensemble=None):
                   error: doc.error,
                   lock: doc.lock,
                   done: doc.done,
-                  input: doc.input
+                  input: doc.input,
+                  files: doc.files,
+                  _attachments: doc._attachments,
+                  typeUrl: doc.typeUrl,
+                  defaultFeatureType: doc.defaultFeatureType
                 }});
               }}
             }}'''.format(name=name, version=version,
