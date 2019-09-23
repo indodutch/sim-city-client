@@ -13,7 +13,7 @@ pystache==0.5.4
 pytest==3.0.1
 pytest-flake8==0.6
 pyxenon==0.3.0
-PyYAML==3.11
+PyYAML==5.1
 requests==2.11.1
 tqdm==4.8.4
 -e .
